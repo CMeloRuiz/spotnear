@@ -1,0 +1,128 @@
+/* Pantalla de pago de la seña. Una sola caja centrada: el cliente está acá
+   esperando o pagando, no explorando. */
+
+.sn-pago {
+  display: flex;
+  justify-content: center;
+}
+
+.sn-pago__caja {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sn-e4);
+  width: 100%;
+  max-width: 520px;
+  padding: var(--sn-e6) var(--sn-e5);
+  text-align: center;
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-xl);
+  box-shadow: var(--sn-sombra-lg);
+}
+
+/* El color del ícono dice el estado antes de que se lea una palabra. */
+.sn-pago__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--sn-radio-full);
+  background: var(--sn-gris-100);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-pago__caja--esperando .sn-pago__icono {
+  background: var(--sn-gris-100);
+  color: var(--sn-accion);
+}
+
+.sn-pago__caja--faltaPagar .sn-pago__icono {
+  background: var(--sn-marca-suave);
+  color: var(--sn-accion);
+}
+
+.sn-pago__caja--rechazado .sn-pago__icono {
+  background: var(--sn-error-suave);
+  color: var(--sn-error);
+}
+
+/* Dura un instante: apenas se ve, la pantalla navega al comprobante. */
+.sn-pago__caja--listo .sn-pago__icono {
+  background: var(--sn-ok-suave);
+  color: var(--sn-ok);
+}
+
+.sn-pago__titulo {
+  font-size: var(--sn-texto-xl);
+  font-weight: var(--sn-peso-bold);
+  line-height: 1.25;
+}
+
+.sn-pago__texto {
+  font-size: var(--sn-texto-base);
+  color: var(--sn-tinta-suave);
+  line-height: 1.55;
+}
+
+.sn-pago__codigo {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+/* Los dos montos, siempre a la vista: es lo que evita que alguien crea que
+   pagando la seña ya pagó todo. */
+.sn-pago__montos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e2);
+  width: 100%;
+  padding: var(--sn-e4);
+  background: var(--sn-gris-50);
+  border-radius: var(--sn-radio);
+  text-align: left;
+}
+
+.sn-pago__montos > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sn-e3);
+  font-size: var(--sn-texto-sm);
+}
+
+.sn-pago__montos dt {
+  color: var(--sn-tinta-suave);
+}
+
+.sn-pago__montos dd {
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+  white-space: nowrap;
+}
+
+.sn-pago__nota {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-tenue);
+}
+
+.sn-pago__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e2);
+  width: 100%;
+}
+
+@media (min-width: 520px) {
+  .sn-pago__acciones {
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+/* Recién vuelto de Mercado Pago, mientras se verifica el pago. */
+.sn-pago__caja--confirmando .sn-pago__icono {
+  background: var(--sn-marca-suave);
+  color: var(--sn-accion);
+}

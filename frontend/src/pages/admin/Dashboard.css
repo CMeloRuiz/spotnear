@@ -1,0 +1,164 @@
+.sn-dashboard__metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--sn-e3);
+  margin-bottom: var(--sn-e5);
+}
+
+.sn-dashboard__grilla {
+  display: grid;
+  gap: var(--sn-e4);
+  margin-bottom: var(--sn-e5);
+}
+
+@media (min-width: 1100px) {
+  .sn-dashboard__grilla {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-areas:
+      'grafico llegadas'
+      'ocupacion llegadas';
+    align-items: start;
+  }
+
+  .sn-dashboard__grafico {
+    grid-area: grafico;
+  }
+
+  .sn-dashboard__ocupacion {
+    grid-area: ocupacion;
+  }
+
+  .sn-dashboard__llegadas {
+    grid-area: llegadas;
+  }
+}
+
+.sn-dashboard__grafico,
+.sn-dashboard__ocupacion,
+.sn-dashboard__llegadas {
+  margin-bottom: 0;
+}
+
+/* ── Ocupación ── */
+
+.sn-dashboard__ocupacion-titulo {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+  margin-bottom: var(--sn-e4);
+}
+
+.sn-ocupacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+}
+
+.sn-ocupacion__barra {
+  height: 12px;
+  background: var(--sn-gris-200);
+  border-radius: var(--sn-radio-full);
+  overflow: hidden;
+}
+
+.sn-ocupacion__relleno {
+  display: block;
+  height: 100%;
+  background: var(--sn-ok);
+  border-radius: var(--sn-radio-full);
+  transition: width var(--sn-trans-lenta);
+}
+
+/* Casi lleno: el color pasa a rojo, que es la señal que importa */
+.sn-ocupacion__relleno--lleno {
+  background: var(--sn-error);
+}
+
+.sn-ocupacion__datos {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sn-e3);
+  flex-wrap: wrap;
+}
+
+.sn-ocupacion__numero {
+  font-size: var(--sn-texto-2xl);
+  font-weight: var(--sn-peso-extra);
+  color: var(--sn-tinta);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.sn-ocupacion__numero small {
+  font-size: var(--sn-texto-lg);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-tenue);
+}
+
+.sn-ocupacion__etiqueta {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+/* ── Próximas llegadas ── */
+
+.sn-llegadas {
+  display: flex;
+  flex-direction: column;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.sn-llegada {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e3);
+  padding: var(--sn-e3) var(--sn-e5);
+  border-bottom: 1px solid var(--sn-borde);
+}
+
+.sn-llegada:last-child {
+  border-bottom: none;
+}
+
+.sn-llegada__hora {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-extra);
+  color: var(--sn-tinta);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  width: 46px;
+}
+
+.sn-llegada__datos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  line-height: 1.3;
+}
+
+.sn-llegada__nombre {
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--sn-trans);
+}
+
+.sn-llegada__nombre:hover {
+  color: var(--sn-marca-texto);
+}
+
+.sn-llegada__detalle {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+  font-family: var(--sn-fuente-mono);
+}
+
+.sn-llegada .sn-boton {
+  flex-shrink: 0;
+}

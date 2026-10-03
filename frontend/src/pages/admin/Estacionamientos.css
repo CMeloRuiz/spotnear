@@ -1,0 +1,161 @@
+.sn-parkings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+}
+
+.sn-parking {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: var(--sn-e4);
+  padding: var(--sn-e4);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  box-shadow: var(--sn-sombra-sm);
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .sn-parking {
+    grid-template-columns: 88px minmax(0, 1fr) auto auto;
+  }
+}
+
+.sn-parking--baja {
+  opacity: 0.62;
+}
+
+.sn-parking__foto {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--sn-radio);
+  overflow: hidden;
+  background: var(--sn-gris-100);
+}
+
+.sn-parking__foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sn-parking__datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e1);
+  min-width: 0;
+}
+
+.sn-parking__nombre {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+.sn-parking__direccion {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-parking__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sn-e2);
+  margin-top: var(--sn-e1);
+}
+
+/* ── Comisión editable en línea ── */
+
+.sn-parking__comision {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+@media (min-width: 900px) {
+  .sn-parking__comision {
+    grid-column: 3;
+    align-items: center;
+    min-width: 92px;
+  }
+}
+
+.sn-parking__comision-etiqueta {
+  font-size: var(--sn-texto-2xs);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-tenue);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sn-parking__comision-valor {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  padding: 2px var(--sn-e2);
+  margin-left: calc(var(--sn-e2) * -1);
+  border-radius: var(--sn-radio-sm);
+  font-size: var(--sn-texto-lg);
+  font-weight: var(--sn-peso-extra);
+  color: var(--sn-marca-texto);
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--sn-trans);
+}
+
+.sn-parking__comision-valor:hover {
+  background: var(--sn-marca-suave);
+}
+
+.sn-parking__comision-valor svg {
+  color: var(--sn-tinta-tenue);
+}
+
+.sn-parking__comision-input {
+  width: 82px;
+  min-height: 38px;
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-bold);
+  text-align: center;
+}
+
+.sn-parking__acciones {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: var(--sn-e2);
+  flex-wrap: wrap;
+}
+
+@media (min-width: 900px) {
+  .sn-parking__acciones {
+    grid-column: 4;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 128px;
+  }
+}
+
+/* ── Formulario ── */
+
+.sn-parkings__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+}
+
+.sn-parkings__checks {
+  display: flex;
+  gap: var(--sn-e6);
+  flex-wrap: wrap;
+}
+
+.sn-parkings__subtitulo {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+  margin-bottom: var(--sn-e1);
+}

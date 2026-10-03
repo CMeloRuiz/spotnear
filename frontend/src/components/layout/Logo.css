@@ -1,0 +1,42 @@
+/* Estilos del logo. Viven acá y no en Header.css porque el logo aparece
+   también en el panel y en el login, que no cargan la hoja del header. */
+
+.sn-logo-link {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--sn-radio-sm);
+}
+
+.sn-logo {
+  width: auto;
+  object-fit: contain;
+}
+
+.sn-logo--sm {
+  height: 30px;
+}
+
+.sn-logo--md {
+  height: 38px;
+}
+
+.sn-logo--lg {
+  height: 46px;
+}
+
+/* En pantallas chicas el logo compite con el botón de menú y el alto del
+   header no cambia, así que baja un escalón. Sigue siendo más grande que
+   la versión original en cualquier caso. */
+@media (max-width: 599px) {
+  .sn-logo--sm {
+    height: 26px;
+  }
+
+  .sn-logo--md {
+    height: 32px;
+  }
+
+  .sn-logo--lg {
+    height: 38px;
+  }
+}

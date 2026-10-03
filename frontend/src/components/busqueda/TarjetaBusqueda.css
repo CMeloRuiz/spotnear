@@ -1,0 +1,88 @@
+.sn-tarjeta-busqueda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e5);
+  padding: var(--sn-e5);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-xl);
+  box-shadow: var(--sn-sombra-lg);
+  width: 100%;
+  max-width: 520px;
+}
+
+@media (min-width: 768px) {
+  .sn-tarjeta-busqueda {
+    padding: var(--sn-e6);
+  }
+}
+
+/* ── Pestañas Por hora / Mensual ── */
+
+.sn-tarjeta-busqueda__pestanas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sn-e1);
+  padding: var(--sn-e1);
+  background: var(--sn-gris-100);
+  border-radius: var(--sn-radio-md);
+}
+
+.sn-tarjeta-busqueda__pestana {
+  padding: var(--sn-e3) var(--sn-e4);
+  border-radius: var(--sn-radio);
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-suave);
+  transition:
+    background-color var(--sn-trans),
+    color var(--sn-trans),
+    box-shadow var(--sn-trans);
+}
+
+.sn-tarjeta-busqueda__pestana:hover {
+  color: var(--sn-tinta);
+}
+
+.sn-tarjeta-busqueda__pestana--activa {
+  background: var(--sn-superficie);
+  color: var(--sn-tinta);
+  box-shadow: var(--sn-sombra-sm);
+}
+
+.sn-tarjeta-busqueda__campos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+}
+
+.sn-tarjeta-busqueda__mensual {
+  font-size: var(--sn-texto-sm);
+  line-height: 1.5;
+}
+
+/* ── Pestaña pausada ──
+   Se ve, pero no se puede entrar: es una pausa temporal, no una eliminación,
+   así que sigue ocupando su lugar en la tarjeta. */
+.sn-tarjeta-busqueda__pestana--pausada {
+  color: var(--sn-tinta-tenue);
+  cursor: not-allowed;
+}
+
+.sn-tarjeta-busqueda__pestana--pausada:hover {
+  background: transparent;
+  color: var(--sn-tinta-tenue);
+}
+
+/* El select de sedes usa la misma caja que el resto de los campos del
+   período, para que la tarjeta no cambie de forma entre pestañas. */
+.sn-periodo__select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}

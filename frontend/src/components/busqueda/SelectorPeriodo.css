@@ -1,0 +1,105 @@
+.sn-periodo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e2);
+  min-width: 0;
+}
+
+.sn-periodo__caja {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  min-height: 54px;
+  padding: var(--sn-e1) var(--sn-e4);
+  background: var(--sn-superficie);
+  border: 1.5px solid var(--sn-borde);
+  border-radius: var(--sn-radio-md);
+  transition:
+    border-color var(--sn-trans),
+    box-shadow var(--sn-trans);
+}
+
+.sn-periodo__caja:focus-within {
+  border-color: var(--sn-accion);
+  box-shadow: var(--sn-sombra-foco);
+}
+
+.sn-periodo__caja--error {
+  border-color: var(--sn-error);
+}
+
+.sn-periodo--compacto .sn-periodo__caja {
+  min-height: 44px;
+  border-radius: var(--sn-radio);
+  padding-inline: var(--sn-e3);
+}
+
+.sn-periodo__icono {
+  color: var(--sn-tinta-tenue);
+  flex-shrink: 0;
+  display: flex;
+}
+
+.sn-periodo__campo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  padding-block: 4px;
+}
+
+.sn-periodo__label {
+  font-size: var(--sn-texto-2xs);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.sn-periodo__input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+  font-family: inherit;
+  padding: 0;
+}
+
+.sn-periodo--compacto .sn-periodo__input {
+  font-size: var(--sn-texto-sm);
+}
+
+.sn-periodo__separador {
+  color: var(--sn-tinta-tenue);
+  flex-shrink: 0;
+  display: flex;
+}
+
+/* ── Variante `separado`: dos casillas, una al lado de la otra ──
+   Es la del hero, donde hay ancho de sobra y conviene que Ingreso y Salida se
+   lean como dos campos distintos. En pantallas angostas se apilan. */
+
+.sn-periodo__fila {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sn-e3);
+}
+
+@media (min-width: 440px) {
+  .sn-periodo__fila {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Cada casilla trae su ícono, así que el interior se aprieta un poco para que
+   la fecha y la hora entren completas sin cortarse. */
+.sn-periodo--separado .sn-periodo__caja {
+  padding-inline: var(--sn-e3);
+  gap: var(--sn-e2);
+  min-width: 0;
+}

@@ -1,0 +1,164 @@
+.sn-resultados {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--sn-fondo-alt);
+}
+
+/* ─────────────────── Barra de herramientas ─────────────────── */
+
+.sn-resultados__herramientas {
+  background: var(--sn-superficie);
+  border-bottom: 1px solid var(--sn-borde);
+  flex-shrink: 0;
+}
+
+.sn-resultados__herramientas-interior {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sn-e4);
+  padding-block: var(--sn-e3);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.sn-resultados__herramientas-interior::-webkit-scrollbar {
+  display: none;
+}
+
+.sn-resultados__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  flex-shrink: 0;
+}
+
+.sn-resultados__filtros--activo {
+  border-color: var(--sn-marca);
+  color: var(--sn-marca-texto);
+}
+
+.sn-resultados__punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sn-marca);
+}
+
+.sn-resultados__ajustes {
+  display: none;
+  align-items: center;
+  gap: var(--sn-e5);
+  flex-shrink: 0;
+}
+
+@media (min-width: 900px) {
+  .sn-resultados__ajustes {
+    display: flex;
+  }
+}
+
+.sn-resultados__orden .sn-select {
+  min-height: 36px;
+  height: 36px;
+  padding-block: 0;
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-medio);
+  border-radius: var(--sn-radio-sm);
+}
+
+/* ─────────────────── Cuerpo: lista + mapa ─────────────────── */
+
+.sn-resultados__cuerpo {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  position: relative;
+}
+
+@media (min-width: 900px) {
+  .sn-resultados__cuerpo {
+    /* Lista a la izquierda, mapa a la derecha */
+    grid-template-columns: minmax(380px, 43%) 1fr;
+  }
+}
+
+.sn-resultados__lista {
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  background: var(--sn-fondo-alt);
+}
+
+.sn-resultados__lista-interior {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+  padding: var(--sn-e4);
+  /* Espacio extra abajo para que el botón flotante no tape la última tarjeta */
+  padding-bottom: calc(var(--sn-e16) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 900px) {
+  .sn-resultados__lista-interior {
+    padding-bottom: var(--sn-e8);
+  }
+}
+
+.sn-resultados__contador {
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-media);
+  padding-inline: var(--sn-e1);
+}
+
+.sn-resultados__mapa {
+  min-height: 0;
+  position: relative;
+  background: var(--sn-gris-100);
+}
+
+/* ── Alternancia en móvil ── */
+
+@media (max-width: 899px) {
+  .sn-resultados__cuerpo--lista .sn-resultados__mapa {
+    display: none;
+  }
+
+  .sn-resultados__cuerpo--mapa .sn-resultados__lista {
+    display: none;
+  }
+}
+
+.sn-resultados__cambiar-vista {
+  position: fixed;
+  bottom: calc(var(--sn-e5) + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--sn-z-sticky);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  padding: var(--sn-e3) var(--sn-e6);
+  background: var(--sn-tinta);
+  color: #ffffff;
+  border-radius: var(--sn-radio-full);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-bold);
+  box-shadow: var(--sn-sombra-xl);
+  transition: background-color var(--sn-trans);
+}
+
+.sn-resultados__cambiar-vista:hover {
+  background: #1e293b;
+}
+
+@media (min-width: 900px) {
+  .sn-resultados__cambiar-vista {
+    display: none;
+  }
+}

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" width="400" height="260" role="img" aria-label="Microcentro Sarmiento">
+  <rect width="400" height="260" fill="#1C2B3A"/>
+  
+    <rect x="0" y="150" width="400" height="110" fill="#2C3E50"/>
+    <g opacity=".55">
+      <rect x="28" y="168" width="62" height="34" rx="4" fill="#3D5266"/>
+      <rect x="104" y="168" width="62" height="34" rx="4" fill="#3D5266"/>
+      <rect x="180" y="168" width="62" height="34" rx="4" fill="#3D5266"/>
+      <rect x="256" y="168" width="62" height="34" rx="4" fill="#3D5266"/>
+    </g>
+    <g stroke="#ffffff" stroke-width="2.5" opacity=".35">
+      <line x1="24" y1="214" x2="24" y2="250"/>
+      <line x1="100" y1="214" x2="100" y2="250"/>
+      <line x1="176" y1="214" x2="176" y2="250"/>
+      <line x1="252" y1="214" x2="252" y2="250"/>
+      <line x1="328" y1="214" x2="328" y2="250"/>
+    </g>
+  <g transform="translate(24,26)">
+    <path d="M11 0C4.9 0 0 4.9 0 11c0 8.1 11 19.4 11 19.4S22 19.1 22 11C22 4.9 17.1 0 11 0z" fill="#188FEB"/>
+    <circle cx="11" cy="10.6" r="4.6" fill="#1C2B3A"/>
+  </g>
+  <text x="56" y="48" font-family="'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif" font-size="17" font-weight="700" fill="#ffffff">SpotNear</text>
+  <text x="24" y="246" font-family="'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif" font-size="11.5" font-weight="600" fill="#ffffff" opacity=".82">Microcentro Sarmiento</text>
+</svg>

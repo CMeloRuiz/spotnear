@@ -1,0 +1,165 @@
+.sn-barra {
+  position: relative;
+  z-index: var(--sn-z-header);
+  background: var(--sn-superficie);
+  border-bottom: 1px solid var(--sn-borde);
+  flex-shrink: 0;
+}
+
+.sn-barra__interior {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e4);
+  min-height: var(--sn-alto-header);
+  padding-block: var(--sn-e2);
+}
+
+.sn-barra__logo {
+  flex-shrink: 0;
+}
+
+/* ── Escritorio ── */
+
+.sn-barra__form {
+  display: none;
+  flex: 1;
+  align-items: center;
+  gap: var(--sn-e2);
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .sn-barra__form {
+    display: flex;
+  }
+}
+
+.sn-barra__select {
+  min-height: 44px;
+  height: 44px;
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  border-radius: var(--sn-radio);
+  min-width: 150px;
+}
+
+.sn-barra__destino {
+  flex: 1.4;
+  min-width: 180px;
+}
+
+.sn-barra__periodo {
+  flex: 1.6;
+  min-width: 260px;
+}
+
+.sn-barra__enviar {
+  /* Cuadrado de 44px es el mínimo cómodo para el dedo; desde ahí crece solo
+     cuando entra la palabra "Buscar". */
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  gap: var(--sn-e2);
+  flex-shrink: 0;
+  border-radius: var(--sn-radio);
+}
+
+/* La palabra aparece recién cuando la barra tiene lugar de sobra: en pantallas
+   medianas compite con los campos de fecha y los apretaría. */
+.sn-barra__enviar-texto {
+  display: none;
+}
+
+@media (min-width: 1180px) {
+  .sn-barra__enviar {
+    padding-inline: var(--sn-e5);
+  }
+
+  .sn-barra__enviar-texto {
+    display: inline;
+  }
+}
+
+.sn-barra__error {
+  padding-bottom: var(--sn-e2);
+}
+
+/* ── Móvil ── */
+
+.sn-barra__resumen {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e3);
+  flex: 1;
+  min-width: 0;
+  padding: var(--sn-e2) var(--sn-e3);
+  background: var(--sn-gris-50);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-full);
+  color: var(--sn-tinta-suave);
+  text-align: left;
+}
+
+@media (min-width: 900px) {
+  .sn-barra__resumen {
+    display: none;
+  }
+}
+
+.sn-barra__resumen-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  line-height: 1.25;
+}
+
+.sn-barra__resumen-texto strong {
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sn-barra__resumen-texto small {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-barra__movil {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+  padding: var(--sn-e4);
+  border-top: 1px solid var(--sn-borde);
+  background: var(--sn-superficie);
+  box-shadow: var(--sn-sombra-lg);
+}
+
+.sn-barra__pestanas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sn-e1);
+  padding: var(--sn-e1);
+  background: var(--sn-gris-100);
+  border-radius: var(--sn-radio);
+}
+
+.sn-barra__pestana {
+  padding: var(--sn-e2) var(--sn-e3);
+  border-radius: var(--sn-radio-sm);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-suave);
+  transition:
+    background-color var(--sn-trans),
+    color var(--sn-trans);
+}
+
+.sn-barra__pestana--activa {
+  background: var(--sn-superficie);
+  color: var(--sn-tinta);
+  box-shadow: var(--sn-sombra-sm);
+}

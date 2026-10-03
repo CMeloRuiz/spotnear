@@ -1,0 +1,86 @@
+.sn-comisiones__controles {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sn-e4);
+  margin-bottom: var(--sn-e4);
+  flex-wrap: wrap;
+}
+
+.sn-comisiones__rangos {
+  display: flex;
+  gap: var(--sn-e2);
+  flex-wrap: wrap;
+}
+
+.sn-comisiones__agrupar {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-comisiones__agrupar .sn-select {
+  min-height: 38px;
+  font-size: var(--sn-texto-sm);
+}
+
+.sn-comisiones__totales {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--sn-e3);
+  margin-bottom: var(--sn-e4);
+}
+
+.sn-comisiones__comision {
+  color: var(--sn-marca-texto);
+  font-weight: var(--sn-peso-semi);
+}
+
+/* ── Barra de participación ── */
+
+.sn-comisiones__col-barra {
+  width: 130px;
+  white-space: nowrap;
+}
+
+.sn-comisiones__barra {
+  display: inline-block;
+  width: 78px;
+  height: 7px;
+  vertical-align: middle;
+  background: var(--sn-gris-200);
+  border-radius: var(--sn-radio-full);
+  overflow: hidden;
+}
+
+.sn-comisiones__barra-relleno {
+  display: block;
+  height: 100%;
+  /* Mismo azul que las barras del dashboard: el tono fuerte, que contrasta bien */
+  background: var(--sn-marca-fuerte);
+  border-radius: var(--sn-radio-full);
+}
+
+.sn-comisiones__porcentaje {
+  display: inline-block;
+  margin-left: var(--sn-e2);
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+  font-variant-numeric: tabular-nums;
+  width: 34px;
+}
+
+.sn-tabla tfoot th,
+.sn-tabla tfoot td {
+  padding: var(--sn-e4);
+  background: var(--sn-gris-50);
+  border-top: 2px solid var(--sn-borde);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+  position: static;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: var(--sn-texto-sm);
+}

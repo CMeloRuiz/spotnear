@@ -1,0 +1,170 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   SpotNear · Sistema de diseño
+   Todo el look de la app sale de estas variables. Cambiar una acá se
+   propaga a toda la interfaz.
+
+   La paleta sale del logo: el pin va sobre un círculo azul #188EEB y el
+   wordmark es casi negro (#212121), que acá se redondea al azul petróleo
+   #0F172A de la tipografía. De ahí salen la marca y la estructura.
+
+   Los tonos se sacaron del PNG del logo con un muestreo de píxeles, no a
+   ojo, y las variantes son el mismo H/S con distinta luminosidad.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Marca ─────────────────────────────────────────────────────────── */
+  --sn-marca: #188feb; /* muestreado del círculo del logo */
+  --sn-marca-fuerte: #1177c5; /* 4.70:1 con blanco → apto para texto encima */
+  --sn-marca-intensa: #0c558d; /* 7.78:1 con blanco */
+  --sn-marca-suave: #eaf5fd; /* fondos de chips y avisos de marca */
+  --sn-marca-borde: #b6dcf9;
+  --sn-marca-texto: #0d5a96; /* 7.19:1 sobre blanco → AA para texto normal */
+
+  /* Color de las acciones principales.
+     Sigue separado de --sn-marca a propósito, pero por un motivo concreto:
+     el azul del logo (#188feb) da 3.40:1 contra blanco y no llega al 4.5:1
+     que pide WCAG para el texto de un botón. Por eso las acciones usan el
+     tono fuerte. El azul del logo queda para el logo y para elementos
+     gráficos, donde alcanza con 3:1. */
+  --sn-accion: var(--sn-marca-fuerte);
+  --sn-accion-hover: var(--sn-marca-intensa);
+  --sn-accion-activo: #093e67;
+  --sn-accion-texto: #ffffff;
+
+  /* ── Tinta y grises ────────────────────────────────────────────────── */
+  --sn-tinta: #0f172a; /* títulos */
+  --sn-tinta-media: #334155; /* cuerpo */
+  --sn-tinta-suave: #64748b; /* secundario */
+  --sn-tinta-tenue: #94a3b8; /* terciario, placeholders */
+
+  --sn-gris-50: #f8fafc;
+  --sn-gris-100: #f1f5f9;
+  --sn-gris-200: #e2e8f0;
+  --sn-gris-300: #cbd5e1;
+  --sn-gris-400: #94a3b8;
+
+  /* ── Superficies ───────────────────────────────────────────────────── */
+  --sn-fondo: #ffffff;
+  --sn-fondo-alt: #f7f9fc;
+  --sn-fondo-oscuro: #0f172a;
+  --sn-superficie: #ffffff;
+  --sn-superficie-hover: #f8fafc;
+  --sn-borde: #e6eaf0;
+  --sn-borde-fuerte: #cbd5e1;
+
+  /* ── Estados ───────────────────────────────────────────────────────── */
+  --sn-ok: #0f9d58;
+  --sn-ok-suave: #e6f6ee;
+  --sn-ok-texto: #0a7a43;
+
+  --sn-aviso: #d97706;
+  --sn-aviso-suave: #fef3e2;
+  --sn-aviso-texto: #b45309;
+
+  --sn-error: #dc2626;
+  --sn-error-suave: #fdecec;
+  --sn-error-texto: #b91c1c;
+
+  --sn-info: #2563eb;
+  --sn-info-suave: #eaf1fe;
+  --sn-info-texto: #1d4ed8;
+
+  /* Estados de reserva (se usan en badges y en la tabla del panel) */
+  --sn-estado-pendiente: #d97706;
+  --sn-estado-pendiente-bg: #fef3e2;
+  --sn-estado-confirmada: #2563eb;
+  --sn-estado-confirmada-bg: #eaf1fe;
+  --sn-estado-en-curso: #0f9d58;
+  --sn-estado-en-curso-bg: #e6f6ee;
+  --sn-estado-finalizada: #475569;
+  --sn-estado-finalizada-bg: #f1f5f9;
+  --sn-estado-cancelada: #dc2626;
+  --sn-estado-cancelada-bg: #fdecec;
+  --sn-estado-no-show: #7c3aed;
+  --sn-estado-no-show-bg: #f3ecfe;
+
+  /* ── Tipografía ────────────────────────────────────────────────────── */
+  --sn-fuente: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --sn-fuente-mono: 'SFMono-Regular', 'JetBrains Mono', Consolas, 'Liberation Mono', monospace;
+
+  --sn-texto-2xs: 0.6875rem; /* 11px */
+  --sn-texto-xs: 0.75rem; /* 12px */
+  --sn-texto-sm: 0.8125rem; /* 13px */
+  --sn-texto-base: 0.9375rem; /* 15px */
+  --sn-texto-md: 1rem; /* 16px */
+  --sn-texto-lg: 1.125rem; /* 18px */
+  --sn-texto-xl: 1.375rem; /* 22px */
+  --sn-texto-2xl: 1.75rem; /* 28px */
+  --sn-texto-3xl: 2.25rem; /* 36px */
+  --sn-texto-4xl: 3rem; /* 48px */
+
+  --sn-peso-normal: 400;
+  --sn-peso-medio: 500;
+  --sn-peso-semi: 600;
+  --sn-peso-bold: 700;
+  --sn-peso-extra: 800;
+
+  --sn-interlineado-ajustado: 1.15;
+  --sn-interlineado: 1.55;
+
+  /* ── Espaciado (escala de 4px) ─────────────────────────────────────── */
+  --sn-e1: 0.25rem;
+  --sn-e2: 0.5rem;
+  --sn-e3: 0.75rem;
+  --sn-e4: 1rem;
+  --sn-e5: 1.25rem;
+  --sn-e6: 1.5rem;
+  --sn-e8: 2rem;
+  --sn-e10: 2.5rem;
+  --sn-e12: 3rem;
+  --sn-e16: 4rem;
+  --sn-e20: 5rem;
+
+  /* ── Bordes ────────────────────────────────────────────────────────── */
+  --sn-radio-sm: 6px;
+  --sn-radio: 10px;
+  --sn-radio-md: 12px;
+  --sn-radio-lg: 16px;
+  --sn-radio-xl: 20px;
+  --sn-radio-full: 999px;
+
+  /* ── Sombras (suaves, estilo SpotHero) ─────────────────────────────── */
+  --sn-sombra-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --sn-sombra: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --sn-sombra-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --sn-sombra-lg: 0 12px 28px rgba(15, 23, 42, 0.1), 0 4px 10px rgba(15, 23, 42, 0.05);
+  --sn-sombra-xl: 0 24px 48px rgba(15, 23, 42, 0.14);
+  --sn-sombra-foco: 0 0 0 3px rgba(24, 143, 235, 0.32);
+
+  /* ── Medidas ───────────────────────────────────────────────────────── */
+  --sn-ancho-max: 1200px;
+  --sn-ancho-max-ancho: 1440px;
+  --sn-alto-header: 68px;
+  --sn-alto-barra-busqueda: 76px;
+  --sn-ancho-sidebar: 248px;
+
+  /* ── Transiciones ──────────────────────────────────────────────────── */
+  --sn-trans-rapida: 120ms ease;
+  --sn-trans: 180ms ease;
+  --sn-trans-lenta: 280ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── Capas ─────────────────────────────────────────────────────────── */
+  --sn-z-base: 1;
+  --sn-z-mapa: 10;
+  --sn-z-sticky: 100;
+  --sn-z-header: 200;
+  --sn-z-dropdown: 300;
+  --sn-z-overlay: 400;
+  --sn-z-modal: 500;
+  --sn-z-toast: 600;
+}
+
+/* Quien prefiere menos movimiento, no lo tiene. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sn-trans-rapida: 0ms;
+    --sn-trans: 0ms;
+    --sn-trans-lenta: 0ms;
+  }
+}

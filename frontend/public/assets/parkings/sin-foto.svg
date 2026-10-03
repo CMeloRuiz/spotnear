@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" width="400" height="260" role="img" aria-label="Sin foto disponible">
+  <rect width="400" height="260" fill="#0F172A"/>
+  
+    <rect x="0" y="196" width="400" height="64" fill="#1E293B"/>
+    <rect x="52" y="86" width="296" height="112" rx="6" fill="#334155" opacity=".5"/>
+    <rect x="128" y="126" width="144" height="72" rx="4" fill="#0F172A" opacity=".45"/>
+    <g fill="#ffffff" opacity=".28">
+      <rect x="70" y="102" width="40" height="22" rx="3"/>
+      <rect x="290" y="102" width="40" height="22" rx="3"/>
+    </g>
+    <rect x="0" y="222" width="400" height="5" fill="#ffffff" opacity=".3"/>
+  <g transform="translate(24,26)">
+    <path d="M11 0C4.9 0 0 4.9 0 11c0 8.1 11 19.4 11 19.4S22 19.1 22 11C22 4.9 17.1 0 11 0z" fill="#188FEB"/>
+    <circle cx="11" cy="10.6" r="4.6" fill="#0F172A"/>
+  </g>
+  <text x="56" y="48" font-family="'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif" font-size="17" font-weight="700" fill="#ffffff">SpotNear</text>
+  <text x="24" y="246" font-family="'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif" font-size="11.5" font-weight="600" fill="#ffffff" opacity=".82">Sin foto disponible</text>
+</svg>

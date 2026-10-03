@@ -1,0 +1,49 @@
+# Dependencias
+node_modules/
+.pnp/
+.pnp.js
+
+# Variables de entorno (NUNCA commitear)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Builds
+dist/
+build/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cache y temporales
+.cache/
+.vite/
+.tmp/
+tmp/
+coverage/
+.nyc_output/
+
+# Prisma (el cliente se genera)
+backend/prisma/generated/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# Fotos que suben los dueños al registrarse. Son datos, no código.
+backend/uploads/

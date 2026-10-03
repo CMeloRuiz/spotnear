@@ -1,0 +1,103 @@
+.sn-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--sn-e5) + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: var(--sn-z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--sn-e2);
+  width: calc(100% - var(--sn-e8));
+  max-width: 420px;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .sn-toasts {
+    left: auto;
+    right: var(--sn-e6);
+    bottom: var(--sn-e6);
+    transform: none;
+  }
+}
+
+.sn-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e3);
+  padding: var(--sn-e3) var(--sn-e3) var(--sn-e3) var(--sn-e4);
+  background: var(--sn-tinta);
+  color: #fff;
+  border-radius: var(--sn-radio-md);
+  box-shadow: var(--sn-sombra-lg);
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-medio);
+  pointer-events: auto;
+  animation: sn-toast-entra var(--sn-trans-lenta);
+}
+
+@keyframes sn-toast-entra {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sn-toast {
+    animation: none;
+  }
+}
+
+.sn-toast__icono {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-bold);
+  flex-shrink: 0;
+}
+
+.sn-toast--ok .sn-toast__icono {
+  background: var(--sn-ok);
+  color: #fff;
+}
+
+.sn-toast--error .sn-toast__icono {
+  background: var(--sn-error);
+  color: #fff;
+}
+
+.sn-toast--info .sn-toast__icono {
+  background: var(--sn-info);
+  color: #fff;
+}
+
+.sn-toast__texto {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.sn-toast__cerrar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--sn-radio-sm);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background-color var(--sn-trans);
+}
+
+.sn-toast__cerrar:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}

@@ -1,0 +1,497 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// SpotNear · Esquema de datos
+// PostgreSQL + Prisma. Todos los importes en ARS (Decimal 12,2).
+// Las fechas se guardan en UTC; la app presenta en America/Argentina/Buenos_Aires.
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────── Enums ───────────────────────────
+
+enum Role {
+  SUPERADMIN // ColdevIA: ve y administra toda la plataforma
+  OWNER // Dueño de un estacionamiento
+  STAFF // Playero / empleado del estacionamiento
+}
+
+/**
+ * Estado de alta de un estacionamiento.
+ * Los que carga el SUPERADMIN nacen ACTIVO; los que llegan por el formulario
+ * público de autogestión nacen PENDIENTE_APROBACION y no se publican hasta
+ * que ColdevIA los revisa.
+ */
+enum ParkingEstado {
+  PENDIENTE_APROBACION
+  ACTIVO
+  RECHAZADO
+}
+
+/**
+ * Cómo cierra un estacionamiento. Son tres modos excluyentes y conviven entre
+ * distintos estacionamientos: cada uno declara el suyo.
+ * Nota: el enum de Prisma no admite un valor que empiece con dígito, así que
+ * el modo de 24 horas se llama ABIERTO_24HS y no "24HS".
+ */
+enum TipoHorario {
+  FIJO // abre y cierra a una hora fija
+  ABIERTO_24HS // nunca cierra
+  FIN_EVENTO // abre a una hora fija y cierra cuando termina el evento del día
+}
+
+enum VehicleType {
+  AUTO
+  CAMIONETA
+  SUV // separado de CAMIONETA: la mayoría de las playas les cobra distinto
+  MOTO
+  UTILITARIO
+}
+
+enum ReservationStatus {
+  PENDIENTE
+  CONFIRMADA
+  EN_CURSO
+  FINALIZADA
+  CANCELADA
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDIENTE // pago online iniciado, esperando confirmación de la pasarela
+  PAGADO
+  FALLIDO
+  REEMBOLSADO
+}
+
+enum RateType {
+  HORA
+  DIA
+  MENSUAL
+}
+
+/** De dónde entró la reserva. Sirve para medir cuánto se corrió del WhatsApp. */
+enum ReservationSource {
+  WEB
+  ADMIN
+  WHATSAPP
+  TELEFONO
+  API
+}
+
+/** Tipo de los campos extra que cada estacionamiento agrega al formulario. */
+enum CustomFieldType {
+  TEXTO
+  NUMERO
+  SELECT
+  BOOLEAN
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  EMAIL
+}
+
+enum NotificationStatus {
+  PENDIENTE
+  ENVIADO
+  FALLIDO
+  SIMULADO
+}
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String
+  nombre       String
+  telefono     String?
+  role         Role    @default(STAFF)
+
+  // Multi-tenant: SUPERADMIN tiene parkingId = null (ve todo).
+  // OWNER y STAFF SIEMPRE pertenecen a un estacionamiento.
+  parkingId String?
+  parking   Parking? @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+
+  activo      Boolean   @default(true)
+  ultimoLogin DateTime?
+
+  refreshTokens   RefreshToken[]
+  reservasCreadas Reservation[]  @relation("ReservationCreatedBy")
+  auditLogs       AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parkingId])
+  @@index([role])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique // Se guarda hasheado, nunca en claro
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─────────────────────────── Estacionamientos ───────────────────────────
+
+model Parking {
+  id          String  @id @default(cuid())
+  /// Eliminación definitiva (distinta de "dado de baja", que es activo=false).
+  /// Un estacionamiento con reservas no se puede borrar de la tabla sin
+  /// llevarse el historial contable por cascada, así que la fila queda como
+  /// ancla de esas reservas y se esconde de TODAS las consultas. Sin reservas,
+  /// la fila se borra de verdad y esta columna nunca se usa.
+  eliminadoEn DateTime?
+  slug        String  @unique // URL amigable: /estacionamiento/humboldt-450
+  nombre      String
+  descripcion String?
+
+  // Ubicación
+  direccion     String
+  barrio        String?
+  ciudad        String  @default("Ciudad Autónoma de Buenos Aires")
+  provincia     String  @default("CABA")
+  codigoPostal  String?
+  lat           Float
+  lng           Float
+  googlePlaceId String?
+
+  // Contacto
+  telefono      String?
+  email         String?
+  // Teléfono del grupo/encargado al que se comparten las reservas por WhatsApp
+  whatsappGrupo String?
+
+  // Operación
+  capacidadTotal Int
+  /// Solo true si el dueño lo marcó en su panel. El default es false a
+  /// propósito: el tag "Cubierto" de la tarjeta de resultados sale de acá y no
+  /// puede prometerle al cliente un techo que nadie confirmó.
+  cubierto       Boolean       @default(false)
+  tiposVehiculo  VehicleType[] @default([AUTO, CAMIONETA, MOTO])
+  servicios      String[]      @default([]) // "camaras", "24hs", "vigilancia", "lavado", "cargador_electrico"
+  // Modo de cierre. El detalle por día sigue viviendo en `horarios`.
+  tipoHorario    TipoHorario   @default(FIJO)
+  // Horarios: { "lun": { "abre": "07:00", "cierra": "23:00" }, ..., "abierto24h": false }
+  // En FIN_EVENTO cada día trae solo `abre`: la hora de cierre no existe.
+  horarios       Json          @default("{}")
+  alturaMaximaCm Int?
+
+  // Negocio
+  comisionPorcentaje Decimal           @default(10.00) @db.Decimal(5, 2)
+  moneda             String            @default("ARS")
+  // null = usa el ciclo global (CICLO_LIQUIDACION_DEFAULT en el .env).
+  // Se puede pisar por estacionamiento sin tocar código.
+
+  // Publicación
+  // ACTIVO por defecto para no romper las altas del panel; las solicitudes
+  // públicas lo pisan con PENDIENTE_APROBACION.
+  estado        ParkingEstado @default(ACTIVO)
+  motivoRechazo String?
+  revisadoEn    DateTime?
+  activo        Boolean       @default(true) // Si está dado de baja, no opera
+  publicado     Boolean       @default(true) // Si aparece en la búsqueda pública
+  destacado     Boolean       @default(false)
+
+  // Reputación (agregado simple; en v2 saldría de reseñas reales)
+  calificacion    Decimal? @db.Decimal(2, 1)
+  cantidadResenas Int      @default(0)
+
+  usuarios      User[]
+  fotos         ParkingPhoto[]
+  tarifas       Rate[]
+  reservas      Reservation[]
+  camposExtra   CustomFieldConfig[]
+  bloqueos      CapacityBlock[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([publicado, activo, estado])
+  @@index([estado])
+  @@index([lat, lng])
+}
+
+model ParkingPhoto {
+  id        String  @id @default(cuid())
+  parkingId String
+  parking   Parking @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  orden     Int     @default(0)
+  portada   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([parkingId, orden])
+}
+
+// ─────────────────────────── Tarifas y eventos ───────────────────────────
+
+model Rate {
+  id        String  @id @default(cuid())
+  parkingId String
+  parking   Parking @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+
+  tipo        RateType
+  precio      Decimal  @db.Decimal(12, 2)
+  descripcion String?
+
+  // Una tarifa puede aplicar solo a un tipo de vehículo (null = todos)
+  vehicleType VehicleType?
+
+  // Vigencia opcional (para tarifas temporales)
+  vigenciaDesde DateTime?
+  vigenciaHasta DateTime?
+
+  activo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parkingId, tipo, activo])
+}
+
+// ─────────────────────────── Clientes y vehículos ───────────────────────────
+
+model Customer {
+  id       String  @id @default(cuid())
+  nombre   String
+  apellido String
+  telefono String // Normalizado a E.164, ej: +5491112345678
+  email    String?
+
+  reservas Reservation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([telefono])
+  @@index([email])
+}
+
+model Vehicle {
+  id      String      @id @default(cuid())
+  patente String // Mayúsculas sin espacios: ABC123 o AB123CD
+  tipo    VehicleType @default(AUTO)
+  marca   String?
+  modelo  String?
+  color   String?
+
+  reservas Reservation[]
+
+  createdAt DateTime @default(now())
+
+  @@index([patente])
+}
+
+// ─────────────────────────── Reservas ───────────────────────────
+
+/**
+ * Liquidación: lo que SpotNear le debe transferir a un estacionamiento por un
+ * período cerrado.
+ * No mueve plata. Calcula y deja registrado qué reservas entran, cuánto se
+ * cobró, cuánto se quedó SpotNear y cuánto va para el dueño. La transferencia
+ * se hace por fuera y el SUPERADMIN la marca como pagada desde el panel.
+ */
+model Reservation {
+  id             String  @id @default(cuid())
+  // Código legible que el cliente muestra al llegar: SN-7K3P9Q
+  codigo         String  @unique
+  // Token no adivinable para el link público del comprobante
+  publicToken    String  @unique
+  // Clave que manda el cliente para que reintentar un POST no cree una reserva
+  // duplicada. Si el request muere en la red (el servidor reiniciándose, el
+  // hosting despertando) y el cliente reintenta, el servidor devuelve la que ya
+  // había creado en vez de crear otra.
+  idempotencyKey String? @unique
+
+  /// Eliminación desde el panel (OWNER, STAFF o SUPERADMIN), solo de reservas
+  /// terminadas: finalizada, cancelada o no se presentó. Es un borrado lógico:
+  /// desaparece de todas las pantallas operativas, pero sigue contando en el
+  /// reporte de Comisiones, porque es facturación que existió.
+  eliminadaEn DateTime?
+
+  parkingId String
+  parking   Parking @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+  /// Copia del nombre y la dirección del estacionamiento, guardada cuando se
+  /// lo elimina definitivamente. El comprobante y el historial se siguen
+  /// leyendo aunque el estacionamiento ya no exista como tal.
+  parkingNombre    String?
+  parkingDireccion String?
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  /// Copia de los datos del cliente TAL COMO ESTABAN al reservar.
+  ///
+  /// Una reserva es un documento de algo que ya pasó: no se puede re-etiquetar
+  /// sola. Sin esta copia, dos personas que comparten un teléfono (una familia,
+  /// una oficina, un playero que reserva para un cliente) apuntan al mismo
+  /// Customer, y la reserva nueva renombra a todas las anteriores.
+  clienteNombre   String?
+  clienteApellido String?
+  clienteEmail    String?
+
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
+  inicio DateTime
+  fin    DateTime
+
+  estado ReservationStatus @default(CONFIRMADA)
+  source ReservationSource @default(WEB)
+
+  // Cuántos lugares ocupa esta reserva (normalmente 1)
+  cantidadVehiculos Int @default(1)
+
+  // ── Dinero (congelado al momento de reservar) ──
+  // subtotal = tarifa del estacionamiento; precioTotal = subtotal + comisión.
+  // El cliente paga precioTotal y al dueño le queda montoNeto (= subtotal).
+  subtotal           Decimal @default(0) @db.Decimal(12, 2)
+  precioTotal        Decimal @db.Decimal(12, 2)
+  comisionPorcentaje Decimal @db.Decimal(5, 2)
+  montoComision      Decimal @db.Decimal(12, 2)
+  montoNeto          Decimal @db.Decimal(12, 2) // Lo que le queda al estacionamiento
+  moneda             String  @default("ARS")
+  // Cómo se calculó: { "modo": "HORA", "horas": 5, "precioUnitario": 2500 }
+  desglosePrecio     Json?
+
+  paymentStatus   PaymentStatus @default(PENDIENTE)
+  paymentProvider String?
+  /// Identificador del cobro en la pasarela. Con Mercado Pago es el id de la
+  /// preferencia de Checkout Pro.
+  paymentRef      String?
+  /// Link al checkout de la pasarela. Se guarda para que reintentar un pago
+  /// rechazado no obligue a crear una preferencia nueva ni a empezar de cero.
+  paymentUrl      String?
+  /// Estado crudo que devolvió la pasarela (approved, in_process, rejected…).
+  /// El enum de arriba es el del negocio; esto es para soporte y para decidir
+  /// qué mensaje ve el cliente: "esperando acreditación" no es "rechazado".
+  paymentDetalle  String?
+  pagadaEn        DateTime?
+
+  // Liquidación en la que entró esta reserva. Null = todavía sin liquidar.
+
+  notas       String?
+  // Respuestas a los campos opcionales configurables por estacionamiento
+  camposExtra Json    @default("{}")
+
+  checkInAt         DateTime?
+  checkOutAt        DateTime?
+  canceledAt        DateTime?
+  motivoCancelacion String?
+
+  createdByUserId String?
+  /// Copia del nombre de quien la cargó, guardada al eliminar ese usuario.
+  /// La relación es SetNull: sin esta copia, borrar a un playero dejaría todas
+  /// sus reservas sin saber quién las tomó.
+  createdByNombre String?
+  createdBy       User?   @relation("ReservationCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  notificaciones NotificationLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Índice clave para el control de capacidad por rango horario
+  @@index([parkingId, inicio, fin])
+  @@index([parkingId, estado])
+  @@index([createdAt])
+  // El webhook de la pasarela llega con el id del cobro, no con el de la reserva.
+  @@index([paymentRef])
+}
+
+// Bloqueo manual de cupos (mantenimiento, abonados, evento propio)
+model CapacityBlock {
+  id        String  @id @default(cuid())
+  parkingId String
+  parking   Parking @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+
+  desde   DateTime
+  hasta   DateTime
+  lugares Int // Cuántos lugares se bloquean en ese rango
+  motivo  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([parkingId, desde, hasta])
+}
+
+// ─────────────────────── Configuración de campos extra ───────────────────────
+// Permite que cada estacionamiento decida qué datos opcionales pedir,
+// sin necesidad de migrar la base para agregar un campo.
+model CustomFieldConfig {
+  id        String  @id @default(cuid())
+  parkingId String
+  parking   Parking @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+
+  key       String // "patente_acoplado", "numero_socio"
+  label     String // "Número de socio"
+  ayuda     String?
+  tipo      CustomFieldType @default(TEXTO)
+  requerido Boolean         @default(false)
+  opciones  String[]        @default([]) // Para tipo SELECT
+  orden     Int             @default(0)
+  activo    Boolean         @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([parkingId, key])
+  @@index([parkingId, activo, orden])
+}
+
+// ─────────────────────────── Trazabilidad ───────────────────────────
+
+model NotificationLog {
+  id            String              @id @default(cuid())
+  reservationId String?
+  reservation   Reservation?        @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  canal         NotificationChannel
+  destino       String // Teléfono E.164 o email
+  estado        NotificationStatus  @default(PENDIENTE)
+  asunto        String?
+  payload       Json?
+  error         String?
+  proveedor     String? // "wa.me", "cloud_api", "smtp"
+
+  createdAt DateTime @default(now())
+
+  @@index([reservationId])
+  @@index([canal, estado])
+}
+
+model AuditLog {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  accion    String // "reserva.checkin", "parking.update", "user.login"
+  entidad   String // "Reservation", "Parking"
+  entidadId String?
+  // Contexto del tenant para poder auditar por estacionamiento
+  parkingId String?
+  datos     Json?
+  ip        String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entidad, entidadId])
+  @@index([parkingId, createdAt])
+}

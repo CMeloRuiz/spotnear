@@ -1,0 +1,154 @@
+.sn-busqueda-rapida {
+  position: relative;
+  min-width: 0;
+}
+
+.sn-busqueda-rapida__caja {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  height: 38px;
+  padding-inline: var(--sn-e3);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--sn-radio);
+  color: #94a3b8;
+  transition:
+    background-color var(--sn-trans),
+    border-color var(--sn-trans);
+}
+
+.sn-busqueda-rapida__caja:focus-within {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.sn-busqueda-rapida__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--sn-texto-sm);
+  color: #ffffff;
+}
+
+.sn-busqueda-rapida__input::placeholder {
+  color: #94a3b8;
+}
+
+/* Saca la X nativa del input type=search, que rompe el diseño */
+.sn-busqueda-rapida__input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.sn-busqueda-rapida__spinner {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.sn-busqueda-rapida__atajo {
+  display: none;
+  padding: 1px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
+  font-family: var(--sn-fuente-mono);
+  font-size: var(--sn-texto-2xs);
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+@media (min-width: 900px) {
+  .sn-busqueda-rapida__atajo {
+    display: inline-block;
+  }
+}
+
+/* ── Panel de resultados ── */
+
+.sn-busqueda-rapida__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: var(--sn-z-dropdown);
+  max-height: 380px;
+  overflow-y: auto;
+  padding: var(--sn-e1);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-md);
+  box-shadow: var(--sn-sombra-xl);
+}
+
+@media (max-width: 639px) {
+  .sn-busqueda-rapida__panel {
+    /* En el celular ocupa el ancho de la pantalla para que entren los datos */
+    position: fixed;
+    left: var(--sn-e3);
+    right: var(--sn-e3);
+    top: 58px;
+  }
+}
+
+.sn-busqueda-rapida__nada {
+  padding: var(--sn-e5) var(--sn-e4);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+  text-align: center;
+}
+
+.sn-busqueda-rapida__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e3);
+  width: 100%;
+  padding: var(--sn-e3);
+  border-radius: var(--sn-radio-sm);
+  text-align: left;
+  transition: background-color var(--sn-trans-rapida);
+}
+
+.sn-busqueda-rapida__item--activo {
+  background: var(--sn-marca-suave);
+}
+
+.sn-busqueda-rapida__codigo {
+  font-family: var(--sn-fuente-mono);
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-bold);
+  letter-spacing: 0.04em;
+  color: var(--sn-tinta);
+  background: var(--sn-gris-100);
+  padding: 3px var(--sn-e2);
+  border-radius: var(--sn-radio-sm);
+  flex-shrink: 0;
+}
+
+.sn-busqueda-rapida__datos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  line-height: 1.3;
+}
+
+.sn-busqueda-rapida__datos strong {
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sn-busqueda-rapida__datos small {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

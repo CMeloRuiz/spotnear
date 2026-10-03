@@ -1,0 +1,1055 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Estilos base y componentes compartidos.
+   Todo lo que se repite en más de dos pantallas vive acá; lo específico
+   de un componente va en su propio archivo .css al lado del .jsx.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+body {
+  font-family: var(--sn-fuente);
+  font-size: var(--sn-texto-base);
+  line-height: var(--sn-interlineado);
+  color: var(--sn-tinta-media);
+  background: var(--sn-fondo);
+}
+
+/* ─────────────────────────── Tipografía ─────────────────────────── */
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--sn-tinta);
+  line-height: var(--sn-interlineado-ajustado);
+  letter-spacing: -0.02em;
+  font-weight: var(--sn-peso-bold);
+}
+
+h1 {
+  font-size: var(--sn-texto-3xl);
+  font-weight: var(--sn-peso-extra);
+  letter-spacing: -0.03em;
+}
+
+h2 {
+  font-size: var(--sn-texto-2xl);
+}
+
+h3 {
+  font-size: var(--sn-texto-xl);
+}
+
+h4 {
+  font-size: var(--sn-texto-lg);
+  font-weight: var(--sn-peso-semi);
+}
+
+@media (min-width: 768px) {
+  h1 {
+    font-size: var(--sn-texto-4xl);
+  }
+}
+
+strong,
+b {
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+}
+
+/* ─────────────────────────── Layout ─────────────────────────── */
+
+.sn-contenedor {
+  width: 100%;
+  max-width: var(--sn-ancho-max);
+  margin-inline: auto;
+  padding-inline: var(--sn-e4);
+}
+
+@media (min-width: 768px) {
+  .sn-contenedor {
+    padding-inline: var(--sn-e6);
+  }
+}
+
+.sn-contenedor--ancho {
+  max-width: var(--sn-ancho-max-ancho);
+}
+
+.sn-seccion {
+  padding-block: var(--sn-e12);
+}
+
+@media (min-width: 768px) {
+  .sn-seccion {
+    padding-block: var(--sn-e16);
+  }
+}
+
+/* Salto al contenido para quien navega con teclado o lector de pantalla */
+.sn-saltar {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: var(--sn-z-toast);
+  padding: var(--sn-e3) var(--sn-e5);
+  background: var(--sn-tinta);
+  color: #fff;
+  border-radius: 0 0 var(--sn-radio) 0;
+  font-weight: var(--sn-peso-semi);
+}
+
+.sn-saltar:focus {
+  left: 0;
+}
+
+/* Visible solo para lectores de pantalla */
+.sn-solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─────────────────────────── Botones ─────────────────────────── */
+
+.sn-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sn-e2);
+  padding: 0 var(--sn-e5);
+  height: 44px;
+  border-radius: var(--sn-radio);
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-semi);
+  font-family: inherit;
+  white-space: nowrap;
+  transition:
+    background-color var(--sn-trans),
+    border-color var(--sn-trans),
+    color var(--sn-trans),
+    transform var(--sn-trans-rapida),
+    box-shadow var(--sn-trans);
+  border: 1px solid transparent;
+  text-align: center;
+}
+
+.sn-boton:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.sn-boton:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Primario: la acción principal de cada pantalla */
+.sn-boton--primario {
+  background: var(--sn-accion);
+  color: var(--sn-accion-texto);
+  box-shadow: var(--sn-sombra-sm);
+}
+
+.sn-boton--primario:hover:not(:disabled) {
+  background: var(--sn-accion-hover);
+  box-shadow: var(--sn-sombra-md);
+}
+
+/* Secundario: acciones de apoyo */
+.sn-boton--secundario {
+  background: var(--sn-superficie);
+  color: var(--sn-tinta);
+  border-color: var(--sn-borde-fuerte);
+}
+
+.sn-boton--secundario:hover:not(:disabled) {
+  background: var(--sn-gris-50);
+  border-color: var(--sn-tinta-tenue);
+}
+
+/* Oscuro: para fondos claros donde el azul de marca competiría */
+.sn-boton--oscuro {
+  background: var(--sn-tinta);
+  color: #fff;
+}
+
+.sn-boton--oscuro:hover:not(:disabled) {
+  background: #1e293b;
+}
+
+/* Fantasma: acciones terciarias */
+.sn-boton--fantasma {
+  background: transparent;
+  color: var(--sn-tinta-media);
+}
+
+.sn-boton--fantasma:hover:not(:disabled) {
+  background: var(--sn-gris-100);
+  color: var(--sn-tinta);
+}
+
+/* Peligro: cancelar, dar de baja */
+.sn-boton--peligro {
+  background: var(--sn-error-suave);
+  color: var(--sn-error-texto);
+  border-color: #f7cfcf;
+}
+
+.sn-boton--peligro:hover:not(:disabled) {
+  background: var(--sn-error);
+  color: #fff;
+  border-color: var(--sn-error);
+}
+
+/* WhatsApp: el verde oficial, porque se reconoce al instante */
+.sn-boton--whatsapp {
+  background: #25d366;
+  color: #06331a;
+  font-weight: var(--sn-peso-bold);
+}
+
+.sn-boton--whatsapp:hover:not(:disabled) {
+  background: #1eb455;
+  color: #fff;
+}
+
+.sn-boton--sm {
+  height: 34px;
+  padding-inline: var(--sn-e3);
+  font-size: var(--sn-texto-sm);
+  border-radius: var(--sn-radio-sm);
+}
+
+.sn-boton--lg {
+  height: 52px;
+  padding-inline: var(--sn-e8);
+  font-size: var(--sn-texto-md);
+  border-radius: var(--sn-radio-md);
+}
+
+.sn-boton--bloque {
+  width: 100%;
+}
+
+/* ─────────────────────────── Formularios ─────────────────────────── */
+
+.sn-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e2);
+}
+
+.sn-campo__label {
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+}
+
+.sn-campo__obligatorio {
+  color: var(--sn-marca-texto);
+  margin-left: 2px;
+}
+
+.sn-campo__ayuda {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-campo__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sn-e1);
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-medio);
+  color: var(--sn-error-texto);
+}
+
+.sn-input,
+.sn-select,
+.sn-textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: var(--sn-e3) var(--sn-e4);
+  background: var(--sn-superficie);
+  border: 1.5px solid var(--sn-borde);
+  border-radius: var(--sn-radio);
+  font-size: var(--sn-texto-base);
+  color: var(--sn-tinta);
+  transition:
+    border-color var(--sn-trans),
+    box-shadow var(--sn-trans),
+    background-color var(--sn-trans);
+}
+
+.sn-textarea {
+  min-height: 92px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.sn-select {
+  cursor: pointer;
+  appearance: none;
+  /* Flecha dibujada en el fondo: así no depende de una librería de íconos */
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' fill='none'%3E%3Cpath d='M1 1.5 7 7.5l6-6' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--sn-e4) center;
+  padding-right: var(--sn-e10);
+}
+
+.sn-input::placeholder,
+.sn-textarea::placeholder {
+  color: var(--sn-tinta-tenue);
+}
+
+.sn-input:hover:not(:disabled),
+.sn-select:hover:not(:disabled),
+.sn-textarea:hover:not(:disabled) {
+  border-color: var(--sn-borde-fuerte);
+}
+
+.sn-input:focus,
+.sn-select:focus,
+.sn-textarea:focus {
+  outline: none;
+  border-color: var(--sn-accion);
+  box-shadow: var(--sn-sombra-foco);
+}
+
+.sn-input:disabled,
+.sn-select:disabled,
+.sn-textarea:disabled {
+  background: var(--sn-gris-100);
+  color: var(--sn-tinta-suave);
+  cursor: not-allowed;
+}
+
+.sn-input--error,
+.sn-select--error,
+.sn-textarea--error {
+  border-color: var(--sn-error);
+}
+
+.sn-input--error:focus,
+.sn-select--error:focus,
+.sn-textarea--error:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
+/* La patente se escribe siempre en mayúsculas y monoespaciada: se lee mejor */
+.sn-input--patente {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: var(--sn-fuente-mono);
+  font-weight: var(--sn-peso-semi);
+}
+
+.sn-checkbox,
+.sn-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sn-e3);
+  cursor: pointer;
+  font-size: var(--sn-texto-base);
+  color: var(--sn-tinta-media);
+}
+
+.sn-checkbox input,
+.sn-radio input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--sn-accion);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sn-grilla-campos {
+  display: grid;
+  gap: var(--sn-e4);
+}
+
+@media (min-width: 640px) {
+  .sn-grilla-campos--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sn-grilla-campos--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ─────────────────────────── Tarjetas ─────────────────────────── */
+
+.sn-tarjeta {
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  box-shadow: var(--sn-sombra);
+}
+
+.sn-tarjeta__cabecera {
+  padding: var(--sn-e5) var(--sn-e5) 0;
+}
+
+.sn-tarjeta__cuerpo {
+  padding: var(--sn-e5);
+}
+
+.sn-tarjeta__titulo {
+  font-size: var(--sn-texto-lg);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+/* ─────────────────────────── Badges ─────────────────────────── */
+
+.sn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  padding: 3px var(--sn-e2);
+  border-radius: var(--sn-radio-sm);
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-semi);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.sn-badge--neutro {
+  background: var(--sn-gris-100);
+  color: var(--sn-tinta-media);
+}
+
+.sn-badge--marca {
+  background: var(--sn-marca-suave);
+  color: var(--sn-marca-texto);
+}
+
+.sn-badge--ok {
+  background: var(--sn-ok-suave);
+  color: var(--sn-ok-texto);
+}
+
+.sn-badge--aviso {
+  background: var(--sn-aviso-suave);
+  color: var(--sn-aviso-texto);
+}
+
+.sn-badge--error {
+  background: var(--sn-error-suave);
+  color: var(--sn-error-texto);
+}
+
+.sn-badge--info {
+  background: var(--sn-info-suave);
+  color: var(--sn-info-texto);
+}
+
+/* Estados de reserva */
+.sn-badge--PENDIENTE {
+  background: var(--sn-estado-pendiente-bg);
+  color: var(--sn-estado-pendiente);
+}
+
+.sn-badge--CONFIRMADA {
+  background: var(--sn-estado-confirmada-bg);
+  color: var(--sn-estado-confirmada);
+}
+
+.sn-badge--EN_CURSO {
+  background: var(--sn-estado-en-curso-bg);
+  color: var(--sn-estado-en-curso);
+}
+
+.sn-badge--FINALIZADA {
+  background: var(--sn-estado-finalizada-bg);
+  color: var(--sn-estado-finalizada);
+}
+
+.sn-badge--CANCELADA {
+  background: var(--sn-estado-cancelada-bg);
+  color: var(--sn-estado-cancelada);
+}
+
+.sn-badge--NO_SHOW {
+  background: var(--sn-estado-no-show-bg);
+  color: var(--sn-estado-no-show);
+}
+
+/* Etiqueta negra de las tarjetas de resultados (Más cerca, Mejor calificado) */
+.sn-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--sn-e1) var(--sn-e3);
+  background: var(--sn-tinta);
+  color: #fff;
+  font-size: var(--sn-texto-2xs);
+  font-weight: var(--sn-peso-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: var(--sn-radio-sm);
+}
+
+/* ─────────────────────────── Avisos ─────────────────────────── */
+
+.sn-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sn-e3);
+  padding: var(--sn-e4);
+  border-radius: var(--sn-radio);
+  font-size: var(--sn-texto-base);
+  border: 1px solid transparent;
+}
+
+.sn-aviso__icono {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.sn-aviso--info {
+  background: var(--sn-info-suave);
+  color: var(--sn-info-texto);
+  border-color: #cfdffc;
+}
+
+.sn-aviso--ok {
+  background: var(--sn-ok-suave);
+  color: var(--sn-ok-texto);
+  border-color: #c3e9d5;
+}
+
+.sn-aviso--aviso {
+  background: var(--sn-aviso-suave);
+  color: var(--sn-aviso-texto);
+  border-color: #f8dcb4;
+}
+
+.sn-aviso--error {
+  background: var(--sn-error-suave);
+  color: var(--sn-error-texto);
+  border-color: #f7cfcf;
+}
+
+/* ─────────────────────────── Carga y vacíos ─────────────────────────── */
+
+.sn-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: sn-girar 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.sn-spinner--lg {
+  width: 34px;
+  height: 34px;
+  border-width: 3px;
+}
+
+@keyframes sn-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Esqueleto: se usa mientras carga, para que el layout no salte */
+.sn-esqueleto {
+  background: linear-gradient(
+    90deg,
+    var(--sn-gris-100) 25%,
+    var(--sn-gris-200) 50%,
+    var(--sn-gris-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: sn-brillo 1.4s ease-in-out infinite;
+  border-radius: var(--sn-radio-sm);
+}
+
+@keyframes sn-brillo {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sn-esqueleto {
+    animation: none;
+  }
+  .sn-spinner {
+    animation-duration: 1.6s;
+  }
+}
+
+.sn-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sn-e3);
+  padding: var(--sn-e12) var(--sn-e5);
+  text-align: center;
+  color: var(--sn-tinta-suave);
+}
+
+.sn-vacio__icono {
+  color: var(--sn-gris-300);
+}
+
+.sn-vacio__titulo {
+  font-size: var(--sn-texto-lg);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+}
+
+.sn-vacio__texto {
+  max-width: 44ch;
+  font-size: var(--sn-texto-base);
+}
+
+/* ─────────────────────────── Tablas ─────────────────────────── */
+
+.sn-tabla-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sn-tabla {
+  width: 100%;
+  font-size: var(--sn-texto-sm);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.sn-tabla th {
+  padding: var(--sn-e3) var(--sn-e4);
+  text-align: left;
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sn-tinta-suave);
+  background: var(--sn-gris-50);
+  border-bottom: 1px solid var(--sn-borde);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sn-tabla td {
+  padding: var(--sn-e4);
+  border-bottom: 1px solid var(--sn-borde);
+  vertical-align: middle;
+  color: var(--sn-tinta-media);
+}
+
+.sn-tabla tbody tr {
+  transition: background-color var(--sn-trans-rapida);
+}
+
+.sn-tabla tbody tr:hover {
+  background: var(--sn-gris-50);
+}
+
+.sn-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.sn-tabla__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─────────────────────────── Utilidades ─────────────────────────── */
+
+.sn-mono {
+  font-family: var(--sn-fuente-mono);
+  letter-spacing: 0.03em;
+}
+
+.sn-codigo {
+  font-family: var(--sn-fuente-mono);
+  font-weight: var(--sn-peso-bold);
+  letter-spacing: 0.06em;
+  color: var(--sn-tinta);
+}
+
+.sn-precio {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+.sn-silencio {
+  color: var(--sn-tinta-suave);
+}
+
+.sn-link {
+  color: var(--sn-marca-texto);
+  font-weight: var(--sn-peso-semi);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--sn-trans);
+}
+
+.sn-link:hover {
+  color: var(--sn-marca-intensa);
+}
+
+.sn-separador {
+  height: 1px;
+  background: var(--sn-borde);
+  border: none;
+}
+
+.sn-solo-movil {
+  display: block;
+}
+
+.sn-solo-escritorio {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .sn-solo-movil {
+    display: none;
+  }
+
+  .sn-solo-escritorio {
+    display: block;
+  }
+}
+
+/* ─────────────────────────── Impresión ─────────────────────────── */
+/* "Descargar PDF" del comprobante usa el diálogo de impresión del
+   navegador ("Guardar como PDF"), así que acá se define qué se imprime. */
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .sn-no-imprimir,
+  header,
+  footer,
+  nav {
+    display: none !important;
+  }
+
+  .sn-solo-imprimir {
+    display: block !important;
+  }
+
+  .sn-tarjeta {
+    box-shadow: none;
+    border: 1px solid #cbd5e1;
+    break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: '';
+  }
+}
+
+.sn-solo-imprimir {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Piezas compartidas entre el sitio público y el panel.
+   Viven en el CSS global y no en el de un componente porque el panel se
+   carga como chunk aparte: si estuvieran en la hoja del público, las
+   pantallas del admin quedarían sin estilo.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Chip: filtro u opción seleccionable ── */
+
+.sn-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  min-height: 38px;
+  padding: var(--sn-e2) var(--sn-e4);
+  background: var(--sn-superficie);
+  border: 1.5px solid var(--sn-borde);
+  border-radius: var(--sn-radio-full);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-medio);
+  color: var(--sn-tinta-media);
+  white-space: nowrap;
+  transition:
+    border-color var(--sn-trans),
+    background-color var(--sn-trans),
+    color var(--sn-trans);
+}
+
+.sn-chip:hover {
+  border-color: var(--sn-borde-fuerte);
+  color: var(--sn-tinta);
+}
+
+.sn-chip--activo {
+  background: var(--sn-marca-suave);
+  border-color: var(--sn-marca);
+  color: var(--sn-marca-texto);
+  font-weight: var(--sn-peso-semi);
+}
+
+.sn-chip--sm {
+  min-height: 34px;
+  padding: var(--sn-e1) var(--sn-e3);
+  font-size: var(--sn-texto-xs);
+}
+
+.sn-chip__estrella {
+  color: #f5a623;
+}
+
+/* ── Botón de solo ícono, dentro de tablas y listas ── */
+
+.sn-tabla-reservas__icono {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--sn-radio-sm);
+  color: var(--sn-tinta-suave);
+  flex-shrink: 0;
+  transition:
+    background-color var(--sn-trans),
+    color var(--sn-trans);
+}
+
+.sn-tabla-reservas__icono:hover {
+  background: var(--sn-gris-100);
+  color: var(--sn-tinta);
+}
+
+/* ── Volver (panel) ── */
+
+.sn-detalle-reserva__volver {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  margin-bottom: var(--sn-e2);
+  margin-left: calc(var(--sn-e2) * -1);
+  padding: var(--sn-e1) var(--sn-e2);
+  border-radius: var(--sn-radio-sm);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-suave);
+  transition:
+    background-color var(--sn-trans),
+    color var(--sn-trans);
+}
+
+.sn-detalle-reserva__volver:hover {
+  background: var(--sn-gris-100);
+  color: var(--sn-tinta);
+}
+
+/* ── Texto de ayuda de un bloque de configuración ── */
+
+.sn-est__ayuda {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+  margin-bottom: var(--sn-e3);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Selector de modo de horario
+
+   Vive acá y no en RegistrarEstacionamiento.css porque lo usan el formulario
+   público de alta Y el panel (Mi estacionamiento), que se carga como chunk
+   aparte y no vería ese archivo.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Selector de modo de horario ──
+   Tarjetas seleccionables sobre radios nativos: se ve que son alternativas
+   entre sí, y el teclado y los lectores de pantalla siguen funcionando solos. */
+
+.sn-modos {
+  display: grid;
+  gap: var(--sn-e2);
+}
+
+.sn-modos__opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e3);
+  padding: var(--sn-e3) var(--sn-e4);
+  border: 1.5px solid var(--sn-borde);
+  border-radius: var(--sn-radio-md);
+  background: var(--sn-superficie);
+  cursor: pointer;
+  transition:
+    border-color var(--sn-trans),
+    background-color var(--sn-trans),
+    box-shadow var(--sn-trans);
+}
+
+.sn-modos__opcion:hover {
+  border-color: var(--sn-borde-fuerte);
+}
+
+.sn-modos__opcion--activa {
+  border-color: var(--sn-accion);
+  background: var(--sn-marca-suave);
+}
+
+/* El radio se oculta pero sigue enfocable: el foco se dibuja sobre la tarjeta. */
+.sn-modos__radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.sn-modos__opcion:has(.sn-modos__radio:focus-visible) {
+  border-color: var(--sn-accion);
+  box-shadow: var(--sn-sombra-foco);
+}
+
+.sn-modos__icono {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: var(--sn-radio-sm);
+  background: var(--sn-gris-100);
+  color: var(--sn-tinta-suave);
+  transition:
+    background-color var(--sn-trans),
+    color var(--sn-trans);
+}
+
+.sn-modos__opcion--activa .sn-modos__icono {
+  background: var(--sn-marca-borde);
+  color: var(--sn-marca-texto);
+}
+
+.sn-modos__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sn-modos__titulo {
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+}
+
+.sn-modos__detalle {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+  line-height: 1.4;
+}
+
+/* Tilde del modo elegido. */
+.sn-modos__marca {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: var(--sn-radio-full);
+  border: 1.5px solid var(--sn-borde-fuerte);
+  color: transparent;
+  transition:
+    background-color var(--sn-trans),
+    border-color var(--sn-trans),
+    color var(--sn-trans);
+}
+
+.sn-modos__opcion--activa .sn-modos__marca {
+  background: var(--sn-accion);
+  border-color: var(--sn-accion);
+  color: var(--sn-accion-texto);
+}
+
+/* Los campos del modo elegido entran con una transición corta, así el cambio
+   no se siente como un salto. */
+.sn-modos__campos {
+  animation: sn-modos-entra var(--sn-trans-lenta);
+}
+
+@keyframes sn-modos-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sn-modos__campos {
+    animation: none;
+  }
+}
+
+/* "Cierra al finalizar el evento": ocupa el lugar del selector de hora. */
+.sn-modos__cierre-evento {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  margin: 0;
+  height: 46px;
+  padding-inline: var(--sn-e4);
+  border: 1.5px dashed var(--sn-marca-borde);
+  border-radius: var(--sn-radio);
+  background: var(--sn-marca-suave);
+  color: var(--sn-marca-texto);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+}
+
+/* Badge que muestra solo una cantidad ("3 reservas").
+   Más chico y más apretado que un badge de estado: es un dato secundario al
+   lado del nombre del estacionamiento, no una etiqueta que haya que leer
+   primero. */
+.sn-badge--contador {
+  padding: 2px 7px;
+  font-size: 11px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fila de un dato histórico cuyo origen ya no existe en la plataforma
+   (por ejemplo, un estacionamiento eliminado). Se conserva por contabilidad,
+   pero no tiene que leerse como algo activo. */
+.sn-fila--historica > td:first-child {
+  color: var(--sn-tinta-suave);
+}
+
+.sn-fila--historica .sn-badge,
+.sn-tabla-reservas__parking .sn-badge {
+  margin-left: var(--sn-e2);
+  vertical-align: middle;
+}
+
+/* Eliminar: rojo recién al pasar por encima, para no gritar en cada fila. */
+.sn-tabla-reservas__icono--peligro:hover {
+  background: var(--sn-error-suave);
+  color: var(--sn-error);
+}

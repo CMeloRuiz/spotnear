@@ -1,0 +1,169 @@
+/* ── Alternancia tabla / tarjetas ── */
+
+.sn-tabla-reservas__escritorio {
+  display: none;
+}
+
+.sn-tabla-reservas__movil {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+  padding: var(--sn-e4);
+}
+
+@media (min-width: 1100px) {
+  .sn-tabla-reservas__escritorio {
+    display: block;
+  }
+
+  .sn-tabla-reservas__movil {
+    display: none;
+  }
+}
+
+/* ── Celdas ── */
+
+.sn-tabla-reservas__codigo {
+  font-family: var(--sn-fuente-mono);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-bold);
+  letter-spacing: 0.04em;
+  color: var(--sn-tinta);
+  transition: color var(--sn-trans);
+}
+
+.sn-tabla-reservas__codigo:hover {
+  color: var(--sn-marca-texto);
+}
+
+.sn-tabla-reservas__cliente,
+.sn-tabla-reservas__vehiculo,
+.sn-tabla-reservas__horario {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.sn-tabla-reservas__cliente strong,
+.sn-tabla-reservas__horario strong {
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+}
+
+.sn-tabla-reservas__cliente small,
+.sn-tabla-reservas__vehiculo small,
+.sn-tabla-reservas__horario small {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-tabla-reservas__tel {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+  transition: color var(--sn-trans);
+}
+
+.sn-tabla-reservas__tel:hover {
+  color: var(--sn-marca-texto);
+  text-decoration: underline;
+}
+
+.sn-tabla-reservas__patente {
+  font-family: var(--sn-fuente-mono);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-bold);
+  letter-spacing: 0.06em;
+  color: var(--sn-tinta);
+}
+
+.sn-tabla-reservas__parking {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Acciones ── */
+
+.sn-tabla-reservas__fila-acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  justify-content: flex-end;
+}
+
+.sn-tabla-reservas__acciones {
+  display: flex;
+  gap: var(--sn-e2);
+  flex-wrap: wrap;
+}
+
+/* ── Tarjeta (celular) ── */
+
+.sn-reserva-tarjeta {
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  overflow: hidden;
+}
+
+.sn-reserva-tarjeta__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sn-e3);
+  padding: var(--sn-e3) var(--sn-e4);
+  background: var(--sn-gris-50);
+  border-bottom: 1px solid var(--sn-borde);
+}
+
+.sn-reserva-tarjeta__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e2);
+  padding: var(--sn-e4);
+}
+
+.sn-reserva-tarjeta__nombre {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+.sn-reserva-tarjeta__linea {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-media);
+}
+
+.sn-reserva-tarjeta__linea svg {
+  color: var(--sn-tinta-tenue);
+  flex-shrink: 0;
+}
+
+.sn-reserva-tarjeta__linea small {
+  color: var(--sn-tinta-suave);
+  font-size: var(--sn-texto-xs);
+}
+
+.sn-reserva-tarjeta__monto {
+  margin-top: var(--sn-e1);
+  font-size: var(--sn-texto-lg);
+  font-weight: var(--sn-peso-extra);
+  color: var(--sn-tinta);
+  font-variant-numeric: tabular-nums;
+}
+
+.sn-reserva-tarjeta__pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sn-e2);
+  padding: var(--sn-e3) var(--sn-e4);
+  border-top: 1px solid var(--sn-borde);
+  background: var(--sn-gris-50);
+}

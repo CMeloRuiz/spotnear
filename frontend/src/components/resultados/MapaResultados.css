@@ -1,0 +1,227 @@
+/* ─────────────────────── Contenedor ─────────────────────── */
+
+.sn-mapa__contenedor,
+.sn-mapa-alt {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--sn-gris-100);
+  overflow: hidden;
+}
+
+.sn-mapa__google {
+  width: 100%;
+  height: 100%;
+}
+
+.sn-mapa__cargando {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sn-e4);
+  width: 100%;
+  height: 100%;
+  background: var(--sn-gris-100);
+  color: var(--sn-tinta-suave);
+  font-size: var(--sn-texto-sm);
+}
+
+.sn-mapa__cargando .sn-spinner {
+  color: var(--sn-accion);
+}
+
+/* ─────────────────── Burbuja de precio ─────────────────── */
+
+.sn-burbuja {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px var(--sn-e3);
+  background: var(--sn-superficie);
+  border: 1.5px solid var(--sn-tinta);
+  border-radius: var(--sn-radio-full);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+  white-space: nowrap;
+  box-shadow: var(--sn-sombra-md);
+  transform-origin: center bottom;
+  transition:
+    transform var(--sn-trans),
+    background-color var(--sn-trans),
+    color var(--sn-trans),
+    border-color var(--sn-trans),
+    box-shadow var(--sn-trans);
+}
+
+/* Piquito inferior, para que apunte al punto exacto */
+.sn-burbuja::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  border-right: 1.5px solid;
+  border-bottom: 1.5px solid;
+  border-color: inherit;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.sn-burbuja:hover,
+.sn-burbuja--resaltada {
+  transform: scale(1.09);
+  border-color: var(--sn-marca);
+  color: var(--sn-marca-texto);
+  box-shadow: var(--sn-sombra-lg);
+  z-index: 20;
+}
+
+.sn-burbuja--seleccionada {
+  background: var(--sn-tinta);
+  border-color: var(--sn-tinta);
+  color: #ffffff;
+  transform: scale(1.12);
+}
+
+.sn-burbuja--sin-lugar {
+  background: var(--sn-gris-200);
+  border-color: var(--sn-gris-400);
+  color: var(--sn-tinta-suave);
+  text-decoration: line-through;
+}
+
+/* ─────────────────── Marcador del destino ─────────────────── */
+
+.sn-mapa__destino,
+.sn-mapa-alt__destino {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.22);
+}
+
+.sn-mapa-alt__destino {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
+.sn-mapa__destino-punto {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--sn-info);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35);
+}
+
+/* ─────────────────── Buscar en esta zona ─────────────────── */
+
+.sn-mapa__buscar-zona {
+  position: absolute;
+  top: var(--sn-e4);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--sn-z-sticky);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  padding: var(--sn-e3) var(--sn-e5);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-full);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+  box-shadow: var(--sn-sombra-lg);
+  animation: sn-zona-aparece var(--sn-trans-lenta);
+  transition: background-color var(--sn-trans);
+}
+
+.sn-mapa__buscar-zona:hover {
+  background: var(--sn-gris-50);
+}
+
+@keyframes sn-zona-aparece {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sn-mapa__buscar-zona {
+    animation: none;
+  }
+}
+
+/* ─────────────────── Mapa alternativo ─────────────────── */
+
+.sn-mapa-alt {
+  background: #eef2f6;
+}
+
+/* Trama de calles: puramente decorativa, para que no sea un rectángulo vacío */
+.sn-mapa-alt__trama {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.28) 1.5px, transparent 1.5px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.28) 1.5px, transparent 1.5px),
+    linear-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.14) 1px, transparent 1px);
+  background-size:
+    124px 124px,
+    124px 124px,
+    31px 31px,
+    31px 31px;
+}
+
+.sn-mapa-alt__lienzo {
+  position: absolute;
+  inset: 0;
+}
+
+.sn-mapa-alt__marcador {
+  position: absolute;
+  transform: translate(-50%, -100%);
+}
+
+.sn-mapa-alt__aviso {
+  position: absolute;
+  top: var(--sn-e3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--sn-z-sticky);
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  max-width: calc(100% - var(--sn-e8));
+  padding: var(--sn-e2) var(--sn-e4);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-full);
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+  box-shadow: var(--sn-sombra);
+  text-align: center;
+}
+
+.sn-mapa-alt__aviso code {
+  font-family: var(--sn-fuente-mono);
+  font-size: var(--sn-texto-2xs);
+  background: var(--sn-gris-100);
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: var(--sn-tinta-media);
+}

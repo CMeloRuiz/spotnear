@@ -1,0 +1,34 @@
+.sn-wa__ayuda {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+  margin-bottom: var(--sn-e3);
+}
+
+.sn-wa__mensaje {
+  padding: var(--sn-e4);
+  background: #e6f2ea;
+  border: 1px solid #c8e2d3;
+  border-radius: var(--sn-radio-md);
+  font-family: var(--sn-fuente);
+  font-size: var(--sn-texto-sm);
+  line-height: 1.55;
+  color: var(--sn-tinta);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 46dvh;
+  overflow-y: auto;
+}
+
+.sn-wa__cargando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sn-e3);
+  padding: var(--sn-e10);
+  color: var(--sn-tinta-suave);
+  font-size: var(--sn-texto-sm);
+}
+
+.sn-wa__cargando .sn-spinner {
+  color: var(--sn-accion);
+}

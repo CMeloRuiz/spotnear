@@ -1,0 +1,183 @@
+/* Bandeja de solicitudes de alta (panel SUPERADMIN). */
+
+.sn-solicitudes__contador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding-inline: var(--sn-e2);
+  margin-left: var(--sn-e3);
+  border-radius: var(--sn-radio-full);
+  background: var(--sn-accion);
+  color: var(--sn-accion-texto);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-bold);
+  vertical-align: middle;
+}
+
+.sn-solicitudes__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sn-e2);
+  margin-bottom: var(--sn-e5);
+}
+
+.sn-solicitudes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+}
+
+.sn-solicitud {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+  padding: var(--sn-e5);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  box-shadow: var(--sn-sombra-sm);
+}
+
+.sn-solicitud__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sn-e4);
+  flex-wrap: wrap;
+}
+
+.sn-solicitud__nombre {
+  margin: 0 0 var(--sn-e1);
+  font-size: var(--sn-texto-lg);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+.sn-solicitud__direccion {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  margin: 0;
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-solicitud__descripcion {
+  margin: 0;
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-media);
+  line-height: var(--sn-interlineado);
+}
+
+/* ── Datos ── */
+
+.sn-solicitud__datos {
+  display: grid;
+  gap: var(--sn-e4);
+  margin: 0;
+  padding: var(--sn-e4);
+  background: var(--sn-gris-50);
+  border-radius: var(--sn-radio);
+}
+
+@media (min-width: 768px) {
+  .sn-solicitud__datos {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sn-solicitud__datos dt {
+  font-size: var(--sn-texto-2xs);
+  font-weight: var(--sn-peso-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sn-tinta-suave);
+  margin-bottom: var(--sn-e2);
+}
+
+.sn-solicitud__datos dd {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta);
+  overflow-wrap: anywhere;
+}
+
+/* Todo lo que no es el primer renglón es información secundaria. */
+.sn-solicitud__datos dd > span,
+.sn-solicitud__datos dd > a {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-solicitud__datos dd > a {
+  color: var(--sn-marca-texto);
+}
+
+.sn-solicitud__sin-dato {
+  font-style: italic;
+}
+
+/* ── Servicios ── */
+
+.sn-solicitud__servicios {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sn-e2);
+}
+
+.sn-solicitud__servicios li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  padding: var(--sn-e1) var(--sn-e3);
+  border-radius: var(--sn-radio-full);
+  background: var(--sn-marca-suave);
+  color: var(--sn-marca-texto);
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-semi);
+}
+
+/* ── Acciones ── */
+
+.sn-solicitud__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sn-e3);
+  flex-wrap: wrap;
+}
+
+/* ── Fotos de la solicitud ── */
+
+.sn-solicitud__fotos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sn-e2);
+}
+
+.sn-solicitud__fotos img {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  display: block;
+  border-radius: var(--sn-radio-sm);
+  border: 1px solid var(--sn-borde);
+  transition: transform var(--sn-trans);
+}
+
+.sn-solicitud__fotos a:hover img {
+  transform: scale(1.04);
+}

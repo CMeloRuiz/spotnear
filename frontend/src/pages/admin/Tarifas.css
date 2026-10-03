@@ -1,0 +1,11 @@
+.sn-tarifas__explicacion {
+  margin-bottom: var(--sn-e4);
+  font-size: var(--sn-texto-sm);
+  line-height: 1.6;
+}
+
+.sn-tarifas__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+}

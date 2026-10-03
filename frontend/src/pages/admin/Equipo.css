@@ -1,0 +1,53 @@
+.sn-equipo__persona {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e3);
+}
+
+.sn-equipo__avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--sn-marca-suave);
+  color: var(--sn-marca-texto);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-bold);
+  flex-shrink: 0;
+}
+
+.sn-equipo__persona strong {
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+}
+
+.sn-equipo__persona small {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-tenue);
+}
+
+.sn-equipo__inactivo {
+  opacity: 0.6;
+}
+
+.sn-equipo__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+}
+
+/* La celda de acciones tiene dos cosas con peso distinto: la baja (reversible,
+   con texto) y el borrado (irreversible, solo ícono). */
+.sn-equipo__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  justify-content: flex-end;
+}
+
+.sn-equipo__borrar:hover,
+.sn-equipo__borrar:focus-visible {
+  color: var(--sn-error);
+}

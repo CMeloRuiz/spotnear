@@ -1,0 +1,203 @@
+.sn-tarjeta-parking {
+  position: relative;
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  box-shadow: var(--sn-sombra-sm);
+  transition:
+    border-color var(--sn-trans),
+    box-shadow var(--sn-trans),
+    transform var(--sn-trans);
+  scroll-margin-top: var(--sn-e4);
+}
+
+.sn-tarjeta-parking--resaltada {
+  border-color: var(--sn-marca);
+  box-shadow: var(--sn-sombra-md);
+}
+
+.sn-tarjeta-parking--seleccionada {
+  border-color: var(--sn-tinta);
+  box-shadow: var(--sn-sombra-md);
+}
+
+.sn-tarjeta-parking--sin-lugar {
+  opacity: 0.72;
+}
+
+.sn-tarjeta-parking--esqueleto {
+  pointer-events: none;
+}
+
+/* ── Etiquetas (Más cerca / Mejor calificado) ── */
+
+.sn-tarjeta-parking__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sn-e2);
+  padding: var(--sn-e3) var(--sn-e4) 0;
+}
+
+/* ── Cuerpo ── */
+
+.sn-tarjeta-parking__cuerpo {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: var(--sn-e3);
+  padding: var(--sn-e4);
+  align-items: start;
+}
+
+@media (min-width: 480px) {
+  .sn-tarjeta-parking__cuerpo {
+    grid-template-columns: 92px minmax(0, 1fr) auto;
+    gap: var(--sn-e4);
+  }
+}
+
+.sn-tarjeta-parking__foto {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--sn-radio);
+  overflow: hidden;
+  background: var(--sn-gris-100);
+}
+
+.sn-tarjeta-parking__foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sn-tarjeta-parking__datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e1);
+  min-width: 0;
+}
+
+/* Ya no es un link: la tarjeta no lleva a una vista de detalle, así que el
+   nombre no cambia de color al pasar por encima ni promete un clic. */
+.sn-tarjeta-parking__nombre {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+  line-height: 1.3;
+}
+
+.sn-tarjeta-parking__direccion {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sn-tarjeta-parking__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sn-e1) var(--sn-e3);
+  margin-top: 2px;
+}
+
+.sn-tarjeta-parking__caminando {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-medio);
+  color: var(--sn-tinta-media);
+}
+
+.sn-tarjeta-parking__caminando .sn-silencio {
+  font-weight: var(--sn-peso-normal);
+  font-size: var(--sn-texto-xs);
+}
+
+.sn-tarjeta-parking__servicios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sn-e1) var(--sn-e3);
+  margin-top: var(--sn-e1);
+}
+
+.sn-tarjeta-parking__servicio {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-tarjeta-parking__urgencia {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  margin-top: var(--sn-e1);
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-aviso-texto);
+}
+
+/* ── Precio ── */
+
+.sn-tarjeta-parking__precio {
+  grid-column: 2;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--sn-e2);
+  margin-top: var(--sn-e2);
+}
+
+@media (min-width: 480px) {
+  .sn-tarjeta-parking__precio {
+    grid-column: 3;
+    grid-row: 1;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+    margin-top: 0;
+    text-align: right;
+  }
+}
+
+.sn-tarjeta-parking__monto {
+  font-size: var(--sn-texto-xl);
+  font-weight: var(--sn-peso-extra);
+  color: var(--sn-tinta);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sn-tarjeta-parking__unidad {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+  white-space: nowrap;
+}
+
+.sn-tarjeta-parking__no-disponible {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-error-texto);
+  text-align: right;
+}
+
+/* ── Acciones ── */
+
+.sn-tarjeta-parking__acciones {
+  display: flex;
+  gap: var(--sn-e2);
+  justify-content: flex-end;
+  padding: 0 var(--sn-e4) var(--sn-e4);
+}
+
+.sn-tarjeta-parking__acciones .sn-boton--primario {
+  min-width: 108px;
+}

@@ -1,0 +1,328 @@
+.sn-detalle {
+  padding-block: var(--sn-e5) var(--sn-e12);
+  background: var(--sn-fondo-alt);
+  min-height: 100%;
+}
+
+.sn-detalle__volver {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  margin-bottom: var(--sn-e4);
+  padding: var(--sn-e2) var(--sn-e3);
+  margin-left: calc(var(--sn-e3) * -1);
+  border-radius: var(--sn-radio-sm);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-media);
+  transition:
+    background-color var(--sn-trans),
+    color var(--sn-trans);
+}
+
+.sn-detalle__volver:hover {
+  background: var(--sn-gris-100);
+  color: var(--sn-tinta);
+}
+
+/* ── Galería ── */
+
+.sn-detalle__galeria {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sn-e2);
+  border-radius: var(--sn-radio-lg);
+  overflow: hidden;
+  margin-bottom: var(--sn-e6);
+}
+
+@media (min-width: 768px) {
+  .sn-detalle__galeria {
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    height: 340px;
+  }
+
+  .sn-detalle__foto--principal {
+    grid-row: 1 / 3;
+  }
+}
+
+.sn-detalle__foto {
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  object-fit: cover;
+  background: var(--sn-gris-100);
+}
+
+@media (max-width: 767px) {
+  .sn-detalle__foto:not(.sn-detalle__foto--principal) {
+    display: none;
+  }
+
+  .sn-detalle__foto--principal {
+    aspect-ratio: 16 / 10;
+    border-radius: var(--sn-radio-lg);
+  }
+}
+
+/* ── Grilla ── */
+
+.sn-detalle__grilla {
+  display: grid;
+  gap: var(--sn-e8);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .sn-detalle__grilla {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: var(--sn-e10);
+  }
+}
+
+.sn-detalle__principal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e6);
+  min-width: 0;
+}
+
+/* ── Cabecera ── */
+
+.sn-detalle__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e2);
+}
+
+.sn-detalle__nombre {
+  font-size: var(--sn-texto-2xl);
+  letter-spacing: -0.025em;
+}
+
+.sn-detalle__direccion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  font-size: var(--sn-texto-base);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-detalle__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sn-e3);
+  margin-top: var(--sn-e1);
+}
+
+/* ── Secciones ── */
+
+.sn-detalle__seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+  padding: var(--sn-e5);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+}
+
+.sn-detalle__seccion .sn-boton {
+  align-self: flex-start;
+}
+
+.sn-detalle__titulo {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+.sn-detalle__texto {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  font-size: var(--sn-texto-base);
+  color: var(--sn-tinta-media);
+  line-height: 1.65;
+}
+
+.sn-detalle__servicios {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--sn-e3);
+}
+
+.sn-detalle__servicios li {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  font-size: var(--sn-texto-base);
+  color: var(--sn-tinta-media);
+}
+
+.sn-detalle__servicios svg {
+  color: var(--sn-marca);
+  flex-shrink: 0;
+}
+
+.sn-detalle__horarios,
+.sn-detalle__tarifas {
+  display: flex;
+  flex-direction: column;
+}
+
+.sn-detalle__horarios li,
+.sn-detalle__tarifas li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sn-e4);
+  padding-block: var(--sn-e2);
+  font-size: var(--sn-texto-base);
+  border-bottom: 1px solid var(--sn-borde);
+}
+
+.sn-detalle__horarios li:last-child,
+.sn-detalle__tarifas li:last-child {
+  border-bottom: none;
+}
+
+.sn-detalle__horarios li span:first-child,
+.sn-detalle__tarifas li span:first-child {
+  color: var(--sn-tinta-suave);
+}
+
+.sn-detalle__horarios li span:last-child {
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+  font-variant-numeric: tabular-nums;
+}
+
+.sn-detalle__tarifas strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--sn-peso-bold);
+}
+
+/* ── Mapa ── */
+
+.sn-detalle__mapa {
+  height: 260px;
+  border-radius: var(--sn-radio-md);
+  overflow: hidden;
+  background: var(--sn-gris-100);
+}
+
+.sn-detalle__mapa-google {
+  width: 100%;
+  height: 100%;
+}
+
+.sn-detalle__mapa-alt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sn-e2);
+  width: 100%;
+  height: 100%;
+  color: var(--sn-tinta-tenue);
+  font-size: var(--sn-texto-sm);
+  text-align: center;
+  padding: var(--sn-e4);
+}
+
+.sn-detalle__pin {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--sn-marca);
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.3));
+}
+
+/* ── Caja de reserva ── */
+
+.sn-detalle__reserva {
+  position: sticky;
+  top: calc(var(--sn-alto-header) + var(--sn-e4));
+}
+
+.sn-detalle__caja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+  padding: var(--sn-e5);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  box-shadow: var(--sn-sombra-md);
+}
+
+.sn-detalle__precio {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sn-e2);
+  flex-wrap: wrap;
+}
+
+.sn-detalle__monto {
+  font-size: var(--sn-texto-3xl);
+  font-weight: var(--sn-peso-extra);
+  color: var(--sn-tinta);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sn-detalle__unidad {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-detalle__periodo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e2);
+  padding-block: var(--sn-e3);
+  border-block: 1px solid var(--sn-borde);
+}
+
+.sn-detalle__periodo > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sn-e3);
+}
+
+.sn-detalle__periodo dt {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-detalle__periodo dd {
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+  text-align: right;
+}
+
+.sn-detalle__garantias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e2);
+}
+
+.sn-detalle__garantias li {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-detalle__garantias svg {
+  color: var(--sn-ok);
+  flex-shrink: 0;
+}

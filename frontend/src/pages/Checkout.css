@@ -1,0 +1,360 @@
+.sn-checkout {
+  padding-block: var(--sn-e8) var(--sn-e12);
+  background: var(--sn-fondo-alt);
+  min-height: 100%;
+}
+
+.sn-checkout__titulo {
+  font-size: var(--sn-texto-2xl);
+  margin-bottom: var(--sn-e6);
+}
+
+@media (min-width: 768px) {
+  .sn-checkout__titulo {
+    font-size: var(--sn-texto-3xl);
+  }
+}
+
+.sn-checkout__grilla {
+  display: grid;
+  gap: var(--sn-e6);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .sn-checkout__grilla {
+    grid-template-columns: minmax(0, 1fr) 368px;
+    gap: var(--sn-e8);
+  }
+}
+
+.sn-checkout__columna {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+  min-width: 0;
+}
+
+/* ── Aviso de invitado ── */
+
+.sn-checkout__invitado {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  padding: var(--sn-e3) var(--sn-e4);
+  background: var(--sn-gris-100);
+  border-radius: var(--sn-radio);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-media);
+}
+
+/* ── Pasos ── */
+
+.sn-checkout__pasos {
+  display: flex;
+  gap: var(--sn-e5);
+  padding-inline: var(--sn-e1);
+}
+
+.sn-checkout__paso {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-tenue);
+}
+
+.sn-checkout__paso-num {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--sn-gris-200);
+  color: var(--sn-tinta-suave);
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-bold);
+}
+
+.sn-checkout__paso--activo {
+  color: var(--sn-tinta);
+}
+
+.sn-checkout__paso--activo .sn-checkout__paso-num {
+  background: var(--sn-accion);
+  color: #ffffff;
+}
+
+.sn-checkout__paso--hecho {
+  color: var(--sn-ok-texto);
+}
+
+.sn-checkout__paso--hecho .sn-checkout__paso-num {
+  background: var(--sn-ok);
+  color: #ffffff;
+}
+
+/* ── Formulario ── */
+
+.sn-checkout__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+}
+
+.sn-checkout__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+  padding: var(--sn-e5);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  box-shadow: var(--sn-sombra-sm);
+}
+
+.sn-checkout__bloque-titulo {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+.sn-checkout__bloque-ayuda {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+  margin-top: calc(var(--sn-e3) * -1);
+}
+
+/* ── Revisión (paso 2) ── */
+
+.sn-checkout__revision {
+  display: flex;
+  flex-direction: column;
+}
+
+.sn-checkout__revision > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sn-e4);
+  padding-block: var(--sn-e3);
+  border-bottom: 1px solid var(--sn-borde);
+}
+
+.sn-checkout__revision > div:last-child {
+  border-bottom: none;
+}
+
+.sn-checkout__revision dt {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+  flex-shrink: 0;
+}
+
+.sn-checkout__revision dd {
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.sn-checkout__editar {
+  align-self: flex-start;
+  margin-left: calc(var(--sn-e3) * -1);
+}
+
+.sn-checkout__acciones {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--sn-e3);
+}
+
+@media (min-width: 560px) {
+  .sn-checkout__acciones {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .sn-checkout__acciones .sn-boton--primario {
+    flex: 1;
+    max-width: 280px;
+  }
+}
+
+/* ── Resumen ── */
+
+.sn-checkout__resumen {
+  position: sticky;
+  top: calc(var(--sn-alto-header) + var(--sn-e4));
+}
+
+@media (max-width: 899px) {
+  .sn-checkout__resumen {
+    position: static;
+    order: -1;
+  }
+}
+
+.sn-checkout__caja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+  padding: var(--sn-e5);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  box-shadow: var(--sn-sombra-md);
+}
+
+/* ── Foto del estacionamiento ──
+   Va arriba de la tarjeta de resumen, antes del nombre y la dirección.
+   Relación 16:9 fija: así la caja no cambia de alto según la foto que haya
+   cargado cada dueño, y el desglose de precios no salta mientras carga. */
+.sn-checkout__foto {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--sn-radio);
+  overflow: hidden;
+  background: var(--sn-gris-100);
+}
+
+.sn-checkout__foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sn-checkout__parking-nombre {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+  line-height: 1.3;
+}
+
+.sn-checkout__parking-dir {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sn-e1);
+  margin-top: var(--sn-e1);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-checkout__parking-dir svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.sn-checkout__periodo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e1);
+  padding-block: var(--sn-e4);
+  border-block: 1px solid var(--sn-borde);
+}
+
+.sn-checkout__periodo-cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sn-e3);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+}
+
+.sn-checkout__periodo-fechas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sn-e2);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-media);
+}
+
+.sn-checkout__periodo-fechas svg {
+  color: var(--sn-tinta-tenue);
+}
+
+.sn-checkout__duracion {
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-tenue);
+}
+
+/* ── Precio ── */
+
+.sn-checkout__precio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e2);
+}
+
+.sn-checkout__precio-titulo {
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+  margin-bottom: var(--sn-e1);
+}
+
+.sn-checkout__linea {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sn-e3);
+  font-size: var(--sn-texto-base);
+  color: var(--sn-tinta-media);
+}
+
+.sn-checkout__linea span:last-child {
+  font-variant-numeric: tabular-nums;
+}
+
+.sn-checkout__linea--total {
+  padding-top: var(--sn-e3);
+  margin-top: var(--sn-e1);
+  border-top: 1px solid var(--sn-borde);
+  font-size: var(--sn-texto-lg);
+  font-weight: var(--sn-peso-extra);
+  color: var(--sn-tinta);
+}
+
+.sn-checkout__pago {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  margin-top: var(--sn-e1);
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+}
+
+/* ── Desglose con seña ──
+   La línea del estacionamiento y la de la seña llevan una aclaración chica
+   debajo del concepto: sin eso, "Seña para reservar $2.600" no dice cuándo se
+   paga ni que no se devuelve, que es lo primero que pregunta el cliente. */
+.sn-checkout__detalle {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--sn-texto-xs);
+  font-style: normal;
+  color: var(--sn-tinta-suave);
+  font-weight: var(--sn-peso-normal);
+}
+
+/* El aviso de que la seña no se devuelve tiene que leerse, no pasar de largo. */
+.sn-checkout__pago--sena {
+  align-items: flex-start;
+  gap: var(--sn-e2);
+  margin-top: var(--sn-e3);
+  padding: var(--sn-e2) var(--sn-e3);
+  border-radius: var(--sn-radio-sm);
+  background: var(--sn-aviso-suave);
+  color: var(--sn-aviso-texto);
+  line-height: 1.45;
+}
+
+.sn-checkout__pago--sena svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}

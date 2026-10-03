@@ -1,0 +1,21 @@
+.sn-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.sn-layout__main {
+  flex: 1;
+}
+
+/* Resultados: la pantalla ocupa el alto completo y el scroll vive adentro */
+.sn-layout--completo {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.sn-layout--completo .sn-layout__main {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}

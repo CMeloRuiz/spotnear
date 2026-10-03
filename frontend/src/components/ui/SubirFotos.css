@@ -1,0 +1,174 @@
+/* Carga de fotos: zona de arrastre + grilla de miniaturas. */
+
+.sn-fotos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+}
+
+/* ── Zona de arrastre ── */
+
+.sn-fotos__zona {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sn-e2);
+  padding: var(--sn-e8) var(--sn-e5);
+  text-align: center;
+  cursor: pointer;
+  background: var(--sn-gris-50);
+  border: 2px dashed var(--sn-borde-fuerte);
+  border-radius: var(--sn-radio-md);
+  transition:
+    border-color var(--sn-trans),
+    background-color var(--sn-trans);
+}
+
+.sn-fotos__zona:hover {
+  border-color: var(--sn-accion);
+  background: var(--sn-marca-suave);
+}
+
+/* Mientras se arrastra un archivo encima. */
+.sn-fotos__zona--arrastrando {
+  border-color: var(--sn-accion);
+  border-style: solid;
+  background: var(--sn-marca-suave);
+}
+
+.sn-fotos__zona--error {
+  border-color: var(--sn-error);
+}
+
+.sn-fotos__zona--llena {
+  cursor: default;
+  background: var(--sn-gris-50);
+}
+
+.sn-fotos__zona--llena:hover {
+  border-color: var(--sn-borde-fuerte);
+  background: var(--sn-gris-50);
+}
+
+/* El input se oculta pero sigue siendo enfocable con el teclado: el foco se
+   dibuja sobre la zona, que es su label. */
+.sn-fotos__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sn-fotos__zona:has(.sn-fotos__input:focus-visible) {
+  border-color: var(--sn-accion);
+  box-shadow: var(--sn-sombra-foco);
+}
+
+.sn-fotos__zona-icono {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--sn-radio-full);
+  background: var(--sn-superficie);
+  color: var(--sn-accion);
+  box-shadow: var(--sn-sombra-sm);
+}
+
+.sn-fotos__zona-titulo {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+.sn-fotos__zona-texto {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+/* Parece un botón pero no lo es: todo el bloque es el label del input, y un
+   <button> adentro robaría el clic. */
+.sn-fotos__boton {
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--sn-e1);
+  padding: var(--sn-e2) var(--sn-e5);
+  border-radius: var(--sn-radio-full);
+  background: var(--sn-accion);
+  color: var(--sn-accion-texto);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+}
+
+.sn-fotos__limites {
+  margin-top: var(--sn-e1);
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-tenue);
+}
+
+/* ── Miniaturas ── */
+
+.sn-fotos__grilla {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--sn-e3);
+}
+
+.sn-fotos__item {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--sn-radio);
+  overflow: hidden;
+  border: 1px solid var(--sn-borde);
+  background: var(--sn-gris-100);
+}
+
+.sn-fotos__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sn-fotos__portada {
+  position: absolute;
+  left: var(--sn-e2);
+  bottom: var(--sn-e2);
+  padding: 2px var(--sn-e2);
+  border-radius: var(--sn-radio-full);
+  background: var(--sn-accion);
+  color: var(--sn-accion-texto);
+  font-size: var(--sn-texto-2xs);
+  font-weight: var(--sn-peso-bold);
+}
+
+.sn-fotos__quitar {
+  position: absolute;
+  top: var(--sn-e2);
+  right: var(--sn-e2);
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--sn-radio-full);
+  background: rgba(15, 23, 42, 0.72);
+  color: #ffffff;
+  transition: background-color var(--sn-trans);
+}
+
+.sn-fotos__quitar:hover {
+  background: var(--sn-error);
+}
+
+.sn-fotos__cuenta {
+  margin: 0;
+  font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+}

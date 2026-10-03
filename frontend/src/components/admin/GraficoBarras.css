@@ -1,0 +1,148 @@
+.sn-grafico {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+  margin: 0;
+}
+
+.sn-grafico__titulo {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+.sn-grafico__lienzo {
+  position: relative;
+}
+
+.sn-grafico__svg {
+  width: 100%;
+  height: 180px;
+  overflow: visible;
+}
+
+/* ── Ejes y guías: recesivos, nunca compiten con los datos ── */
+
+.sn-grafico__guia {
+  stroke: var(--sn-borde);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.sn-grafico__base {
+  stroke: var(--sn-borde-fuerte);
+  stroke-width: 1;
+}
+
+/* ── Barras ── */
+
+.sn-grafico__barra {
+  /* --sn-marca-fuerte (#1177C5) y no el azul del logo: el del logo queda en
+     3.40:1 contra el fondo blanco, justo en el límite, y una barra tiene que
+     leerse cómoda. Este da 4.70:1. */
+  fill: var(--sn-marca-fuerte);
+  transition:
+    fill var(--sn-trans),
+    opacity var(--sn-trans);
+}
+
+.sn-grafico__barra--hoy {
+  fill: var(--sn-tinta);
+}
+
+.sn-grafico__barra--activa {
+  opacity: 0.78;
+}
+
+.sn-grafico__zona {
+  cursor: pointer;
+  outline: none;
+}
+
+.sn-grafico__zona:focus-visible {
+  outline: 2px solid var(--sn-accion);
+  outline-offset: -2px;
+}
+
+.sn-grafico__valor {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--sn-tinta-media);
+  font-family: var(--sn-fuente);
+}
+
+/* ── Eje de días ── */
+
+.sn-grafico__eje {
+  display: flex;
+  margin-top: calc(var(--sn-e2) * -1);
+}
+
+.sn-grafico__etiqueta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+  font-size: var(--sn-texto-2xs);
+  color: var(--sn-tinta-tenue);
+  line-height: 1.2;
+}
+
+.sn-grafico__etiqueta-dia {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sn-grafico__etiqueta-num {
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.sn-grafico__etiqueta--hoy .sn-grafico__etiqueta-dia,
+.sn-grafico__etiqueta--hoy .sn-grafico__etiqueta-num {
+  color: var(--sn-tinta);
+  font-weight: var(--sn-peso-bold);
+}
+
+/* Con muchos días, en pantalla chica solo se muestra el número */
+@media (max-width: 560px) {
+  .sn-grafico__etiqueta-dia {
+    display: none;
+  }
+}
+
+/* ── Tooltip ── */
+
+.sn-grafico__tooltip {
+  position: absolute;
+  top: -6px;
+  z-index: var(--sn-z-dropdown);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--sn-e2) var(--sn-e3);
+  background: var(--sn-tinta);
+  color: #ffffff;
+  border-radius: var(--sn-radio-sm);
+  box-shadow: var(--sn-sombra-lg);
+  font-size: var(--sn-texto-xs);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.sn-grafico__tooltip strong {
+  color: #ffffff;
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-bold);
+}
+
+.sn-grafico__tooltip span {
+  color: #cbd5e1;
+}
+
+.sn-grafico__tooltip-monto {
+  font-variant-numeric: tabular-nums;
+}

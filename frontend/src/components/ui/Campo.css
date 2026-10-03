@@ -1,0 +1,64 @@
+.sn-campo__opcional {
+  font-weight: var(--sn-peso-normal);
+  color: var(--sn-tinta-tenue);
+  font-size: var(--sn-texto-xs);
+}
+
+.sn-campo__ayuda--inline {
+  display: block;
+  margin-top: 2px;
+}
+
+/* ── Opciones tipo chip ── */
+
+.sn-opciones {
+  border: none;
+}
+
+.sn-opciones legend {
+  padding: 0;
+  margin-bottom: var(--sn-e2);
+}
+
+.sn-opciones__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sn-e2);
+}
+
+.sn-opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  padding: var(--sn-e2) var(--sn-e4);
+  min-height: 42px;
+  background: var(--sn-superficie);
+  border: 1.5px solid var(--sn-borde);
+  border-radius: var(--sn-radio);
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-medio);
+  color: var(--sn-tinta-media);
+  cursor: pointer;
+  transition:
+    border-color var(--sn-trans),
+    background-color var(--sn-trans),
+    color var(--sn-trans);
+}
+
+.sn-opcion:hover {
+  border-color: var(--sn-borde-fuerte);
+  background: var(--sn-gris-50);
+}
+
+.sn-opcion--activa {
+  border-color: var(--sn-accion);
+  background: var(--sn-marca-suave);
+  color: var(--sn-marca-texto);
+  font-weight: var(--sn-peso-semi);
+}
+
+/* El foco del teclado se ve en el chip, no en el radio escondido */
+.sn-opcion:has(input:focus-visible) {
+  outline: 2px solid var(--sn-accion);
+  outline-offset: 2px;
+}

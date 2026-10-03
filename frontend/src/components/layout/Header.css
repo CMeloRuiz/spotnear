@@ -1,0 +1,227 @@
+.sn-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--sn-z-header);
+  background: var(--sn-superficie);
+  border-bottom: 1px solid var(--sn-borde);
+
+  /* Lo que cambia al flotar. Están declarados acá, en el estado de reposo,
+     para que la transición corra en los dos sentidos: al bajar y al volver. */
+  margin-inline: 0;
+  margin-top: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transition:
+    margin var(--sn-trans-lenta),
+    top var(--sn-trans-lenta),
+    border-radius var(--sn-trans-lenta),
+    background-color var(--sn-trans-lenta),
+    box-shadow var(--sn-trans-lenta),
+    border-color var(--sn-trans-lenta);
+}
+
+.sn-header--transparente {
+  border-bottom-color: transparent;
+}
+
+/* ── Estado flotante (scroll > 48px) ──
+   Se despega de los bordes, se redondea en píldora y deja ver el contenido de
+   atrás con un desenfoque. El gris tira apenas al azul de marca para que no
+   quede un gris neutro pegado al lado del logo. */
+.sn-header--flotante {
+  margin-inline: var(--sn-e4);
+  /* Se despega también de arriba: con `top` y no con `margin-top`, porque el
+     header es sticky y es `top` quien decide dónde se clava al scrollear. */
+  top: var(--sn-e3);
+  margin-top: var(--sn-e3);
+  border-radius: var(--sn-radio-full);
+  border-bottom-color: transparent;
+  /* Gris apenas azulado y más marcado que el fondo de la página, para que la
+     píldora se despegue del contenido incluso sobre secciones claras. */
+  background: rgba(213, 222, 234, 0.82);
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.14),
+    0 2px 6px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+
+/* Sin soporte de backdrop-filter (Firefox viejo), el fondo se opaca: si no,
+   el texto quedaría ilegible sobre el contenido que pasa por debajo. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .sn-header--flotante {
+    background: rgba(213, 222, 234, 0.97);
+  }
+}
+
+@media (min-width: 900px) {
+  .sn-header--flotante {
+    margin-inline: var(--sn-e8);
+  }
+}
+
+@media (min-width: 1280px) {
+  .sn-header--flotante {
+    /* Más margen en pantallas anchas, para que no quede una barra
+       interminable pegada a los bordes. */
+    margin-inline: max(var(--sn-e12), calc((100vw - var(--sn-ancho-max) - var(--sn-e16)) / 2));
+  }
+}
+
+/* El interior se achica un poco al flotar, así el óvalo no queda desproporcionado
+   y los links respiran igual. */
+.sn-header--flotante .sn-header__interior {
+  height: 60px;
+}
+
+/* El menú desplegable del móvil tiene que seguir la forma redondeada del
+   header, si no asoman las esquinas cuadradas debajo de la píldora. */
+.sn-header--flotante .sn-header__movil {
+  margin-inline: var(--sn-e4);
+  border-radius: var(--sn-radio-lg);
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sn-header {
+    transition: none;
+  }
+}
+
+.sn-header__interior {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sn-e4);
+  height: var(--sn-alto-header);
+}
+
+/* Los estilos del logo viven en Logo.css, que Logo.jsx importa siempre.
+   Acá había una copia que se desincronizaba al cambiar los tamaños. */
+
+/* ── Navegación de escritorio ── */
+
+.sn-header__nav {
+  display: none;
+  align-items: center;
+  gap: var(--sn-e6);
+}
+
+@media (min-width: 900px) {
+  .sn-header__nav {
+    display: flex;
+  }
+}
+
+.sn-header__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-media);
+  padding: var(--sn-e2) 0;
+  border-bottom: 2px solid transparent;
+  transition:
+    color var(--sn-trans),
+    border-color var(--sn-trans);
+}
+
+.sn-header__link:hover {
+  color: var(--sn-tinta);
+}
+
+.sn-header__link--activo {
+  color: var(--sn-tinta);
+  border-bottom-color: var(--sn-accion);
+}
+
+.sn-header__link--cuenta {
+  color: var(--sn-tinta);
+}
+
+/* ── Menú móvil ── */
+
+.sn-header__hamburguesa {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-right: calc(var(--sn-e2) * -1);
+  border-radius: var(--sn-radio);
+  color: var(--sn-tinta);
+  transition: background-color var(--sn-trans);
+}
+
+.sn-header__hamburguesa:hover {
+  background: var(--sn-gris-100);
+}
+
+@media (min-width: 900px) {
+  .sn-header__hamburguesa {
+    display: none;
+  }
+}
+
+.sn-header__movil {
+  position: absolute;
+  top: var(--sn-alto-header);
+  left: 0;
+  right: 0;
+  background: var(--sn-superficie);
+  border-bottom: 1px solid var(--sn-borde);
+  box-shadow: var(--sn-sombra-lg);
+  padding: var(--sn-e4);
+  animation: sn-baja var(--sn-trans);
+}
+
+@keyframes sn-baja {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sn-header__movil {
+    animation: none;
+  }
+}
+
+.sn-header__movil nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+}
+
+.sn-header__movil-link {
+  padding: var(--sn-e3) var(--sn-e2);
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+  border-radius: var(--sn-radio);
+  transition: background-color var(--sn-trans);
+}
+
+.sn-header__movil-link:hover {
+  background: var(--sn-gris-100);
+}
+
+.sn-header__movil-usuario {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--sn-e2);
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+}
+
+.sn-header__movil-usuario small {
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-normal);
+  color: var(--sn-tinta-suave);
+}

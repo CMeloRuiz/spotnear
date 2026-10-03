@@ -1,0 +1,522 @@
+/* Registro público de estacionamientos.
+   Columna angosta y centrada: es un formulario, no una landing. */
+
+.sn-registro {
+  padding-bottom: var(--sn-e16);
+}
+
+/* ── Cabecera ── */
+
+.sn-registro__hero {
+  background: var(--sn-fondo-oscuro);
+  color: #ffffff;
+  padding-block: var(--sn-e10);
+  margin-bottom: var(--sn-e10);
+}
+
+.sn-registro__hero-interior {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e8);
+}
+
+@media (min-width: 900px) {
+  .sn-registro__hero-interior {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sn-e12);
+  }
+
+  .sn-registro__hero-interior > div:first-child {
+    max-width: 30rem;
+  }
+}
+
+.sn-registro__titulo {
+  color: #ffffff;
+  font-size: var(--sn-texto-2xl);
+  font-weight: var(--sn-peso-extra);
+  line-height: var(--sn-interlineado-ajustado);
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--sn-e3);
+}
+
+@media (min-width: 768px) {
+  .sn-registro__titulo {
+    font-size: var(--sn-texto-3xl);
+  }
+}
+
+.sn-registro__subtitulo {
+  margin: 0;
+  color: var(--sn-gris-300);
+  font-size: var(--sn-texto-md);
+  line-height: var(--sn-interlineado);
+}
+
+.sn-registro__beneficios {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .sn-registro__beneficios {
+    width: 24rem;
+    flex-shrink: 0;
+  }
+}
+
+.sn-registro__beneficios li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sn-e3);
+}
+
+.sn-registro__beneficios strong {
+  color: #ffffff;
+  display: block;
+  font-size: var(--sn-texto-base);
+  margin-bottom: 2px;
+}
+
+.sn-registro__beneficios span {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-gris-300);
+  line-height: 1.5;
+}
+
+.sn-registro__beneficio-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--sn-radio);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--sn-marca);
+}
+
+/* ── Cuerpo ── */
+
+.sn-registro__cuerpo {
+  max-width: 44rem;
+}
+
+/* ── Indicador de pasos ── */
+
+.sn-registro__pasos {
+  list-style: none;
+  margin: 0 0 var(--sn-e8);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+}
+
+.sn-registro__paso {
+  display: flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Línea que une un paso con el siguiente. */
+.sn-registro__paso:not(:last-child)::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: var(--sn-borde);
+  border-radius: 2px;
+}
+
+.sn-registro__paso--hecho:not(:last-child)::after {
+  background: var(--sn-accion);
+}
+
+.sn-registro__paso-numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: var(--sn-radio-full);
+  border: 2px solid var(--sn-borde);
+  background: var(--sn-superficie);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta-tenue);
+  transition:
+    background-color var(--sn-trans),
+    border-color var(--sn-trans),
+    color var(--sn-trans);
+}
+
+.sn-registro__paso--actual .sn-registro__paso-numero {
+  border-color: var(--sn-accion);
+  color: var(--sn-accion);
+}
+
+.sn-registro__paso--hecho .sn-registro__paso-numero {
+  background: var(--sn-accion);
+  border-color: var(--sn-accion);
+  color: var(--sn-accion-texto);
+}
+
+.sn-registro__paso-texto {
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-tenue);
+  white-space: nowrap;
+}
+
+.sn-registro__paso--actual .sn-registro__paso-texto,
+.sn-registro__paso--hecho .sn-registro__paso-texto {
+  color: var(--sn-tinta);
+}
+
+/* En pantallas chicas solo se ven los números y la línea: los tres rótulos
+   no entran y forzarlos genera scroll horizontal. */
+@media (max-width: 599px) {
+  .sn-registro__paso-texto {
+    display: none;
+  }
+
+  .sn-registro__paso--actual .sn-registro__paso-texto {
+    display: inline;
+  }
+}
+
+/* ── Formulario ── */
+
+.sn-registro__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e6);
+}
+
+.sn-registro__seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e5);
+  padding: var(--sn-e5);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  box-shadow: var(--sn-sombra-sm);
+}
+
+@media (min-width: 768px) {
+  .sn-registro__seccion {
+    padding: var(--sn-e8);
+  }
+}
+
+.sn-registro__seccion h2 {
+  margin: 0;
+  font-size: var(--sn-texto-xl);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+.sn-registro__ayuda {
+  /* El margen negativo lo pega al título que tiene arriba, aprovechando el gap
+     de la sección. */
+  margin: calc(var(--sn-e3) * -1) 0 0;
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+  line-height: 1.5;
+}
+
+/* Dentro de un fieldset no hay gap que compensar: ese margen negativo hacía que
+   la ayuda se montara sobre la leyenda. */
+.sn-registro__grupo > .sn-registro__ayuda {
+  margin: 0;
+}
+
+.sn-registro__grupo {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+}
+
+/* ── Chips de selección múltiple ── */
+
+.sn-registro__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sn-e2);
+}
+
+.sn-registro__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  padding: var(--sn-e2) var(--sn-e4);
+  border: 1.5px solid var(--sn-borde);
+  border-radius: var(--sn-radio-full);
+  background: var(--sn-superficie);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-media);
+  transition:
+    border-color var(--sn-trans),
+    background-color var(--sn-trans),
+    color var(--sn-trans);
+}
+
+.sn-registro__chip:hover {
+  border-color: var(--sn-borde-fuerte);
+  color: var(--sn-tinta);
+}
+
+.sn-registro__chip--activo {
+  background: var(--sn-marca-suave);
+  border-color: var(--sn-marca-borde);
+  color: var(--sn-marca-texto);
+}
+
+/* ── Fotos por URL: alternativa plegada ── */
+
+.sn-registro__url-fotos summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  cursor: pointer;
+  padding: var(--sn-e2) 0;
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-marca-texto);
+}
+
+.sn-registro__url-fotos summary::marker {
+  color: var(--sn-tinta-tenue);
+}
+
+/* El label del campo se repite en el resumen del details: se oculta adentro. */
+.sn-registro__url-fotos .sn-campo__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* ── Mapa ── */
+
+.sn-registro__mapa {
+  height: 240px;
+  border-radius: var(--sn-radio-md);
+  overflow: hidden;
+  border: 1px solid var(--sn-borde);
+}
+
+.sn-registro__mapa-google {
+  width: 100%;
+  height: 100%;
+}
+
+.sn-registro__mapa-alt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sn-e3);
+  height: 100%;
+  padding: var(--sn-e6);
+  text-align: center;
+  background: var(--sn-gris-50);
+  color: var(--sn-tinta-suave);
+  font-size: var(--sn-texto-sm);
+  line-height: 1.5;
+}
+
+.sn-registro__pin {
+  display: flex;
+  color: var(--sn-accion);
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.3));
+}
+
+/* ── Comisión ── */
+
+.sn-registro__comision {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sn-e4);
+  padding: var(--sn-e5);
+  background: var(--sn-marca-suave);
+  border: 1px solid var(--sn-marca-borde);
+  border-radius: var(--sn-radio-md);
+}
+
+.sn-registro__comision-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: var(--sn-radio);
+  background: var(--sn-superficie);
+  color: var(--sn-marca-texto);
+}
+
+.sn-registro__comision strong {
+  display: block;
+  font-size: var(--sn-texto-md);
+  color: var(--sn-tinta);
+  margin-bottom: var(--sn-e1);
+}
+
+.sn-registro__comision p {
+  margin: 0;
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-media);
+  line-height: var(--sn-interlineado);
+}
+
+.sn-registro__condiciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+}
+
+.sn-registro__condiciones a {
+  color: var(--sn-marca-texto);
+  text-decoration: underline;
+}
+
+/* ── Acciones ── */
+
+.sn-registro__acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sn-e3);
+  flex-wrap: wrap;
+}
+
+.sn-registro__login {
+  margin: var(--sn-e6) 0 0;
+  text-align: center;
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-registro__login a {
+  color: var(--sn-marca-texto);
+  font-weight: var(--sn-peso-semi);
+}
+
+/* ── Confirmación ── */
+
+.sn-registro--listo {
+  padding-block: var(--sn-e16);
+}
+
+.sn-registro__exito {
+  max-width: 34rem;
+  margin: 0 auto;
+  text-align: center;
+  padding: var(--sn-e8) var(--sn-e5);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  box-shadow: var(--sn-sombra-md);
+}
+
+.sn-registro__exito-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--sn-e5);
+  border-radius: var(--sn-radio-full);
+  background: var(--sn-ok-suave);
+  color: var(--sn-ok-texto);
+}
+
+.sn-registro__exito h1 {
+  margin: 0 0 var(--sn-e3);
+  font-size: var(--sn-texto-2xl);
+  font-weight: var(--sn-peso-extra);
+  color: var(--sn-tinta);
+}
+
+.sn-registro__exito-texto {
+  margin: 0 0 var(--sn-e6);
+  color: var(--sn-tinta-media);
+  line-height: var(--sn-interlineado);
+}
+
+.sn-registro__exito-ficha {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sn-e2) var(--sn-e4);
+  align-items: baseline;
+  text-align: left;
+  padding: var(--sn-e4);
+  margin-bottom: var(--sn-e6);
+  background: var(--sn-gris-50);
+  border-radius: var(--sn-radio);
+}
+
+.sn-registro__exito-etiqueta {
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sn-registro__exito-ficha strong {
+  font-size: var(--sn-texto-base);
+  color: var(--sn-tinta);
+  overflow-wrap: anywhere;
+}
+
+.sn-registro__exito-subtitulo {
+  margin: 0 0 var(--sn-e3);
+  text-align: left;
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-bold);
+  color: var(--sn-tinta);
+}
+
+.sn-registro__exito-pasos {
+  /* El reset saca los marcadores de todas las listas; acá los queremos,
+     porque son pasos y el orden importa. */
+  list-style: decimal;
+  margin: 0 0 var(--sn-e8);
+  padding-left: var(--sn-e5);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e2);
+  color: var(--sn-tinta-media);
+  font-size: var(--sn-texto-sm);
+  line-height: var(--sn-interlineado);
+}
+
+/* Ejemplo numérico del acuerdo comercial: "10%" en abstracto no le dice a
+   ningún dueño cuánta plata termina cobrando. */
+.sn-registro__comision-ejemplo {
+  margin-top: var(--sn-e2);
+  padding-top: var(--sn-e2);
+  border-top: 1px dashed var(--sn-borde);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+}

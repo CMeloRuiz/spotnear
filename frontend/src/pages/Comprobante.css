@@ -1,0 +1,298 @@
+.sn-comprobante {
+  padding-block: var(--sn-e6) var(--sn-e12);
+  background: var(--sn-fondo-alt);
+  min-height: 100%;
+}
+
+.sn-comprobante__contenedor {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e5);
+}
+
+/* ── Encabezado de éxito ── */
+
+.sn-comprobante__exito {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sn-e4);
+  padding: var(--sn-e5);
+  background: var(--sn-ok-suave);
+  border: 1px solid #c3e9d5;
+  border-radius: var(--sn-radio-lg);
+}
+
+.sn-comprobante__exito-icono {
+  color: var(--sn-ok);
+  flex-shrink: 0;
+}
+
+.sn-comprobante__exito-titulo {
+  font-size: var(--sn-texto-xl);
+  color: var(--sn-ok-texto);
+  letter-spacing: -0.02em;
+}
+
+.sn-comprobante__exito-texto {
+  font-size: var(--sn-texto-base);
+  color: var(--sn-ok-texto);
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+/* ═══════════════════ Ticket ═══════════════════ */
+
+.sn-ticket {
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-xl);
+  box-shadow: var(--sn-sombra-lg);
+  overflow: hidden;
+}
+
+.sn-ticket--cancelada {
+  opacity: 0.72;
+}
+
+.sn-ticket__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sn-e4);
+  padding: var(--sn-e4) var(--sn-e5);
+  background: var(--sn-fondo-oscuro);
+}
+
+.sn-ticket__marca img {
+  height: 24px;
+  width: auto;
+}
+
+/* ── Código y QR ── */
+
+.sn-ticket__codigo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sn-e2);
+  padding: var(--sn-e6) var(--sn-e5) var(--sn-e5);
+  text-align: center;
+}
+
+.sn-ticket__codigo-etiqueta {
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sn-ticket__codigo-valor {
+  font-family: var(--sn-fuente-mono);
+  font-size: clamp(1.9rem, 8vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--sn-tinta);
+  line-height: 1.1;
+}
+
+.sn-ticket__qr {
+  width: 180px;
+  height: 180px;
+  margin-top: var(--sn-e3);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-md);
+  background: #ffffff;
+}
+
+.sn-ticket__instruccion {
+  margin-top: var(--sn-e2);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+  max-width: 34ch;
+}
+
+/* ── Corte troquelado ── */
+
+.sn-ticket__corte {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 24px;
+}
+
+.sn-ticket__muesca {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--sn-fondo-alt);
+  border: 1px solid var(--sn-borde);
+}
+
+.sn-ticket__muesca--izq {
+  left: -13px;
+}
+
+.sn-ticket__muesca--der {
+  right: -13px;
+}
+
+.sn-ticket__linea {
+  flex: 1;
+  margin-inline: var(--sn-e5);
+  border-top: 2px dashed var(--sn-borde);
+}
+
+/* ── Detalle ── */
+
+.sn-ticket__detalle {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sn-e3) var(--sn-e5) var(--sn-e5);
+}
+
+.sn-ticket__detalle > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sn-e4);
+  padding-block: var(--sn-e3);
+  border-bottom: 1px solid var(--sn-borde);
+}
+
+.sn-ticket__detalle > div:last-child {
+  border-bottom: none;
+}
+
+.sn-ticket__detalle dt {
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-suave);
+  flex-shrink: 0;
+}
+
+.sn-ticket__detalle dd {
+  font-size: var(--sn-texto-base);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.sn-ticket__duracion {
+  font-weight: var(--sn-peso-normal);
+  color: var(--sn-tinta-tenue);
+  font-size: var(--sn-texto-xs);
+}
+
+.sn-ticket__patente {
+  font-family: var(--sn-fuente-mono);
+  font-weight: var(--sn-peso-bold) !important;
+  letter-spacing: 0.08em;
+  font-size: var(--sn-texto-lg) !important;
+}
+
+.sn-ticket__total {
+  margin-top: var(--sn-e2);
+  padding-top: var(--sn-e4) !important;
+  border-top: 2px solid var(--sn-borde);
+  border-bottom: none !important;
+}
+
+.sn-ticket__total dt {
+  font-size: var(--sn-texto-md);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta);
+}
+
+.sn-ticket__total dd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: var(--sn-texto-xl);
+  font-weight: var(--sn-peso-extra);
+  font-variant-numeric: tabular-nums;
+}
+
+.sn-ticket__pago {
+  font-size: var(--sn-texto-xs);
+  font-weight: var(--sn-peso-normal);
+  color: var(--sn-tinta-suave);
+}
+
+/* ═══════════════════ Acciones ═══════════════════ */
+
+.sn-comprobante__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+}
+
+.sn-comprobante__secundarias {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sn-e2);
+}
+
+.sn-comprobante__secundarias .sn-boton {
+  font-size: var(--sn-texto-sm);
+}
+
+.sn-comprobante__volver {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sn-e2);
+  margin-top: var(--sn-e2);
+  padding: var(--sn-e3);
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-tinta-suave);
+  transition: color var(--sn-trans);
+}
+
+.sn-comprobante__volver:hover {
+  color: var(--sn-tinta);
+}
+
+/* ═══════════════════ Impresión ═══════════════════ */
+
+@media print {
+  .sn-comprobante {
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .sn-comprobante__contenedor {
+    max-width: none;
+    padding: 0;
+  }
+
+  .sn-ticket {
+    box-shadow: none;
+    border: 1px solid #cbd5e1;
+    border-radius: 0;
+  }
+
+  .sn-ticket__cabecera {
+    background: #0f172a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sn-ticket__muesca {
+    display: none;
+  }
+}
+
+/* Aclaración del modelo de cobro, al pie del ticket: el cliente tiene que
+   entender qué ya pagó y qué le van a cobrar al llegar. */
+.sn-ticket__aclaracion {
+  margin: var(--sn-e3) 0 0;
+  padding: 0 var(--sn-e4) var(--sn-e4);
+  font-size: var(--sn-texto-xs);
+  line-height: 1.5;
+  color: var(--sn-tinta-suave);
+  text-align: center;
+}
