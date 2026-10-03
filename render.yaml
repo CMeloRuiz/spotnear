@@ -1,0 +1,186 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SpotNear · Blueprint de Render
+#
+# Crea los tres servicios de una vez: Render → New → Blueprint → este repo.
+# Paso a paso, y de dónde sale cada variable: README → "Desplegar en Render".
+#
+#   spotnear-db        PostgreSQL
+#   spotnear-backend   API (Node + Express + Prisma), Web Service
+#   spotnear-frontend  Web (React + Vite), Static Site
+#
+# Las variables con `sync: false` las pide Render al crear el Blueprint y se
+# completan a mano en el panel: son secretos o datos de tus cuentas. Las que
+# tienen `value:` ya traen el valor correcto para producción.
+#
+# Las URLs https://spotnear-*.onrender.com asumen que Render te dio esos
+# nombres. Si el nombre estaba tomado, Render agrega un sufijo
+# (spotnear-frontend-abcd.onrender.com): corregí CORS_ORIGINS, PUBLIC_WEB_URL
+# y VITE_API_URL con la URL real. Lo mismo si después usás un dominio propio.
+# ─────────────────────────────────────────────────────────────────────────────
+
+databases:
+  - name: spotnear-db
+    plan: free
+    region: virginia
+    databaseName: spotnear
+    user: spotnear
+    postgresMajorVersion: "16"
+
+services:
+  # ───────────────────────────── Backend (API) ─────────────────────────────
+  - type: web
+    name: spotnear-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: virginia # la misma región que la base: así usa su URL interna
+    # Corre directo con Node (JavaScript con ES modules, sin TypeScript ni paso
+    # de compilación). El build solo instala, genera el cliente de Prisma y
+    # aplica las migraciones pendientes.
+    #
+    #  · --include=dev: con NODE_ENV=production, npm se saltea las
+    #    devDependencies, y el CLI de Prisma es una. Sin esto, `npx prisma`
+    #    bajaría al vuelo una versión cualquiera.
+    #  · migrate deploy, NO migrate dev: aplica las migraciones ya escritas y
+    #    nunca genera nuevas ni resetea la base.
+    #  · El seed NO corre acá: borra la base. Ver README.
+    buildCommand: npm ci --include=dev && npx prisma generate && npx prisma migrate deploy
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: spotnear-db
+          property: connectionString
+
+      # ── Sesiones (JWT): Render genera valores aleatorios largos ──
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+
+      # ── URLs ──
+      # Orígenes que pueden llamar a la API (el frontend). Varios, con coma.
+      - key: CORS_ORIGINS
+        value: https://spotnear-frontend.onrender.com
+      # Links del comprobante que van por WhatsApp/email.
+      - key: PUBLIC_WEB_URL
+        value: https://spotnear-frontend.onrender.com
+      # URL pública de esta API: webhook de Mercado Pago, vuelta del checkout e
+      # imagen del comprobante. Dejala VACÍA: si no se carga, el backend usa
+      # RENDER_EXTERNAL_URL, que Render completa solo con la URL real del
+      # servicio. Cargala solo si le ponés un dominio propio a la API.
+      - key: PUBLIC_API_URL
+        sync: false
+
+      # ── Negocio ──
+      - key: COMISION_DEFAULT_PORCENTAJE
+        value: "10"
+      - key: TZ
+        value: America/Argentina/Buenos_Aires
+      - key: MONEDA
+        value: ARS
+
+      # ── Pagos: Mercado Pago ──
+      - key: PAYMENT_PROVIDER
+        value: mercadopago
+      - key: MERCADOPAGO_ACCESS_TOKEN
+        sync: false
+      - key: MERCADOPAGO_PUBLIC_KEY
+        sync: false
+      - key: MERCADOPAGO_WEBHOOK_SECRET
+        sync: false
+
+      # ── Email: Resend (recomendado) o SMTP ──
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        value: SpotNear <reservas@spotnear.com.ar>
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+
+      # ── WhatsApp ──
+      # link = sin envío automático. Pasalo a twilio (o cloud_api) cuando
+      # cargues las credenciales de abajo.
+      - key: WHATSAPP_PROVIDER
+        value: link
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        value: "+14155238886"
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_API_VERSION
+        value: v21.0
+      # Solo para pruebas: pisa el grupo de TODOS los estacionamientos. En
+      # producción va vacía.
+      - key: WHATSAPP_GRUPO_PRUEBA
+        sync: false
+
+      # ── Límites de pedidos ──
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX
+        value: "300"
+      - key: RATE_LIMIT_LOGIN_MAX
+        value: "10"
+      - key: RATE_LIMIT_RESERVA_MAX
+        value: "20"
+
+    # ⚠ Fotos de los estacionamientos: se guardan en backend/uploads. En el
+    # plan free el disco se borra en cada deploy o reinicio, y las fotos
+    # subidas se pierden. Para conservarlas hace falta un plan pago con disco
+    # persistente montado ahí (ver README → "Desplegar en Render"):
+    # disk:
+    #   name: uploads
+    #   mountPath: /opt/render/project/src/backend/uploads
+    #   sizeGB: 1
+
+  # ───────────────────────────── Frontend (web) ─────────────────────────────
+  - type: web
+    name: spotnear-frontend
+    runtime: static
+    rootDir: frontend
+    # --include=dev: Vite y el plugin de React son devDependencies.
+    buildCommand: npm ci --include=dev && npm run build
+    staticPublishPath: dist
+    # Las VITE_* se leen al COMPILAR: si cambiás una, hay que redesplegar el
+    # frontend (Manual Deploy → Clear build cache & deploy).
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_URL
+        value: https://spotnear-backend.onrender.com/api/v1
+      - key: VITE_GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: VITE_GOOGLE_MAPS_MAP_ID
+        sync: false
+      - key: VITE_WHATSAPP_SOPORTE
+        sync: false
+    # Es una SPA: cualquier ruta (/pago/..., /comprobante/..., /panel/...) la
+    # resuelve index.html. Sin esto, recargar o volver de Mercado Pago a
+    # /pago/:token daría 404.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

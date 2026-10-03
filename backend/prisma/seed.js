@@ -5,7 +5,12 @@
  * Villa Crespo), que es el caso que originó el producto.
  *
  * ⚠ Borra y recrea los datos. Correr SOLO en desarrollo.
- *   npm run db:seed
+ *   npm run db:seed              (base vacía)
+ *   npm run db:seed -- --forzar  (base con datos: la vacía primero)
+ *
+ * Sobre una base con usuarios se niega a correr sin --forzar: así no hay forma
+ * de vaciar producción por un comando equivocado. Para producción, el primer
+ * administrador se crea con `npm run db:crear-superadmin`, que no borra nada.
  */
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
@@ -330,6 +335,29 @@ async function limpiar() {
 
 async function main() {
   console.info('\n🌱 Sembrando la base de SpotNear\n');
+
+  // Resguardo: este seed BORRA todo antes de cargar el escenario de ejemplo.
+  // Sobre una base con datos (producción, o tu base local con reservas que te
+  // importan) se niega a correr, salvo que se lo pidas explícitamente. En una
+  // base recién creada o recién reseteada (npm run setup / db:reset) no hay
+  // usuarios y sigue de largo como siempre.
+  const forzar = process.argv.includes('--forzar');
+  const usuarios = await prisma.user.count();
+  if (usuarios > 0 && !forzar) {
+    console.error(
+      [
+        `✖ La base ya tiene datos (${usuarios} usuario${usuarios === 1 ? '' : 's'}). No se tocó nada.`,
+        '',
+        '  Este seed BORRA todas las tablas y carga datos de ejemplo.',
+        '  · Si es tu base local y querés empezar de cero: npm run db:seed -- --forzar',
+        '  · Si es PRODUCCIÓN: no lo corras. Para crear el primer administrador usá',
+        '    npm run db:crear-superadmin (no borra nada).',
+        '',
+      ].join('\n'),
+    );
+    process.exitCode = 1;
+    return;
+  }
 
   await limpiar();
 

@@ -16,6 +16,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset --force",
     "db:seed": "node prisma/seed.js",
+    "db:crear-superadmin": "node prisma/crear-superadmin.js",
     "db:studio": "prisma studio",
     "test": "node --import ./tests/setup.js --test --test-concurrency=1 \"tests/**/*.test.js\"",
     "test:unit": "node --import ./tests/setup.js --test \"tests/unit/*.test.js\"",

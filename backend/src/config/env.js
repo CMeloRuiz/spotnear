@@ -84,7 +84,23 @@ const schema = z.object({
   RATE_LIMIT_RESERVA_MAX: z.coerce.number().int().default(20),
 });
 
-const parsed = schema.safeParse(process.env);
+/**
+ * Una variable vacía cuenta como no cargada y toma su valor por defecto.
+ *
+ * En un panel de hosting (Render) es fácil dejar una variable creada pero en
+ * blanco; sin esto, `WHATSAPP_PROVIDER=` o `PUBLIC_WEB_URL=` tumbaban el
+ * arranque por "valor inválido" en vez de usar el default.
+ */
+const entrada = Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== ''));
+
+// Render le pasa a cada Web Service su propia URL pública en RENDER_EXTERNAL_URL
+// (https://<servicio>.onrender.com). Si PUBLIC_API_URL no se cargó a mano, se
+// usa esa: es exactamente la que necesitan el webhook de Mercado Pago, la
+// vuelta del checkout y la imagen del comprobante. Con un dominio propio, se
+// carga PUBLIC_API_URL y gana ella.
+entrada.PUBLIC_API_URL ??= entrada.RENDER_EXTERNAL_URL;
+
+const parsed = schema.safeParse(entrada);
 
 if (!parsed.success) {
   const detalle = parsed.error.issues.map((i) => `  · ${i.path.join('.')}: ${i.message}`).join('\n');
@@ -95,13 +111,20 @@ if (!parsed.success) {
 
 const raw = parsed.data;
 
+/** `https://x.com/` → `https://x.com`. Las URLs se arman concatenando `/api/...`. */
+const sinBarraFinal = (url) => url.replace(/\/+$/, '');
+
 export const env = {
   ...raw,
+  PUBLIC_WEB_URL: sinBarraFinal(raw.PUBLIC_WEB_URL),
+  PUBLIC_API_URL: sinBarraFinal(raw.PUBLIC_API_URL),
   isDev: raw.NODE_ENV === 'development',
   isTest: raw.NODE_ENV === 'test',
   isProd: raw.NODE_ENV === 'production',
+  // El navegador manda el Origin sin barra final: "https://x.com/" no
+  // coincidiría nunca con "https://x.com".
   corsOrigins: raw.CORS_ORIGINS.split(',')
-    .map((o) => o.trim())
+    .map((o) => sinBarraFinal(o.trim()))
     .filter(Boolean),
   /** ¿Hay credenciales SMTP suficientes? */
   smtpHabilitado: Boolean(raw.SMTP_HOST && raw.SMTP_USER && raw.SMTP_PASS),
@@ -121,6 +144,32 @@ export const env = {
     raw.WHATSAPP_PROVIDER === 'twilio' &&
     Boolean(raw.TWILIO_ACCOUNT_SID && raw.TWILIO_AUTH_TOKEN && raw.TWILIO_WHATSAPP_FROM),
 };
+
+/**
+ * En producción, ninguna URL puede seguir apuntando a localhost.
+ *
+ * Los defaults de arriba son para desarrollo. Si en el servidor falta cargar
+ * una de estas, la app arrancaría "bien" pero rota en silencio: el navegador
+ * rechazaría todo por CORS, Mercado Pago recibiría un webhook a localhost y
+ * los comprobantes llevarían links que no abren. Mejor no arrancar y decirlo.
+ */
+if (env.isProd) {
+  const esLocal = (url) => /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/.test(url);
+  const problemas = [
+    esLocal(env.PUBLIC_WEB_URL) && 'PUBLIC_WEB_URL (la URL del frontend, ej. https://spotnear-frontend.onrender.com)',
+    esLocal(env.PUBLIC_API_URL) && 'PUBLIC_API_URL (la URL de este backend, ej. https://spotnear-backend.onrender.com)',
+    env.corsOrigins.every(esLocal) && 'CORS_ORIGINS (el dominio del frontend; varios, separados por coma)',
+  ].filter(Boolean);
+
+  if (problemas.length > 0) {
+    console.error(
+      '\n✖ Configuración de producción incompleta: estas variables siguen apuntando a localhost.\n' +
+        problemas.map((p) => `  · ${p}`).join('\n') +
+        '\n  Cargalas en el panel del hosting (Render → el servicio → Environment).\n',
+    );
+    process.exit(1);
+  }
+}
 
 // Fijamos la zona horaria del proceso para que los cálculos de negocio
 // (día de hoy, próximas llegadas, reportes) sean consistentes.

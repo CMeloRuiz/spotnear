@@ -14,23 +14,24 @@ por WhatsApp sin obligar a nadie a dejar WhatsApp.
 1. [Qué hace](#qué-hace)
 2. [Stack](#stack)
 3. [Puesta en marcha](#puesta-en-marcha)
-4. [Google Maps: cómo obtener y restringir la API key](#google-maps-cómo-obtener-y-restringir-la-api-key)
-5. [Usuarios de prueba](#usuarios-de-prueba)
-6. [Estructura del proyecto](#estructura-del-proyecto)
-7. [Cómo se da de alta un estacionamiento](#cómo-se-da-de-alta-un-estacionamiento)
-8. [Horarios: los tres modos de cierre](#horarios-los-tres-modos-de-cierre)
-9. [Fotos de los estacionamientos](#fotos-de-los-estacionamientos)
-10. [Cómo se calcula el precio](#cómo-se-calcula-el-precio)
-11. [Cobro: la seña no reembolsable](#cobro-la-seña-no-reembolsable)
+4. [Desplegar en Render](#desplegar-en-render)
+5. [Google Maps: cómo obtener y restringir la API key](#google-maps-cómo-obtener-y-restringir-la-api-key)
+6. [Usuarios de prueba](#usuarios-de-prueba)
+7. [Estructura del proyecto](#estructura-del-proyecto)
+8. [Cómo se da de alta un estacionamiento](#cómo-se-da-de-alta-un-estacionamiento)
+9. [Horarios: los tres modos de cierre](#horarios-los-tres-modos-de-cierre)
+10. [Fotos de los estacionamientos](#fotos-de-los-estacionamientos)
+11. [Cómo se calcula el precio](#cómo-se-calcula-el-precio)
+12. [Cobro: la seña no reembolsable](#cobro-la-seña-no-reembolsable)
     · [Pasarela de pago: Mercado Pago (Checkout Pro)](#pasarela-de-pago-mercado-pago-checkout-pro)
-12. [Eliminar cosas: qué se borra y qué se conserva](#eliminar-cosas-qué-se-borra-y-qué-se-conserva)
-13. [Emails: cómo hacer que salgan de verdad](#emails-cómo-hacer-que-salgan-de-verdad)
-14. [WhatsApp automático al grupo](#whatsapp-automático-al-grupo-del-estacionamiento)
-15. [Seguridad y aislamiento entre estacionamientos](#seguridad-y-aislamiento-entre-estacionamientos)
-16. [API](#api)
-17. [Tests](#tests)
-18. [Decisiones que tomé](#decisiones-que-tomé)
-19. [Qué quedó pendiente o simulado](#qué-quedó-pendiente-o-simulado)
+13. [Eliminar cosas: qué se borra y qué se conserva](#eliminar-cosas-qué-se-borra-y-qué-se-conserva)
+14. [Emails: cómo hacer que salgan de verdad](#emails-cómo-hacer-que-salgan-de-verdad)
+15. [WhatsApp automático al grupo](#whatsapp-automático-al-grupo-del-estacionamiento)
+16. [Seguridad y aislamiento entre estacionamientos](#seguridad-y-aislamiento-entre-estacionamientos)
+17. [API](#api)
+18. [Tests](#tests)
+19. [Decisiones que tomé](#decisiones-que-tomé)
+20. [Qué quedó pendiente o simulado](#qué-quedó-pendiente-o-simulado)
 
 ---
 
@@ -162,7 +163,7 @@ npm run dev
 ### Otros comandos
 
 ```bash
-npm run setup               # install + migrate + seed, todo junto
+npm run setup               # install + migrate + seed, todo junto (base vacía)
 npm run build               # build de producción del frontend
 npm test                    # tests del backend
 npm run db:studio           # Prisma Studio, para mirar la base
@@ -173,7 +174,171 @@ Dentro de `backend/`:
 
 ```bash
 npm run db:limpiar-pruebas  # limpia datos que dejó una corrida de tests interrumpida
+npm run db:seed -- --forzar # vuelve a cargar los datos de ejemplo BORRANDO lo que haya
+npm run db:crear-superadmin # crea un SUPERADMIN sin tocar nada más (el de producción)
 ```
+
+El seed **se niega a correr si la base ya tiene usuarios**, salvo con
+`--forzar`: borra todas las tablas, y así no hay forma de vaciar una base real
+por un comando equivocado. En una base recién creada (`npm run setup`,
+`npm run db:reset`) corre como siempre.
+
+---
+
+## Desplegar en Render
+
+Tres servicios, definidos en `render.yaml` (raíz del repo) para crearlos de una
+sola vez:
+
+| Servicio | Tipo | Qué es |
+|---|---|---|
+| `spotnear-db` | PostgreSQL | La base. |
+| `spotnear-backend` | Web Service (Node) | La API. Corre directo con `node src/server.js` (`npm start`): es JavaScript con ES modules, no hay TypeScript ni paso de compilación. |
+| `spotnear-frontend` | Static Site | La web, compilada con Vite (`dist/`). |
+
+### Qué hace cada build
+
+- **Backend:** `npm ci --include=dev && npx prisma generate && npx prisma migrate deploy`.
+  - `--include=dev`: Render corre el build con `NODE_ENV=production`, y así
+    npm se saltea las devDependencies. El CLI de Prisma es una; sin esto,
+    `npx prisma` bajaría al vuelo una versión cualquiera.
+  - `migrate deploy` (no `migrate dev`) aplica las migraciones que ya están en
+    `backend/prisma/migrations`: no crea migraciones nuevas ni resetea la base.
+    Corre en cada despliegue, así la base queda siempre al día con el código.
+  - **El seed no corre nunca solo.** Borra todas las tablas antes de cargar
+    datos de ejemplo. Ver *El primer administrador*, más abajo.
+- **Frontend:** `npm ci --include=dev && npm run build` (Vite es devDependency).
+  Las rutas se reescriben a `index.html`: es una SPA, y sin eso volver de
+  Mercado Pago a `/pago/:token` o recargar `/panel/reservas` daría 404.
+
+### Paso a paso
+
+1. **Subí el repo a GitHub** con `render.yaml` incluido (`git push`). Los
+   `.env` no se suben: están en `.gitignore`.
+2. En [dashboard.render.com](https://dashboard.render.com): **New → Blueprint**,
+   conectá GitHub y elegí el repo. Render lee `render.yaml` y muestra los tres
+   servicios.
+3. Te pide las variables marcadas `sync: false`. Completá las que ya tengas
+   (tabla de abajo); las demás se pueden dejar vacías y cargar después.
+4. **Apply.** Render crea la base, compila y despliega. El backend aplica las
+   migraciones en su build. Tarda unos minutos.
+5. **Revisá las URLs que te asignó Render.** `render.yaml` asume
+   `https://spotnear-backend.onrender.com` y `https://spotnear-frontend.onrender.com`.
+   Si un nombre estaba tomado, Render le agrega un sufijo (`spotnear-frontend-x7k2`).
+   En ese caso corregí:
+   - en `spotnear-backend` → Environment: `CORS_ORIGINS` y `PUBLIC_WEB_URL` con
+     la URL real del frontend;
+   - en `spotnear-frontend` → Environment: `VITE_API_URL` con la URL real del
+     backend + `/api/v1`, y después **Manual Deploy** (las `VITE_*` se graban al
+     compilar).
+6. Abrí `https://<backend>/api/v1/health`: tiene que decir `"base": "ok"`. Y
+   `/api/v1/config` tiene que decir `"vueltaAutomatica": true`.
+7. **Creá el primer administrador** (abajo) y entrá a `https://<frontend>/panel/ingresar`.
+8. **Google Maps:** en Google Cloud, agregá `https://<frontend>/*` a los
+   referrers permitidos de la API key. Sin eso el mapa no carga en producción.
+
+Si el backend no arranca, mirá **Logs**: con `NODE_ENV=production` se niega a
+arrancar si `PUBLIC_WEB_URL`, `PUBLIC_API_URL` o `CORS_ORIGINS` siguen en
+localhost, y dice cuál falta. El build del frontend hace lo mismo con
+`VITE_API_URL`.
+
+### Variables que se completan a mano (`sync: false`)
+
+**Backend (`spotnear-backend`)**
+
+| Variable | ¿Obligatoria? | De dónde sale |
+|---|---|---|
+| `MERCADOPAGO_ACCESS_TOKEN` | **Sí** (sin ella no se puede reservar) | [mercadopago.com.ar/developers/panel/app](https://www.mercadopago.com.ar/developers/panel/app) → tu aplicación → *Credenciales de producción* (`APP_USR-…`). Para probar en Render antes de cobrar de verdad, las *de prueba* (`TEST-…`). |
+| `MERCADOPAGO_PUBLIC_KEY` | No (Checkout Pro no la usa) | Mismo lugar, al lado del access token. |
+| `MERCADOPAGO_WEBHOOK_SECRET` | No, recomendada | Panel de Mercado Pago → tu aplicación → *Webhooks* → *Configurar notificaciones* → URL `https://<backend>/api/v1/payments/mercadopago/webhook`, evento *Pagos* → *Clave secreta*. Sin ella el webhook igual funciona: el estado del pago se relee siempre contra la API. |
+| `RESEND_API_KEY` | Para mandar emails | [resend.com/api-keys](https://resend.com/api-keys) → *Create API Key*. Ver *Emails*. |
+| `SMTP_HOST` · `SMTP_USER` · `SMTP_PASS` | No (alternativa a Resend) | Los de tu casilla. Con Resend, dejalas vacías. |
+| `TWILIO_ACCOUNT_SID` · `TWILIO_AUTH_TOKEN` | Para WhatsApp automático | [console.twilio.com](https://console.twilio.com) → *Account Info*. Además cambiá `WHATSAPP_PROVIDER` a `twilio`. |
+| `WHATSAPP_PHONE_NUMBER_ID` · `WHATSAPP_ACCESS_TOKEN` | Solo con `cloud_api` | Meta for Developers → tu app → WhatsApp → *API Setup*. |
+| `WHATSAPP_GRUPO_PRUEBA` | **No: dejala vacía en producción** | Pisa el grupo de todos los estacionamientos; es solo para pruebas. |
+| `PUBLIC_API_URL` | **No: dejala vacía** | Si está vacía, el backend usa `RENDER_EXTERNAL_URL`, que Render completa solo con la URL pública real del servicio. Cargala solo si le ponés un dominio propio a la API. |
+
+Las demás ya vienen resueltas en `render.yaml`: `DATABASE_URL` (la conecta el
+Blueprint a `spotnear-db`), `JWT_SECRET` y `JWT_REFRESH_SECRET` (Render genera
+valores aleatorios), `NODE_ENV=production`, `PAYMENT_PROVIDER=mercadopago`,
+`CORS_ORIGINS`, `PUBLIC_WEB_URL`, `TZ`, `MONEDA`, comisión, límites de pedidos
+y versión de Node. `PORT` no se carga: lo asigna Render.
+
+**Frontend (`spotnear-frontend`)**
+
+| Variable | ¿Obligatoria? | De dónde sale |
+|---|---|---|
+| `VITE_GOOGLE_MAPS_API_KEY` | No (sin ella hay un mapa alternativo) | Google Cloud → *APIs y servicios* → *Credenciales*. Ver *Google Maps*. Restringila al dominio del frontend. |
+| `VITE_GOOGLE_MAPS_MAP_ID` | No (vacía usa `DEMO_MAP_ID`) | Google Cloud → *Map Management* → *Create Map ID* (tipo JavaScript). |
+| `VITE_WHATSAPP_SOPORTE` | Recomendada | El número de soporte que aparece en "Contacto", con código de país (`+54911…`). |
+
+`VITE_API_URL` ya viene en `render.yaml` (`https://spotnear-backend.onrender.com/api/v1`);
+corregila solo si la URL del backend es otra.
+
+### El webhook de Mercado Pago, resuelto de raíz
+
+En Render el backend tiene una URL https pública, así que las tres cosas que en
+local necesitaban un túnel funcionan solas, sin configurar nada en Mercado Pago:
+
+- **Webhook:** cada preferencia lleva `notification_url = PUBLIC_API_URL + /api/v1/payments/mercadopago/webhook`.
+- **Vuelta automática** al terminar de pagar: la `back_url` es https.
+- **Imagen del comprobante por WhatsApp:** Twilio la puede descargar.
+
+Ninguna de esas URLs está escrita en el código: salen de `PUBLIC_API_URL` (o de
+`RENDER_EXTERNAL_URL`), y CORS sale de `CORS_ORIGINS`. `localhost` solo aparece
+como valor por defecto para desarrollo, y en producción el backend no arranca
+con él.
+
+### El primer administrador (y el seed)
+
+La base de Render arranca vacía, y **no conviene correr el seed ahí**: borra
+todas las tablas y carga estacionamientos y usuarios de demo con claves
+conocidas. Lo que hace falta en producción es un único SUPERADMIN, para entrar
+al panel y aprobar estacionamientos. Para eso está
+`npm run db:crear-superadmin`, que no borra nada y no tiene clave por defecto.
+
+El plan free de Render no tiene consola (*Shell*), así que se corre **desde tu
+máquina, contra la base de Render**:
+
+1. Render → `spotnear-db` → *Connections* → copiá la **External Database URL**.
+2. En una terminal, dentro de `backend/` (PowerShell):
+
+   ```powershell
+   $env:DATABASE_URL = "<External Database URL>"
+   $env:SEED_SUPERADMIN_EMAIL = "vos@tudominio.com"
+   $env:SEED_SUPERADMIN_PASSWORD = "una-clave-larga-y-unica"
+   npm run db:crear-superadmin
+   ```
+
+   (En bash: `DATABASE_URL="…" SEED_SUPERADMIN_EMAIL="…" SEED_SUPERADMIN_PASSWORD="…" npm run db:crear-superadmin`.)
+3. Cerrá esa terminal: las variables quedan solo en esa sesión, y tu `.env`
+   local sigue apuntando a tu base de desarrollo.
+
+Si Prisma se queja de SSL, agregá `?sslmode=require` al final de la URL. Correrlo
+dos veces no hace daño: si el email ya existe, avisa y no toca nada.
+
+**Si igual querés los datos de ejemplo** (por ejemplo, en un entorno de demo,
+nunca en el de clientes reales): mismo procedimiento, con `npm run db:seed`
+sobre la base recién creada. Si la base ya tiene usuarios, el seed se niega;
+`npm run db:seed -- --forzar` la vacía y la recarga. Con un plan pago de Render,
+lo mismo se puede correr desde el *Shell* del backend.
+
+### Límites del plan free que conviene saber
+
+- **El backend se duerme** tras 15 minutos sin tráfico, y la primera visita
+  tarda ~1 minuto en despertarlo. Si en ese rato llega un webhook de Mercado
+  Pago, Mercado Pago lo reintenta, y la pantalla de pago y la vuelta del
+  checkout confirman la seña por su cuenta: no se pierde nada. Para un
+  servicio real, plan *Starter*.
+- **La base free vence a los 30 días** de creada (Render la borra si no se
+  pasa a un plan pago). Antes de tener clientes reales, pasala a un plan pago,
+  o usá otra base (por ejemplo la de Neon de desarrollo, poniendo su URL en
+  `DATABASE_URL` en vez de la de `spotnear-db`).
+- **Las fotos subidas se pierden.** Se guardan en el disco del servicio
+  (`backend/uploads`), y en el plan free ese disco se borra en cada deploy o
+  reinicio. Con un plan pago se monta un disco persistente en esa carpeta (el
+  bloque `disk` está comentado en `render.yaml`), o se pasa a S3/Cloudinary
+  cambiando solo `backend/src/services/uploads.js`.
 
 ---
 
