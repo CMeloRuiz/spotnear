@@ -13,6 +13,7 @@
 import { Icono, ICONO_SERVICIO } from '../ui/Iconos.jsx';
 import { Estrellas } from '../ui/Varios.jsx';
 import { precio as fmtPrecio, distancia as fmtDistancia } from '../../utils/formato.js';
+import { leyendaHorario } from '../../utils/horarios.js';
 import textos from '../../i18n/textos.js';
 import './TarjetaParking.css';
 
@@ -25,6 +26,7 @@ const FOTO_POR_DEFECTO = '/assets/parkings/sin-foto.svg';
  * @param {boolean} props.resaltado       Está señalado desde el mapa
  * @param {(id: string|null) => void} props.onResaltar
  * @param {() => void} props.onReservar
+ * @param {Date} [props.fecha]            Ingreso buscado: el horario que se muestra es el de ese día
  */
 export function TarjetaParking({
   resultado,
@@ -34,6 +36,7 @@ export function TarjetaParking({
   onResaltar,
   onReservar,
   innerRef,
+  fecha,
 }) {
   const {
     nombre,
@@ -53,6 +56,7 @@ export function TarjetaParking({
   } = resultado;
 
   const sinLugar = !disponibilidad?.hayLugar;
+  const horario = leyendaHorario(resultado, fecha);
   const pocosLugares = disponibilidad?.libres > 0 && disponibilidad.libres <= 5;
 
   return (
@@ -115,6 +119,12 @@ export function TarjetaParking({
           </div>
 
           <div className="sn-tarjeta-parking__servicios">
+            {horario && (
+              <span className="sn-tarjeta-parking__servicio" title={horario}>
+                <Icono nombre="reloj" tam={14} />
+                {horario}
+              </span>
+            )}
             {cubierto && (
               <span className="sn-tarjeta-parking__servicio" title={textos.resultados.techado}>
                 <Icono nombre="techo" tam={14} />

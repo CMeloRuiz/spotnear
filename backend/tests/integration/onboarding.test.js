@@ -13,6 +13,7 @@ import assert from 'node:assert/strict';
 import request from 'supertest';
 import { crearApp } from '../../src/app.js';
 import prisma from '../../src/config/prisma.js';
+import env from '../../src/config/env.js';
 import { crearParkingDePrueba, crearSuperadminDePrueba, loguear, limpiar, SUFIJO } from '../helpers/fixtures.js';
 
 const app = crearApp();
@@ -165,13 +166,33 @@ describe('Solicitud pública de alta', () => {
     assert.equal(sinTerminos.status, 422);
   });
 
-  test('rechaza una solicitud sin fotos', async () => {
+  test('sin fotos: se rechaza si hay dónde subirlas; si no, se acepta', async () => {
     const res = await agente
       .post('/api/v1/onboarding/parkings')
       .send(solicitud(`alta-fotos@${SUFIJO}.test`, { parking: { fotos: [] } }));
 
-    assert.equal(res.status, 422);
-    assert.match(JSON.stringify(res.body), /foto/i);
+    if (env.cloudinaryHabilitado) {
+      assert.equal(res.status, 422);
+      assert.match(JSON.stringify(res.body), /foto/i);
+    } else {
+      // Sin Cloudinary no hay dónde subirlas: trabar el alta sería peor.
+      assert.equal(res.status, 201, JSON.stringify(res.body));
+    }
+  });
+
+  test('sin Cloudinary, subir una foto avisa que no está configurado', async (t) => {
+    if (env.cloudinaryHabilitado) {
+      t.skip('hay credenciales de Cloudinary cargadas');
+      return;
+    }
+    const res = await agente
+      .post('/api/v1/onboarding/fotos')
+      .attach('fotos', Buffer.from([0x89, 0x50, 0x4e, 0x47]), { filename: 'f.png', contentType: 'image/png' });
+    assert.equal(res.status, 503);
+    assert.equal(res.body.error.codigo, 'ALMACENAMIENTO_NO_CONFIGURADO');
+
+    const config = await agente.get('/api/v1/config');
+    assert.equal(config.body.fotos.configurado, false);
   });
 
   test('guarda los tres modos de horario', async () => {

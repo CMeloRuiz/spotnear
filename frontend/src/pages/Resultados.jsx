@@ -248,6 +248,7 @@ export function Resultados() {
                     seleccionado={seleccionado === r.id}
                     onResaltar={setResaltado}
                     onReservar={() => irAReservar(r)}
+                    fecha={busqueda.inicio}
                     innerRef={(el) => {
                       if (el) refsTarjetas.current.set(r.id, el);
                       else refsTarjetas.current.delete(r.id);
@@ -266,6 +267,7 @@ export function Resultados() {
             resaltado={resaltado}
             seleccionado={seleccionado}
             mostrarTotal={filtros.mostrarTotal}
+            fecha={busqueda.inicio}
             onSeleccionar={seleccionarDesdeMapa}
             onResaltar={setResaltado}
             onBuscarZona={buscarEnZona}

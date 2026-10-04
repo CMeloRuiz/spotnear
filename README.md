@@ -174,6 +174,7 @@ Dentro de `backend/`:
 
 ```bash
 npm run db:limpiar-pruebas  # limpia datos que dejó una corrida de tests interrumpida
+npm run mp:diagnostico      # prueba las credenciales de Mercado Pago y un pago de prueba directo
 npm run db:seed -- --forzar # vuelve a cargar los datos de ejemplo BORRANDO lo que haya
 npm run db:crear-superadmin # crea un SUPERADMIN sin tocar nada más (el de producción)
 ```
@@ -251,6 +252,7 @@ localhost, y dice cuál falta. El build del frontend hace lo mismo con
 | `MERCADOPAGO_ACCESS_TOKEN` | **Sí** (sin ella no se puede reservar) | [mercadopago.com.ar/developers/panel/app](https://www.mercadopago.com.ar/developers/panel/app) → tu aplicación → *Credenciales de producción* (`APP_USR-…`). Para probar en Render antes de cobrar de verdad, las *de prueba* (`TEST-…`). |
 | `MERCADOPAGO_PUBLIC_KEY` | No (Checkout Pro no la usa) | Mismo lugar, al lado del access token. |
 | `MERCADOPAGO_WEBHOOK_SECRET` | No, recomendada | Panel de Mercado Pago → tu aplicación → *Webhooks* → *Configurar notificaciones* → URL `https://<backend>/api/v1/payments/mercadopago/webhook`, evento *Pagos* → *Clave secreta*. Sin ella el webhook igual funciona: el estado del pago se relee siempre contra la API. |
+| `CLOUDINARY_CLOUD_NAME` · `CLOUDINARY_API_KEY` · `CLOUDINARY_API_SECRET` | **Sí, para que haya fotos** | [console.cloudinary.com](https://console.cloudinary.com) → *Dashboard* → *API Keys*. Paso a paso en *Fotos de los estacionamientos*. Sin ellas el alta funciona igual, pero sin fotos. |
 | `RESEND_API_KEY` | Para mandar emails | [resend.com/api-keys](https://resend.com/api-keys) → *Create API Key*. Ver *Emails*. |
 | `SMTP_HOST` · `SMTP_USER` · `SMTP_PASS` | No (alternativa a Resend) | Los de tu casilla. Con Resend, dejalas vacías. |
 | `TWILIO_ACCOUNT_SID` · `TWILIO_AUTH_TOKEN` | Para WhatsApp automático | [console.twilio.com](https://console.twilio.com) → *Account Info*. Además cambiá `WHATSAPP_PROVIDER` a `twilio`. |
@@ -334,11 +336,10 @@ lo mismo se puede correr desde el *Shell* del backend.
   pasa a un plan pago). Antes de tener clientes reales, pasala a un plan pago,
   o usá otra base (por ejemplo la de Neon de desarrollo, poniendo su URL en
   `DATABASE_URL` en vez de la de `spotnear-db`).
-- **Las fotos subidas se pierden.** Se guardan en el disco del servicio
-  (`backend/uploads`), y en el plan free ese disco se borra en cada deploy o
-  reinicio. Con un plan pago se monta un disco persistente en esa carpeta (el
-  bloque `disk` está comentado en `render.yaml`), o se pasa a S3/Cloudinary
-  cambiando solo `backend/src/services/uploads.js`.
+- **El disco del servicio se borra** en cada deploy y cada vez que se
+  duerme. Por eso las fotos ya **no** se guardan ahí: van a Cloudinary (ver
+  *Fotos de los estacionamientos*). El backend no escribe ningún archivo en su
+  disco.
 
 ---
 
@@ -510,12 +511,67 @@ Pegar una URL sigue estando, pero como alternativa plegada.
 
 **Al menos una foto es obligatoria** para dar de alta un estacionamiento, y se
 valida en el backend además del formulario: el endpoint es público y cualquiera
-puede postear sin pasar por la web.
+puede postear sin pasar por la web. **Excepción:** si Cloudinary no está
+configurado, no hay dónde subirlas, así que pasan a ser opcionales (ver abajo).
 
 - **Endpoint**: `POST /api/v1/onboarding/fotos` (multipart, campo `fotos`).
-- **Límites**: 8 fotos, 5 MB cada una, JPG/PNG/WebP/AVIF/HEIC.
-- **Dónde quedan**: `backend/uploads/parkings/`, servidas en `/uploads/...`.
-  La carpeta está en `.gitignore`: son datos, no código.
+- **Límites**: 8 fotos, 5 MB cada una, JPG/PNG/WebP/AVIF/HEIC. Cloudinary las
+  achica a 1600 px de lado como máximo.
+- **Dónde quedan**: en **Cloudinary**, carpeta `spotnear/parkings`. En la base
+  (`ParkingPhoto.url`) se guarda solo la URL pública
+  (`https://res.cloudinary.com/...`), que el frontend usa tal cual.
+
+### Por qué Cloudinary y no el disco
+
+En Render el disco de un Web Service es **efímero**: se borra en cada deploy y
+cada vez que el plan gratuito duerme el servicio. Las fotos se perdían y en la
+base quedaban URLs rotas. Guardarlas en la base tampoco: la infla y la vuelve
+lenta. Ahora el archivo pasa por la memoria del backend y va directo a
+Cloudinary; el backend no escribe nada en su disco, así que **un redeploy no
+borra ninguna foto**.
+
+La imagen del comprobante (la del QR) no necesitó este cambio: **no se guarda
+en ningún lado**, se dibuja en el momento a partir de la reserva cada vez que
+se pide (`GET /reservations/comprobante/:token/comprobante.png`). Sobrevive
+a cualquier redeploy porque lo único que necesita es la base.
+
+### Crear la cuenta de Cloudinary y sacar las tres credenciales
+
+1. Entrá a [cloudinary.com/users/register_free](https://cloudinary.com/users/register_free)
+   y creá una cuenta gratis (con Google o con email). El plan *Free* alcanza de
+   sobra para las fotos de esta etapa.
+2. Si te pregunta para qué la vas a usar, elegí cualquier opción (por ejemplo
+   *Programmable Media*); no cambia nada.
+3. Entrá a [console.cloudinary.com](https://console.cloudinary.com). En el
+   *Dashboard* (o en *Settings → API Keys*) vas a ver:
+   - **Cloud name** → `CLOUDINARY_CLOUD_NAME`
+   - **API Key** → `CLOUDINARY_API_KEY`
+   - **API Secret** (tocá el ojo para verlo) → `CLOUDINARY_API_SECRET`
+4. Cargalas en Render: *spotnear-backend → Environment → Add Environment
+   Variable*, una por una, y guardá (Render redeploya solo).
+5. Para desarrollo, las mismas tres en `backend/.env` y reiniciá el backend.
+6. Probalo: en `GET /api/v1/config` tiene que aparecer
+   `"fotos": { "configurado": true }`, y en *¿Tenés un estacionamiento?* la
+   zona de "Arrastrá tus fotos acá" vuelve a aparecer.
+
+El API Secret es una credencial: va solo en variables de entorno, nunca en el
+código ni en el frontend.
+
+### Si Cloudinary no está configurado
+
+No se rompe nada. `GET /config` devuelve `fotos.configurado: false` y el
+formulario de alta, en vez de la zona de carga, muestra el aviso "La subida de
+fotos todavía no está disponible", con la opción de pegar links. Las fotos pasan
+a ser opcionales (en el formulario y en el backend): trabar el alta de un
+estacionamiento por un problema de configuración nuestro sería peor que
+recibirla sin fotos. Si alguien igual le pega al endpoint de subida, responde
+**503** `ALMACENAMIENTO_NO_CONFIGURADO` con ese mismo mensaje, al instante y
+sin leer el archivo.
+
+Las fotos que se subieron en desarrollo antes del cambio siguen en
+`backend/uploads/` y se siguen sirviendo en `/uploads/...` (solo lectura). Las
+que se habían subido a Render ya se habían perdido con el disco: esos
+estacionamientos hay que volver a cargarles fotos.
 
 Se suben apenas se eligen y no al mandar el formulario, así el dueño ve la
 miniatura al instante y se entera ahí si una pesa de más.
@@ -525,8 +581,8 @@ archivo lo inventa el servidor (nunca se usa el del cliente), solo se aceptan
 cinco tipos de imagen, hay límite de tasa propio, y los archivos se sirven con
 `nosniff` y una CSP restrictiva para que nada disfrazado de imagen se ejecute.
 
-Cuando haga falta S3 o Cloudinary se cambia solo `backend/src/services/uploads.js`:
-el resto del código únicamente ve la URL que devuelve.
+Todo vive en `backend/src/services/uploads.js`: el resto del código
+únicamente ve la URL que devuelve.
 
 ---
 
@@ -1368,7 +1424,7 @@ npm --prefix backend run test:unit         # sin base de datos
 npm --prefix backend run test:integration  # contra la base real
 ```
 
-**188 tests**, sobre lo que duele si se rompe:
+**189 tests**, sobre lo que duele si se rompe:
 
 - **Patentes argentinas** — formatos viejo, Mercosur y de moto; normalización.
 - **Teléfonos** — las diez formas en que la gente escribe un número (`011 15 …`,
@@ -1464,8 +1520,9 @@ históricos.
 ### La sesión del panel se cierra a los 15 minutos
 
 Solo en el panel: el sitio público no tiene sesión. Cuentan clics, teclas,
-scroll y toques; **no** cuenta tener la pestaña abierta, ni que el cliente HTTP
-renueve el token solo. Un minuto antes aparece un aviso con un botón para seguir
+scroll, movimiento del mouse y toques; **no** cuenta tener la pestaña abierta,
+ni que el cliente HTTP renueve el token solo, ni los pedidos automáticos (los
+contadores de Reservas y Solicitudes que se refrescan cada minuto). Un minuto antes aparece un aviso con un botón para seguir
 conectado, y ahí mover el mouse no alcanza: hay que apretarlo, para que nadie
 pierda la sesión sin enterarse de que estuvo por perderla.
 
@@ -1693,6 +1750,102 @@ primera pantalla), título de 28 px en vez de 40, pestañas en una sola línea y
 la tarjeta con menos relleno lateral y más aire entre campos, siguiendo el
 hero mobile de SpotHero. Verificado en 360, 375 y 430 px, sin scroll
 horizontal.
+
+### Por qué el cierre por inactividad andaba en localhost y no en Render
+
+**Causa raíz:** los 15 minutos se contaban con un `setTimeout` en la memoria
+de la pestaña, y nada más. Probándolo en localhost (pestaña al frente, mirando
+el reloj) funciona. En el uso real del sitio publicado ese temporizador se
+pierde:
+
+- el navegador **congela o descarta las pestañas en segundo plano** (ahorro de
+  energía/memoria de Chrome y Edge): un temporizador congelado no dispara;
+- la notebook **se suspende** con el panel abierto;
+- al volver, la pestaña **se recarga** y la app arrancaba una cuenta nueva de
+  15 minutos con los tokens que seguían en `localStorage`: la sesión quedaba
+  abierta indefinidamente.
+
+Además, el scroll del panel ocurre dentro del contenedor de contenido y el
+evento `scroll` no burbujea hasta `window`, donde se escuchaba: scrollear el
+panel no contaba como actividad. Se revisaron también las otras hipótesis y se
+descartaron: no hay ningún chequeo de `NODE_ENV` ni de modo desarrollo en este
+mecanismo, la minificación no lo toca, la sesión no usa cookies (los tokens van
+en `localStorage`), y los pedidos automáticos nunca reiniciaron el contador:
+solo lo hacen los eventos del DOM.
+
+**La solución** (`frontend/src/hooks/useSesionPanel.js`):
+
+- La hora de la **última interacción se guarda** en `localStorage`
+  (`spotnear.ultimaActividad`) y se compara contra el reloj real cada 5 s, al
+  volver a la pestaña y al recuperar el foco. Si pasaron 15 minutos —con la
+  pestaña congelada, la compu dormida o lo que sea—, se cierra apenas el código
+  vuelve a correr.
+- **Al cargar la app** (`AuthContext`), si la sesión guardada lleva más de 15
+  minutos sin uso, se cierra antes de mostrar nada y el login dice "Tu sesión se
+  cerró por inactividad".
+- Los eventos se escuchan en `document` en fase de captura, así el scroll de
+  cualquier contenedor cuenta.
+- El cierre local ya no espera la respuesta del servidor: con el plan gratis el
+  backend puede tardar un minuto en despertar. Se limpia la sesión en el acto y
+  el refresh token se revoca en segundo plano.
+- Como la marca es compartida, usar el panel en una pestaña cuenta como
+  actividad para todas.
+
+Probado en el navegador: aviso a los 14 minutos, cierre a los 15 y cierre al
+recargar una sesión vieja, con el refresh token revocado en el servidor (401 al
+intentar reusarlo).
+
+### Pantallas de laptop (1366x768)
+
+La escala tipográfica era la misma en todos los anchos (texto base de 15 px,
+secundario de 13 px). En un monitor grande se lee bien; en una notebook de
+1366x768, que físicamente es chica, se veía diminuto. Hay un breakpoint nuevo
+en `styles/variables.css` para **1024–1599 px** —cubre 1280, 1366 y 1440, y
+también 1536/1920 con el escalado de Windows al 125–150 %—, que sube un escalón
+el texto de lectura (base 16 px, secundario 14 px, chico 13 px), ensancha un
+poco el contenedor (1240 px) y el menú del panel (264 px). Como todo el CSS usa
+esos tokens, el ajuste llega a las pantallas públicas y al panel sin tocarlas
+una por una. En el celular y en 1600 px o más, nada cambia.
+
+### El horario en la tarjeta de resultados
+
+Se muestra junto a los otros tags (cubierto, servicios), con un reloj:
+"Abierto las 24 horas", "Abre 06:00 · Cierra 22:00" o "Abre 18:00 · Cierra al
+finalizar el evento". En los modos con hora, es la del **día buscado** (cada
+día puede tener la suya); si ese día cierra, dice "Cerrado ese día". También va
+en el tooltip del marcador del mapa. Sale de `utils/horarios.js` →
+`leyendaHorario`, la misma lógica de los tres modos que ya usaba la ficha.
+
+### Si los pagos de prueba fallan con «Algo salió mal»
+
+El 04/10/2026 todos los pagos de prueba empezaron a fallar con "Algo salió
+mal... No pudimos procesar tu pago". **No era Render ni el código**: se
+reprodujo igual en local, y creando el pago **directo contra la API de Mercado
+Pago**, sin pasar por SpotNear, la respuesta fue `HTTP 500 internal_error` con
+cualquier tarjeta (Master, Visa, Amex), en efectivo y con cualquier email. Las
+preferencias se crean bien, con las URLs correctas de Render. Lo que falla es la
+creación del pago del lado de Mercado Pago para esas credenciales.
+
+Para revisarlo sin adivinar:
+
+```bash
+cd backend && npm run mp:diagnostico
+```
+
+Revisa, sin imprimir las credenciales: que sean del mismo tipo, de qué cuenta
+son, si se puede crear una preferencia y si se puede crear un pago de prueba con
+la tarjeta `APRO`. Si el último paso falla con 500, es de la cuenta o de la
+aplicación de Mercado Pago:
+
+1. Regenerá las **credenciales de prueba** en Mercado Pago Developers → *Tus
+   integraciones* → *SpotNear* → *Credenciales de prueba*, cargalas en
+   `backend/.env` y en Render, y volvé a correr el diagnóstico.
+2. Si sigue fallando, usá cuentas de prueba: en la aplicación, *Cuentas de
+   prueba* → creá una **vendedora** y una **compradora**; con la vendedora
+   (en incógnito) creá una aplicación y usá sus **credenciales de producción**
+   (`APP_USR-…`) en el backend; pagá iniciando sesión con la compradora.
+3. Si nada de eso alcanza, reclamo al soporte de Mercado Pago con el
+   `x-request-id` que imprime el diagnóstico.
 
 ### Antes de pagar, nunca se dice "tu lugar está apartado"
 

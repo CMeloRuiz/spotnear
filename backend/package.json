@@ -21,7 +21,8 @@
     "test": "node --import ./tests/setup.js --test --test-concurrency=1 \"tests/**/*.test.js\"",
     "test:unit": "node --import ./tests/setup.js --test \"tests/unit/*.test.js\"",
     "test:integration": "node --import ./tests/setup.js --test --test-concurrency=1 \"tests/integration/*.test.js\"",
-    "db:limpiar-pruebas": "node prisma/limpiar-pruebas.js"
+    "db:limpiar-pruebas": "node prisma/limpiar-pruebas.js",
+    "mp:diagnostico": "node prisma/diagnostico-mercadopago.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -29,6 +30,7 @@
   "dependencies": {
     "@prisma/client": "^6.2.1",
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

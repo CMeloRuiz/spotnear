@@ -92,6 +92,8 @@ router.get('/config', (req, res) => {
       automatico: envioAutomatico(),
     },
     email: { configurado: env.mailHabilitado },
+    // false = el formulario de alta avisa que no se pueden subir fotos todavía.
+    fotos: { configurado: env.cloudinaryHabilitado },
   });
 });
 

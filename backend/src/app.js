@@ -61,9 +61,10 @@ export function crearApp() {
   app.use('/api', limiteGeneral);
 
   // ── Archivos subidos ──
-  // Las fotos de los estacionamientos viven en backend/uploads y se sirven
-  // desde acá. Van con nosniff y sin index para que un archivo que se haya
-  // colado disfrazado de imagen no se pueda ejecutar ni listar la carpeta.
+  // Las fotos nuevas van a Cloudinary (services/uploads.js). Esto queda solo
+  // para servir, en desarrollo, las que se subieron a backend/uploads antes del
+  // cambio: no se escribe más ahí. Van con nosniff y sin index para que un
+  // archivo disfrazado de imagen no se pueda ejecutar ni listar la carpeta.
   app.use(
     '/uploads',
     express.static(DIR_UPLOADS, {

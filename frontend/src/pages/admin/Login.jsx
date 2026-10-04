@@ -1,7 +1,7 @@
 /**
  * Ingreso al panel administrativo.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
 import Logo from '../../components/layout/Logo.jsx';
 import { Campo } from '../../components/ui/Campo.jsx';
@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useTitulo } from '../../hooks/index.js';
 import { validarLogin, sinErrores } from '../../utils/validaciones.js';
 import textos from '../../i18n/textos.js';
+import { leerCierreAlCargar, olvidarCierreAlCargar } from '../../hooks/useSesionPanel.js';
 import './Login.css';
 
 export function Login() {
@@ -32,9 +33,12 @@ export function Login() {
     inactividad: 'cerradaPorInactividad',
     passwordCambiada: 'cerradaPorCambioDePassword',
   };
-  const motivoCierre = ubicacion.state?.motivo
-    ? textos.admin.sesion[MOTIVOS[ubicacion.state.motivo] ?? 'cerradaEnOtraPestana']
-    : null;
+  // Si la sesión venció mientras la pestaña estaba cerrada o dormida, el
+  // motivo no viene en la redirección sino anotado por AuthContext.
+  const [motivoAlCargar] = useState(leerCierreAlCargar);
+  useEffect(() => olvidarCierreAlCargar(), []);
+  const motivo = ubicacion.state?.motivo ?? motivoAlCargar;
+  const motivoCierre = motivo ? textos.admin.sesion[MOTIVOS[motivo] ?? 'cerradaEnOtraPestana'] : null;
 
   // Ya logueado: derecho al panel (o a donde quería ir antes).
   if (!cargando && autenticado) {

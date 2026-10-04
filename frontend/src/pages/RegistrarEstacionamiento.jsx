@@ -19,7 +19,7 @@ import BuscadorDireccion from '../components/busqueda/BuscadorDireccion.jsx';
 import { MAP_ID, useEstadoMapas } from '../components/mapas/ProveedorMapas.jsx';
 import { publico } from '../services/spotnear.service.js';
 import { precio as fmtPrecio } from '../utils/formato.js';
-import { useTitulo } from '../hooks/index.js';
+import { usePedido, useTitulo } from '../hooks/index.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { esEmailValido, esTelefonoValido, normalizarTelefono } from '../utils/validaciones.js';
 import textos from '../i18n/textos.js';
@@ -89,6 +89,11 @@ export function RegistrarEstacionamiento() {
   const [enviando, setEnviando] = useState(false);
   const [listo, setListo] = useState(null);
 
+  // ¿El servidor tiene dónde guardar las fotos (Cloudinary)? Mientras carga la
+  // configuración se asume que sí: el caso normal no tiene que parpadear.
+  const { datos: config } = usePedido(() => publico.config(), []);
+  const subidaDeFotosConfigurada = config?.fotos?.configurado !== false;
+
   const set = (cambios) => {
     setForm((f) => ({ ...f, ...cambios }));
     // Se limpian solo los errores de los campos tocados, no todos: si el
@@ -134,8 +139,10 @@ export function RegistrarEstacionamiento() {
       e.tiposVehiculo = 'Elegí al menos un tipo de vehículo.';
     }
     // Las fotos pasaron a ser obligatorias: sin al menos una, el estacionamiento
-    // se publica con el placeholder y nadie lo reserva.
-    if (fotosDelFormulario(form).length === 0) {
+    // se publica con el placeholder y nadie lo reserva. Salvo que la subida no
+    // esté configurada en el servidor: ahí no se puede exigir lo que no se
+    // puede hacer.
+    if (subidaDeFotosConfigurada && fotosDelFormulario(form).length === 0) {
       e.fotos = t.fotosFaltan;
     }
     return e;
@@ -645,6 +652,7 @@ export function RegistrarEstacionamiento() {
 
                 <SubirFotos
                   fotos={form.fotos}
+                  deshabilitada={!subidaDeFotosConfigurada}
                   onChange={(fotos) => set({ fotos })}
                   error={errores.fotos}
                 />

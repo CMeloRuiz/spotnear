@@ -63,4 +63,44 @@ export function resumenHorario(parking) {
   return textos.parking.horarioFijoResumen;
 }
 
-export default { TIPOS_HORARIO, DIAS, tipoDeHorario, textoDelDia, resumenHorario };
+/** Día de la semana ('lun'…'dom') de una fecha, en la hora de Buenos Aires. */
+const CLAVE_POR_DIA = { Mon: 'lun', Tue: 'mar', Wed: 'mie', Thu: 'jue', Fri: 'vie', Sat: 'sab', Sun: 'dom' };
+export function claveDelDia(fecha) {
+  const corto = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    timeZone: 'America/Argentina/Buenos_Aires',
+  }).format(fecha);
+  return CLAVE_POR_DIA[corto];
+}
+
+/**
+ * Leyenda corta del horario para la tarjeta de resultados y el mapa.
+ *
+ *  · ABIERTO_24HS → "Abierto las 24 horas"
+ *  · FIN_EVENTO   → "Abre 18:00 · Cierra al finalizar el evento"
+ *  · FIJO         → "Abre 06:00 · Cierra 22:00"
+ *
+ * En FIJO y FIN_EVENTO la hora es la del DÍA BUSCADO (cada día puede tener la
+ * suya). Si ese día no hay horario cargado, se muestra solo el modo; si ese
+ * día cierra, se dice. Devuelve null si no hay nada confiable para mostrar.
+ *
+ * @param {object} parking   Con tipoHorario y horarios.
+ * @param {Date} [fecha]     Ingreso buscado. Sin fecha, el día de hoy.
+ */
+export function leyendaHorario(parking, fecha = new Date()) {
+  const t = textos.parking;
+  const tipo = tipoDeHorario(parking);
+  if (tipo === 'ABIERTO_24HS') return t.modosHorario.ABIERTO_24HS;
+
+  const dia = parking?.horarios?.[claveDelDia(fecha)];
+  if (dia?.cerrado === true) return t.cerradoEseDia;
+
+  if (tipo === 'FIN_EVENTO') {
+    return dia?.abre ? `${t.abreA(dia.abre)} · ${t.cierraConEvento}` : t.cierraConEvento;
+  }
+  if (dia?.abre && dia?.cierra) return `${t.abreA(dia.abre)} · ${t.cierraA(dia.cierra)}`;
+  if (dia?.abre) return t.abreA(dia.abre);
+  return null;
+}
+
+export default { TIPOS_HORARIO, DIAS, tipoDeHorario, textoDelDia, resumenHorario, leyendaHorario };

@@ -155,6 +155,11 @@ export const textos = {
     desde: (hora) => `Desde ${hora}`,
     desdeHastaEvento: (hora) => `${hora} · hasta que termine el evento`,
     cierreEventoResumen: 'Cierra cuando termina el evento',
+    // Leyenda de la tarjeta de resultados (utils/horarios.js → leyendaHorario).
+    abreA: (hora) => `Abre ${hora}`,
+    cierraA: (hora) => `Cierra ${hora}`,
+    cierraConEvento: 'Cierra al finalizar el evento',
+    cerradoEseDia: 'Cerrado ese día',
     horarioFijoResumen: 'Horario fijo',
     modosHorario: {
       FIJO: 'Horario fijo',
@@ -859,6 +864,9 @@ export const textos = {
     fotos: 'Fotos',
     fotosAyuda:
       'Mostrá la entrada, el interior y la cartelería. La primera es la que se ve en los resultados.',
+    fotosNoConfiguradasTitulo: 'La subida de fotos todavía no está disponible',
+    fotosNoConfiguradas:
+      'Podés mandar la solicitud sin fotos, o pegar links de fotos publicadas en otro lado (abajo). Las agregamos antes de publicar tu estacionamiento.',
     fotosSoltar: 'Arrastrá tus fotos acá',
     fotosOSeleccionar: 'o elegilas desde tu dispositivo',
     fotosBoton: 'Elegir fotos',

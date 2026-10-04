@@ -1,0 +1,33 @@
+/* Mi cuenta: una tarjeta angosta con el formulario de contraseña.
+   Usa la cabecera y el cuerpo de sección del resto del panel, así el aire
+   interno es el mismo que en Tarifas o Equipo. */
+
+.sn-cuenta {
+  max-width: 560px;
+}
+
+.sn-cuenta__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e4);
+}
+
+/* El aviso y el botón son el cierre del formulario: más separados de los
+   campos que los campos entre sí. */
+.sn-cuenta__form .sn-aviso {
+  margin-top: var(--sn-e2);
+}
+
+.sn-cuenta__acciones {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--sn-e4);
+  margin-top: var(--sn-e1);
+  border-top: 1px solid var(--sn-borde);
+}
+
+@media (max-width: 520px) {
+  .sn-cuenta__acciones .sn-boton {
+    width: 100%;
+  }
+}

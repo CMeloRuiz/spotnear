@@ -121,12 +121,15 @@ export const auth = {
   },
 
   async logout() {
+    // Se lee el refresh token ANTES de cualquier await: quien llama puede
+    // limpiar la sesión local enseguida, sin esperar esta respuesta.
     const refreshToken = tokens.refresh;
     try {
       if (refreshToken) await api.post('/auth/logout', { refreshToken });
     } finally {
-      // Aunque el servidor no responda, la sesión local se cierra igual.
-      tokens.limpiar();
+      // Aunque el servidor no responda, la sesión local se cierra igual. Salvo
+      // que mientras tanto se haya iniciado OTRA sesión: esa no se toca.
+      if (tokens.refresh === refreshToken) tokens.limpiar();
     }
   },
 

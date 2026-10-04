@@ -10,6 +10,7 @@
  */
 import { useId, useRef, useState } from 'react';
 import { Icono } from './Iconos.jsx';
+import { Aviso } from './Varios.jsx';
 import { publico } from '../../services/spotnear.service.js';
 import textos from '../../i18n/textos.js';
 import './SubirFotos.css';
@@ -28,8 +29,9 @@ const TIPOS = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/hei
  * @param {string[]} props.fotos URLs ya cargadas
  * @param {(fotos: string[]) => void} props.onChange
  * @param {string} [props.error]
+ * @param {boolean} [props.deshabilitada]  El servidor no tiene dónde guardarlas (sin Cloudinary)
  */
-export function SubirFotos({ fotos, onChange, error }) {
+export function SubirFotos({ fotos, onChange, error, deshabilitada = false }) {
   const idInput = useId();
   const inputRef = useRef(null);
 
@@ -98,6 +100,16 @@ export function SubirFotos({ fotos, onChange, error }) {
 
   const mensaje = error ?? errorLocal;
   const lleno = fotos.length >= MAX_FOTOS;
+
+  // Sin almacenamiento configurado no se ofrece una zona de carga que va a
+  // fallar: se avisa de entrada, antes de que elijan archivos.
+  if (deshabilitada) {
+    return (
+      <Aviso tipo="aviso">
+        <strong>{t.fotosNoConfiguradasTitulo}.</strong> {t.fotosNoConfiguradas}
+      </Aviso>
+    );
+  }
 
   return (
     <div className="sn-fotos">

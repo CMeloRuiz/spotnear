@@ -20,6 +20,7 @@ import { asyncHandler } from '../../middleware/error.js';
 import { requiereAuth, requiereRol } from '../../middleware/auth.js';
 import { limiteAltaEstacionamiento, limiteSubidaFotos } from '../../middleware/rateLimit.js';
 import errores from '../../utils/errors.js';
+import env from '../../config/env.js';
 import { auditar } from '../../services/audit.js';
 import { hashearPassword } from '../auth/auth.service.js';
 import { notificarAltaEstacionamiento } from '../../services/notifications/index.js';
@@ -27,7 +28,7 @@ import { aNumero } from '../../utils/money.js';
 import { TIPOS_HORARIO } from '../../utils/horarios.js';
 import {
   subirFotosParking,
-  urlPublica,
+  guardarFotos,
   traducirErrorDeSubida,
   MAX_FOTOS,
 } from '../../services/uploads.js';
@@ -104,7 +105,7 @@ function aSolicitud(p) {
 /**
  * POST /api/v1/onboarding/fotos
  *
- * Sube las fotos del estacionamiento y devuelve sus URLs. Va separado del alta
+ * Sube las fotos del estacionamiento a Cloudinary y devuelve sus URLs. Va separado del alta
  * para que el dueño vea la miniatura apenas elige el archivo, en vez de esperar
  * a mandar todo el formulario junto y descubrir ahí que una foto pesaba de más.
  *
@@ -125,13 +126,9 @@ routerPublico.post(
       throw errores.datosInvalidos(undefined, 'No llegó ninguna foto.');
     }
 
-    res.status(201).json({
-      fotos: archivos.map((a) => ({
-        url: urlPublica(a.filename),
-        nombre: a.originalname,
-        bytes: a.size,
-      })),
-    });
+    // A Cloudinary: lo que vuelve es la URL https permanente, y es lo único
+    // que después se guarda en la base (ParkingPhoto.url).
+    res.status(201).json({ fotos: await guardarFotos(archivos) });
   }),
 );
 
@@ -179,9 +176,12 @@ routerPublico.post(
         horarios: esquemaHorarios,
         // Al menos una foto, validado también acá y no solo en el formulario:
         // el endpoint es público y cualquiera puede postear sin pasar por la web.
+        // Excepción: sin Cloudinary configurado no hay dónde subirlas, y trabar
+        // el alta por un problema de configuración nuestro sería peor. Ahí
+        // son opcionales y el formulario lo avisa (ver README → "Imágenes").
         fotos: z
           .array(z.string().trim().url('Las fotos tienen que ser URLs válidas.'))
-          .min(1, 'Subí al menos una foto de tu estacionamiento.')
+          .min(env.cloudinaryHabilitado ? 1 : 0, 'Subí al menos una foto de tu estacionamiento.')
           .max(MAX_FOTOS, `Podés subir hasta ${MAX_FOTOS} fotos.`),
       }),
       // ── Condiciones ──

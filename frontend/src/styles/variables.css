@@ -160,6 +160,32 @@
   --sn-z-toast: 600;
 }
 
+/*
+ * Laptops (1024–1599px de ancho: 1280, 1366, 1440, y los 1536/1920 con el
+ * escalado de Windows al 125–150 %).
+ *
+ * La escala de arriba está pensada para el celular y para monitores grandes,
+ * donde 13–15 px se leen bien. En una notebook de 1366x768 la pantalla es
+ * físicamente chica y el mismo texto se veía diminuto. Acá se sube un escalón
+ * el texto de lectura (párrafos, labels, tarjetas, tablas) y un poco el aire
+ * horizontal; los títulos grandes quedan igual, que ya ocupan lo suyo.
+ * Todo el CSS usa estos tokens, así que el ajuste llega a todas las pantallas
+ * —públicas y panel— sin tocarlas una por una.
+ */
+@media (min-width: 1024px) and (max-width: 1599px) {
+  :root {
+    --sn-texto-2xs: 0.75rem; /* 12px */
+    --sn-texto-xs: 0.8125rem; /* 13px */
+    --sn-texto-sm: 0.875rem; /* 14px */
+    --sn-texto-base: 1rem; /* 16px */
+    --sn-texto-md: 1.0625rem; /* 17px */
+    --sn-texto-lg: 1.1875rem; /* 19px */
+    --sn-texto-xl: 1.4375rem; /* 23px */
+    --sn-ancho-max: 1240px;
+    --sn-ancho-sidebar: 264px;
+  }
+}
+
 /* Quien prefiere menos movimiento, no lo tiene. */
 @media (prefers-reduced-motion: reduce) {
   :root {

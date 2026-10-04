@@ -13,19 +13,28 @@ import { Icono } from '../ui/Iconos.jsx';
 import { precio as fmtPrecio } from '../../utils/formato.js';
 import { MAP_ID, useEstadoMapas } from '../mapas/ProveedorMapas.jsx';
 import textos from '../../i18n/textos.js';
+import { leyendaHorario } from '../../utils/horarios.js';
 import './MapaResultados.css';
 
 /* ═══════════════════ Burbuja de precio ═══════════════════ */
 
-/** "Parking X · 60 lugares · 12 disponibles en tu horario", para el tooltip. */
-function cupos(resultado) {
+/**
+ * Tooltip del marcador: "Parking X · 60 lugares · 12 disponibles en tu horario
+ * · Abre 06:00 · Cierra 22:00".
+ */
+function cupos(resultado, fecha) {
   const d = resultado.disponibilidad;
-  if (!d?.capacidadTotal) return resultado.nombre;
-  const libres = d.hayLugar ? textos.resultados.disponibles(d.libres) : textos.resultados.sinDisponibilidad;
-  return `${resultado.nombre} · ${textos.resultados.capacidad(d.capacidadTotal)} · ${libres}`;
+  const partes = [resultado.nombre];
+  if (d?.capacidadTotal) {
+    partes.push(textos.resultados.capacidad(d.capacidadTotal));
+    partes.push(d.hayLugar ? textos.resultados.disponibles(d.libres) : textos.resultados.sinDisponibilidad);
+  }
+  const horario = leyendaHorario(resultado, fecha);
+  if (horario) partes.push(horario);
+  return partes.join(' · ');
 }
 
-function Burbuja({ resultado, resaltado, seleccionado, mostrarTotal, onClick, onHover }) {
+function Burbuja({ resultado, resaltado, seleccionado, mostrarTotal, onClick, onHover, fecha }) {
   const valor = mostrarTotal ? resultado.precio.total : resultado.precioDesde;
   const sinLugar = !resultado.disponibilidad?.hayLugar;
 
@@ -47,7 +56,7 @@ function Burbuja({ resultado, resaltado, seleccionado, mostrarTotal, onClick, on
       onMouseEnter={() => onHover(resultado.id)}
       onMouseLeave={() => onHover(null)}
       aria-label={`${resultado.nombre}, ${fmtPrecio(valor)}`}
-      title={cupos(resultado)}
+      title={cupos(resultado, fecha)}
     >
       {fmtPrecio(valor)}
     </button>
@@ -134,6 +143,7 @@ function MapaGoogle({
   resaltado,
   seleccionado,
   mostrarTotal,
+  fecha,
   onSeleccionar,
   onResaltar,
   onBuscarZona,
@@ -184,6 +194,7 @@ function MapaGoogle({
               resaltado={resaltado === r.id}
               seleccionado={seleccionado === r.id}
               mostrarTotal={mostrarTotal}
+              fecha={fecha}
               onClick={onSeleccionar}
               onHover={onResaltar}
             />
@@ -247,6 +258,7 @@ function MapaAlternativo({
   resaltado,
   seleccionado,
   mostrarTotal,
+  fecha,
   onSeleccionar,
   onResaltar,
 }) {
@@ -294,6 +306,7 @@ function MapaAlternativo({
                 resaltado={resaltado === r.id}
                 seleccionado={seleccionado === r.id}
                 mostrarTotal={mostrarTotal}
+                fecha={fecha}
                 onClick={onSeleccionar}
                 onHover={onResaltar}
               />

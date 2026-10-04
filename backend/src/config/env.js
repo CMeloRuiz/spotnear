@@ -39,6 +39,13 @@ const schema = z.object({
   // Alternativa a SMTP: una sola API key, sin servidor de correo.
   RESEND_API_KEY: z.string().optional().default(''),
 
+  // Almacenamiento de imágenes (fotos de estacionamientos). Render borra el
+  // disco del servicio en cada deploy y cada vez que se duerme: las fotos van a
+  // Cloudinary y en la base queda solo su URL. Ver README → "Imágenes".
+  CLOUDINARY_CLOUD_NAME: z.string().optional().default(''),
+  CLOUDINARY_API_KEY: z.string().optional().default(''),
+  CLOUDINARY_API_SECRET: z.string().optional().default(''),
+
   WHATSAPP_PROVIDER: z.enum(['link', 'twilio', 'cloud_api']).default('link'),
   // Twilio: el camino corto para que el aviso al grupo salga solo.
   TWILIO_ACCOUNT_SID: z.string().optional().default(''),
@@ -136,6 +143,10 @@ export const env = {
   whatsappCloudHabilitado:
     raw.WHATSAPP_PROVIDER === 'cloud_api' &&
     Boolean(raw.WHATSAPP_PHONE_NUMBER_ID && raw.WHATSAPP_ACCESS_TOKEN),
+  /** ¿Están las tres credenciales de Cloudinary? Sin ellas no se pueden subir fotos. */
+  cloudinaryHabilitado: Boolean(
+    raw.CLOUDINARY_CLOUD_NAME && raw.CLOUDINARY_API_KEY && raw.CLOUDINARY_API_SECRET,
+  ),
   /** ¿Se puede cobrar de verdad con Mercado Pago? */
   mercadopagoHabilitado: Boolean(raw.MERCADOPAGO_ACCESS_TOKEN),
   /** Credenciales de prueba (sandbox) vs. de producción. */

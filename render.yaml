@@ -99,6 +99,14 @@ services:
       - key: MERCADOPAGO_WEBHOOK_SECRET
         sync: false
 
+      # ── Imágenes: Cloudinary (las fotos NO se guardan en el disco de Render) ──
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
       # ── Email: Resend (recomendado) o SMTP ──
       - key: RESEND_API_KEY
         sync: false
@@ -147,14 +155,9 @@ services:
       - key: RATE_LIMIT_RESERVA_MAX
         value: "20"
 
-    # ⚠ Fotos de los estacionamientos: se guardan en backend/uploads. En el
-    # plan free el disco se borra en cada deploy o reinicio, y las fotos
-    # subidas se pierden. Para conservarlas hace falta un plan pago con disco
-    # persistente montado ahí (ver README → "Desplegar en Render"):
-    # disk:
-    #   name: uploads
-    #   mountPath: /opt/render/project/src/backend/uploads
-    #   sizeGB: 1
+    # Fotos de los estacionamientos: van a Cloudinary (CLOUDINARY_* arriba).
+    # El backend no escribe nada en su disco, que en Render se borra en cada
+    # deploy: no hace falta montar un disco persistente.
 
   # ───────────────────────────── Frontend (web) ─────────────────────────────
   - type: web

@@ -18,6 +18,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useTitulo } from '../../hooks/index.js';
 import textos from '../../i18n/textos.js';
+import './MiCuenta.css';
 
 /** La misma regla mínima que exige el backend para cualquier contraseña. */
 const LARGO_MINIMO = 8;
@@ -86,10 +87,12 @@ export function MiCuenta() {
         </div>
       </header>
 
-      <section className="sn-panel__seccion" style={{ maxWidth: 520 }}>
-        <h2 className="sn-panel__seccion-titulo">{t.cambiarPassword}</h2>
+      <section className="sn-panel__seccion sn-cuenta">
+        <div className="sn-panel__seccion-cabecera">
+          <h2 className="sn-panel__seccion-titulo">{t.cambiarPassword}</h2>
+        </div>
 
-        <form className="sn-form" onSubmit={guardar} noValidate>
+        <form className="sn-panel__seccion-cuerpo sn-cuenta__form" onSubmit={guardar} noValidate>
           <Campo
             name="actual"
             type={tipo}
@@ -130,7 +133,7 @@ export function MiCuenta() {
 
           <Aviso tipo="info">{t.aviso}</Aviso>
 
-          <div>
+          <div className="sn-cuenta__acciones">
             <button type="submit" className="sn-boton sn-boton--primario" disabled={guardando}>
               {guardando ? (
                 <span className="sn-spinner" style={{ width: 16, height: 16 }} aria-hidden="true" />
