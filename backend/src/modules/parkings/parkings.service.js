@@ -216,9 +216,16 @@ export async function buscarParkings(filtros) {
   }
 
   ordenarResultados(resultados, orden);
-  asignarEtiquetas(resultados);
 
-  return resultados;
+  // Los que no tienen lugar en ese horario (cuando se los pide, con
+  // soloDisponibles=false) van al final y sin etiquetas: "Más cerca" o "Más
+  // barato" sobre uno que no se puede reservar sería invitar a un clic inútil.
+  const conLugar = resultados.filter((r) => r.disponibilidad.hayLugar);
+  const sinLugar = resultados.filter((r) => !r.disponibilidad.hayLugar);
+  for (const r of sinLugar) r.etiquetas = [];
+  asignarEtiquetas(conLugar);
+
+  return [...conLugar, ...sinLugar];
 }
 
 /** Ordena in-place según el criterio elegido. */

@@ -1,8 +1,8 @@
 /**
  * Capa de pagos.
  *
- * Se cobra ÚNICAMENTE LA SEÑA: el 10% de la tarifa, que el cliente paga online
- * para apartar el lugar y que no se devuelve. El resto de la tarifa lo cobra el
+ * Se cobra ÚNICAMENTE LA SEÑA: el 20% de la tarifa, que el cliente paga online
+ * para reservar el lugar y que no se devuelve. El resto de la tarifa lo cobra el
  * estacionamiento en el lugar, directo del cliente; SpotNear no lo intermedia y
  * por lo tanto no le transfiere nada al dueño después.
  *

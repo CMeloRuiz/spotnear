@@ -131,15 +131,29 @@
   color: var(--sn-tinta-suave);
 }
 
-.sn-tarjeta-parking__urgencia {
-  display: inline-flex;
+/* Cupos: "60 lugares · 12 disponibles en tu horario" */
+.sn-tarjeta-parking__cupos {
+  display: flex;
   align-items: center;
   gap: var(--sn-e1);
   margin-top: var(--sn-e1);
   font-size: var(--sn-texto-xs);
+  color: var(--sn-tinta-suave);
+}
+
+.sn-tarjeta-parking__cupos strong {
   font-weight: var(--sn-peso-bold);
+  color: var(--sn-ok);
+}
+
+.sn-tarjeta-parking__cupos--pocos strong {
   color: var(--sn-aviso-texto);
 }
+
+.sn-tarjeta-parking__cupos--sin-lugar strong {
+  color: var(--sn-error);
+}
+
 
 /* ── Precio ── */
 

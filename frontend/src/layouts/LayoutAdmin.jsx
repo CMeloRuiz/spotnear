@@ -24,7 +24,13 @@ import './LayoutAdmin.css';
  */
 const SECCIONES = [
   { a: '/panel', icono: 'tablero', texto: textos.admin.nav.dashboard, exacta: true },
-  { a: '/panel/reservas', icono: 'ticket', texto: textos.admin.nav.reservas },
+  {
+    a: '/panel/reservas',
+    icono: 'ticket',
+    texto: textos.admin.nav.reservas,
+    // Reservas confirmadas que el dueño o el playero todavía no vio.
+    contador: 'reservas',
+  },
   {
     a: '/panel/mi-estacionamiento',
     icono: 'edificio',
@@ -53,7 +59,26 @@ const SECCIONES = [
     texto: textos.admin.nav.comisiones,
     roles: ['SUPERADMIN', 'OWNER'],
   },
+  {
+    a: '/panel/catalogo-vehiculos',
+    icono: 'auto',
+    texto: textos.admin.nav.catalogoVehiculos,
+    roles: ['SUPERADMIN'],
+  },
+  // Para los tres roles: cada uno ve y cambia solo lo suyo.
+  { a: '/panel/cuenta', icono: 'usuario', texto: textos.admin.nav.miCuenta },
 ];
+
+/** Dónde se recuerda si el menú lateral está contraído (por navegador). */
+const CLAVE_MENU_COLAPSADO = 'spotnear.panel.menuColapsado';
+
+function leerColapsado() {
+  try {
+    return localStorage.getItem(CLAVE_MENU_COLAPSADO) === '1';
+  } catch {
+    return false;
+  }
+}
 
 export function LayoutAdmin() {
   const { usuario, cargando, autenticado, rol, salir } = useAuth();
@@ -63,6 +88,25 @@ export function LayoutAdmin() {
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   useBloquearScroll(menuAbierto && esMovil);
+
+  /**
+   * Menú lateral contraído: solo íconos, con el nombre de cada sección como
+   * tooltip. Es una preferencia de pantalla, así que vive en el navegador
+   * (localStorage) y no en el servidor. En el celular no aplica: ahí el menú
+   * es un panel que se abre y se cierra.
+   */
+  const [colapsado, setColapsado] = useState(leerColapsado);
+  const colapsadoEfectivo = colapsado && !esMovil;
+  const alternarColapsado = () => {
+    setColapsado((v) => {
+      try {
+        localStorage.setItem(CLAVE_MENU_COLAPSADO, v ? '0' : '1');
+      } catch {
+        /* sin localStorage la preferencia dura lo que dura la pestaña */
+      }
+      return !v;
+    });
+  };
 
   /**
    * Cierre de sesión automático.
@@ -104,6 +148,35 @@ export function LayoutAdmin() {
   );
   useRefrescoAutomatico(recargarPendientes, { activo: autenticado && esSuperadmin });
   const solicitudesPendientes = datosPendientes?.pendientes ?? 0;
+
+  /**
+   * Reservas nuevas para el dueño o el playero: confirmadas después de la
+   * última vez que abrió la lista de Reservas (criterio en el README). Mismo
+   * refresco que el de solicitudes. Al entrar a Reservas se marcan como vistas
+   * y el contador vuelve a 0.
+   */
+  const tieneParking = autenticado && !esSuperadmin;
+  const { datos: datosNuevas, recargar: recargarNuevas } = usePedido(
+    ({ signal }) => admin.reservas.nuevas({ signal }),
+    [ubicacion.pathname],
+    { inmediato: tieneParking },
+  );
+  useRefrescoAutomatico(recargarNuevas, { activo: tieneParking });
+  const reservasNuevas = datosNuevas?.nuevas ?? 0;
+
+  useEffect(() => {
+    if (!tieneParking || ubicacion.pathname !== '/panel/reservas') return;
+    admin.reservas
+      .marcarVistas()
+      .then(recargarNuevas)
+      .catch(() => {});
+  }, [tieneParking, ubicacion.pathname, recargarNuevas]);
+
+  const contadores = { solicitudes: solicitudesPendientes, reservas: reservasNuevas };
+  const etiquetaContador = {
+    solicitudes: (n) => `${n} ${n === 1 ? 'solicitud sin revisar' : 'solicitudes sin revisar'}`,
+    reservas: textos.admin.nav.reservasNuevas,
+  };
 
   if (cargando) return <Cargando texto="Verificando tu sesión..." />;
 
@@ -164,10 +237,14 @@ export function LayoutAdmin() {
         <BusquedaRapida className="sn-admin__buscador" />
 
         <div className="sn-admin__usuario">
-          <span className="sn-admin__usuario-datos">
+          <Link
+            to="/panel/cuenta"
+            className="sn-admin__usuario-datos"
+            title={textos.admin.nav.miCuenta}
+          >
             <strong>{usuario.nombre}</strong>
             <small>{usuario.parking?.nombre ?? textos.admin.roles[rol]}</small>
-          </span>
+          </Link>
           <button
             type="button"
             className="sn-admin__salir"
@@ -183,41 +260,68 @@ export function LayoutAdmin() {
       <div className="sn-admin__cuerpo">
         {/* ─────────── Navegación lateral ─────────── */}
         <nav
-          className={`sn-admin__lateral ${menuAbierto ? 'sn-admin__lateral--abierto' : ''}`}
+          className={[
+            'sn-admin__lateral',
+            menuAbierto ? 'sn-admin__lateral--abierto' : '',
+            colapsadoEfectivo ? 'sn-admin__lateral--colapsado' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           aria-label="Secciones del panel"
         >
-          <ul className="sn-admin__menu">
-            {secciones.map((s) => (
-              <li key={s.a}>
-                <NavLink
-                  to={s.a}
-                  end={s.exacta}
-                  className={({ isActive }) =>
-                    `sn-admin__link ${isActive ? 'sn-admin__link--activo' : ''}`
-                  }
-                >
-                  <Icono nombre={s.icono} tam={19} />
-                  {s.texto}
-                  {/* El contador solo aparece si hay algo que revisar: un "0"
-                      en el menú es ruido, no información. */}
-                  {s.contador === 'solicitudes' && solicitudesPendientes > 0 && (
-                    <span
-                      className="sn-admin__contador"
-                      aria-label={`${solicitudesPendientes} ${solicitudesPendientes === 1 ? 'solicitud sin revisar' : 'solicitudes sin revisar'}`}
+          <div>
+            {/* Contraer / expandir (solo en pantallas grandes). */}
+            <button
+              type="button"
+              className="sn-admin__colapsar"
+              onClick={alternarColapsado}
+              aria-expanded={!colapsado}
+              title={colapsado ? textos.admin.nav.expandirMenu : textos.admin.nav.contraerMenu}
+            >
+              <Icono nombre={colapsado ? 'flechaDerecha' : 'flechaIzquierda'} tam={16} />
+              <span className="sn-admin__link-texto">{textos.admin.nav.contraerMenu}</span>
+            </button>
+
+            <ul className="sn-admin__menu">
+              {secciones.map((s) => {
+                const n = s.contador ? contadores[s.contador] : 0;
+                return (
+                  <li key={s.a}>
+                    <NavLink
+                      to={s.a}
+                      end={s.exacta}
+                      // Contraído, el nombre de la sección queda como tooltip.
+                      title={colapsadoEfectivo ? s.texto : undefined}
+                      aria-label={colapsadoEfectivo ? s.texto : undefined}
+                      className={({ isActive }) =>
+                        `sn-admin__link ${isActive ? 'sn-admin__link--activo' : ''}`
+                      }
                     >
-                      {solicitudesPendientes > 99 ? '99+' : solicitudesPendientes}
-                    </span>
-                  )}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
+                      <Icono nombre={s.icono} tam={19} />
+                      <span className="sn-admin__link-texto">{s.texto}</span>
+                      {/* El contador solo aparece si hay algo que revisar: un "0"
+                          en el menú es ruido, no información. */}
+                      {n > 0 && (
+                        <span className="sn-admin__contador" aria-label={etiquetaContador[s.contador](n)}>
+                          {n > 99 ? '99+' : n}
+                        </span>
+                      )}
+                    </NavLink>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
 
           <div className="sn-admin__lateral-pie">
             <span className="sn-admin__rol">{textos.admin.roles[rol]}</span>
-            <Link to="/" className="sn-admin__ver-sitio">
+            <Link
+              to="/"
+              className="sn-admin__ver-sitio"
+              title={colapsadoEfectivo ? textos.admin.nav.verSitio : undefined}
+            >
               <Icono nombre="externo" tam={14} />
-              Ver el sitio
+              <span className="sn-admin__link-texto">{textos.admin.nav.verSitio}</span>
             </Link>
           </div>
         </nav>

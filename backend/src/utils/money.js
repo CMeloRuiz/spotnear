@@ -26,19 +26,19 @@ export function redondear(n, decimales = 2) {
 /**
  * Calcula comisión de SpotNear y neto del estacionamiento.
  * @param {number} precioTotal
- * @param {number} porcentaje  Ej: 10 para 10%.
+ * @param {number} porcentaje  Ej: 20 para 20%.
  * @returns {{ precioTotal: number, comisionPorcentaje: number, montoComision: number, montoNeto: number }}
  */
 /**
  * Desglose de cobro del modelo de SEÑA NO REEMBOLSABLE.
  *
- * El cliente paga online solo la seña (el 10% de la tarifa) para apartar el
+ * El cliente paga online solo la seña (el 20% de la tarifa) para reservar el
  * lugar. El resto lo paga en el estacionamiento, en efectivo o como maneje
  * cada lugar, igual que antes de que existiera SpotNear.
  *
  *     Estacionamiento  $12.000   ← lo paga ALLÁ, íntegro, al dueño
- *     Seña              $1.200   ← 10% sobre esa tarifa, se paga ACÁ y no se devuelve
- *     Total            $13.200   ← lo que le sale la reserva al cliente
+ *     Seña              $2.400   ← 20% sobre esa tarifa, se paga ACÁ y no se devuelve
+ *     Total            $14.400   ← lo que le sale la reserva al cliente
  *
  * La seña se SUMA, no se descuenta: el estacionamiento recibe el 100% de su
  * tarifa. Por eso `montoNeto === subtotal`, y no hay nada que liquidarle

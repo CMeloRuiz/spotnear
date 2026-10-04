@@ -115,10 +115,15 @@ router.post(
   '/cambiar-password',
   requiereAuth,
   validar({
-    body: z.object({
-      actual: z.string({ required_error: 'Ingresá tu contraseña actual.' }).min(1),
-      nueva: password,
-    }),
+    body: z
+      .object({
+        actual: z.string({ required_error: 'Ingresá tu contraseña actual.' }).min(1, 'Ingresá tu contraseña actual.'),
+        nueva: password,
+      })
+      .refine((d) => d.nueva !== d.actual, {
+        path: ['nueva'],
+        message: 'La contraseña nueva tiene que ser distinta de la actual.',
+      }),
   }),
   asyncHandler(async (req, res) => {
     await servicio.cambiarPassword(req.usuario.id, req.body);

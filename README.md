@@ -69,7 +69,7 @@ por WhatsApp sin obligar a nadie a dejar WhatsApp.
 - **Bandeja de solicitudes**: aprueba o rechaza los estacionamientos que se
   registraron por su cuenta.
 - Alta y baja de estacionamientos, con su usuario dueño.
-- Comisión configurable por estacionamiento (10% por defecto).
+- Comisión configurable por estacionamiento (20% por defecto).
 - Vista global de reservas y reporte de comisiones por estacionamiento o por mes.
 
 ---
@@ -445,7 +445,7 @@ Hay dos caminos, y los dos terminan en el mismo lugar.
 1. Entra a **`/registrar-estacionamiento`** (link en el header y en el pie).
 2. Completa tres pasos: sus datos, los del estacionamiento (dirección con Google
    Places y marcador ajustable) y las condiciones, donde ve escrita la
-   **comisión del 10%** y tiene que aceptarla explícitamente.
+   **comisión del 20%** y tiene que aceptarla explícitamente.
 3. Al enviar se crean de una sola vez el `Parking` y su usuario `OWNER`, pero
    **apagados**: `estado = PENDIENTE_APROBACION`, `activo = false` y
    `publicado = false`. Eso significa que no aparece en ninguna búsqueda y que
@@ -572,7 +572,7 @@ sale más barato**, y hay un test que la recorre de punta a punta.
   encarecer nada respecto de la tarifa diaria que el dueño ya publicó.
 - **Mensual**: precio fijo por mes iniciado; es una modalidad aparte, no compite
   con los escalones.
-- **Comisión**: el 10% se calcula **sobre el precio que resulta de los
+- **Comisión**: el 20% se calcula **sobre el precio que resulta de los
   escalones** y se suma al total. El escalón define lo que cobra el
   estacionamiento; la comisión es lo que paga el cliente por encima.
 
@@ -595,9 +595,9 @@ El cliente paga **dos veces**, en dos momentos y a dos destinatarios distintos:
 
 ```
 Estacionamiento (lo paga allá)   $26.000   ← íntegro, al dueño, al llegar
-Seña para reservar (la paga acá)  $2.600   ← 10%, online, no se devuelve
+Seña para reservar (la paga acá)  $5.200   ← 20%, online, no se devuelve
 ──────────────────────────────────────────
-Total de la reserva              $28.600
+Total de la reserva              $31.200
 ```
 
 La seña **se suma, no se descuenta**. El estacionamiento recibe el 100% de su
@@ -611,15 +611,23 @@ código ni el QR.
 
 ### Cómo se calcula
 
-La seña es el 10% (configurable por estacionamiento) **sobre el precio que sale
+La seña es el 20% (configurable por estacionamiento) **sobre el precio que sale
 del cálculo por escalones**, nunca sobre un valor recalculado aparte. Así los
 dos números no se pueden desincronizar: si la estadía cae en media estadía y da
-$26.000, la seña son $2.600 y punto. Hay un test que lo fija
+$26.000, la seña son $5.200 y punto. Hay un test que lo fija
 (`tests/unit/pricing.test.js`, "la seña se calcula sobre el precio que salió de
 los escalones").
 
 El porcentaje se **congela en la reserva**: si mañana cambia, lo ya reservado no
 se mueve.
+
+**Del 10% al 20% (04/10/2026).** La migración `20261004100000_comision_20_por_ciento`
+cambió el default de la columna a 20 y pasó a 20% todos los estacionamientos que
+estaban en 10% (en producción, todos). Las reservas ya hechas conservan el
+porcentaje con el que se reservaron. También cambiaron el default de
+`COMISION_DEFAULT_PORCENTAJE`, el motor de precios, el alta desde el panel, el
+seed y todos los textos (condiciones del registro, páginas informativas,
+ejemplos numéricos).
 
 ### Cómo se lo nombra en cada pantalla
 
@@ -630,7 +638,7 @@ Esto no es cosmético, es la regla:
 | Checkout, comprobante, emails, WhatsApp al cliente | **"seña para reservar"**, siempre con "no reembolsable" al lado |
 | Panel (SUPERADMIN / OWNER), reportes, base de datos | "comisión", "seña cobrada", lo que retiene SpotNear |
 
-De cara al cliente **nunca** se dice que ese 10% es una comisión ni que va a
+De cara al cliente **nunca** se dice que ese 20% es una comisión ni que va a
 SpotNear: para él es la seña que aparta su lugar. En las columnas de la base los
 nombres siguen siendo `montoComision` y `comisionPorcentaje` porque son los de
 siempre y los que usan las pantallas internas; renombrarlos habría obligado a
@@ -1022,6 +1030,21 @@ SUPERADMIN activo: dejaría la plataforma sin nadie que pueda entrar.
 
 ## Emails: cómo hacer que salgan de verdad
 
+**Diagnóstico del 04/10/2026: el código está completo; lo único que falta es la
+API key.** Seguí la cadena entera: el botón "Enviar por email" del comprobante
+llama a `POST /reservations/comprobante/:token/enviar-email`, que llama a
+`notificarClienteEmail()` → `enviarEmail()` → la API de Resend. No hay ningún
+`if` que lo desactive salvo el que pregunta si existe `RESEND_API_KEY`
+(`env.resendHabilitado`): sin ella, el envío queda `SIMULADO` y el usuario ve
+*"El envío de emails todavía no está configurado en este entorno"*. Para
+confirmarlo se mandó un pedido real a la API de Resend con una key inválida, y
+Resend respondió *"API key is invalid"*: el pedido sale y llega. Con una key
+válida, el mail se envía.
+
+**Qué cargar:** `RESEND_API_KEY` en Render (*spotnear-backend → Environment*) y
+en `backend/.env` para local. Se saca en <https://resend.com/api-keys>. Pasos
+completos abajo.
+
 **Proveedor elegido: Resend.** Ya estaba integrado (es un `POST` con `fetch`,
 sin dependencias) y lo que faltaba era que funcionara **con solo cargar la API
 key**. Lo que lo impedía: sin un dominio verificado, Resend rechaza el
@@ -1150,6 +1173,28 @@ WHATSAPP_PROVIDER=link     # default: NO envía solo
 | `twilio` | **Envío automático desde el servidor.** Es el camino corto para arrancar. |
 | `cloud_api` | Envío automático con la Cloud API de Meta. Más barato a escala, pero pide Business Manager con el número verificado y plantillas aprobadas. |
 
+### Qué falta para activar WhatsApp (y cuánto tarda)
+
+El código está terminado: el botón "Enviar a mi WhatsApp" y el aviso al grupo
+mandan la imagen del comprobante por la API apenas hay credenciales. Lo que
+falta es del lado de las cuentas, y **no es solo cargar una variable**, como el
+email:
+
+| Etapa | Qué hacés | Cuánto tarda | Qué se puede hacer |
+|---|---|---|---|
+| **1. Sandbox de Twilio** (para probar) | Crear la cuenta, activar el sandbox, cargar las 3 variables (pasos abajo). | Minutos. | Mandar a números que se **unieron al sandbox** mandando `join …`. Ni el cliente común ni un grupo pueden recibir. |
+| **2. Número propio en producción** | En Twilio: *Messaging → Senders → WhatsApp senders*, registrar un número que no esté usado en WhatsApp, y vincularlo a una cuenta de **Meta Business**. | Días a un par de semanas. | Mandar a cualquier cliente. |
+| **2b. Verificación del negocio en Meta** | En Meta Business Manager: *Configuración → Centro de seguridad → Verificación del negocio*. Pide razón social, CUIT, dirección y un documento o factura del negocio, y un dominio o teléfono verificable. | Unos días (a veces más, si piden documentación extra). | Sin verificar, Meta limita el número a pocas conversaciones por día. |
+| **3. Plantilla aprobada** | Para escribirle a alguien que no te escribió en las últimas 24 h, WhatsApp exige una plantilla aprobada por Meta (el comprobante con imagen entra en la categoría *Utility*). | Minutos a 1 día. | El aviso automático del comprobante a cualquier cliente. |
+
+Mientras tanto, sin credenciales, nada se rompe: el botón avisa que el envío no
+está configurado y el cliente puede guardar la imagen o compartirla.
+
+**Sobre los grupos de WhatsApp:** ni Twilio ni la Cloud API de Meta mandan
+mensajes a grupos. `WHATSAPP_GRUPO_PRUEBA` y el `whatsappGrupo` de cada
+estacionamiento tienen que ser **el número de una persona** (el encargado o un
+celular del estacionamiento), no un grupo.
+
 ### Poner Twilio a andar
 
 1. Crear cuenta en [twilio.com](https://www.twilio.com) (la de prueba alcanza).
@@ -1275,6 +1320,8 @@ consume igual, sin cambios.
 | `POST` | `/reservations/comprobante/:token/pagar-sena` | Arma el checkout de la seña (botón "Pagar la seña"; también reintenta) |
 | `POST` | `/payments/mercadopago/webhook` | Aviso de Mercado Pago (lo llama la pasarela, no un usuario) |
 | `GET` | `/payments/estado` | Si hay credenciales de la pasarela y si son de prueba |
+| `GET` | `/vehiculos/catalogo` | Marcas y modelos del catálogo, para el autocompletado del checkout |
+| `GET` | `/vehiculos/clasificar?marca=&modelo=` | Tipo de vehículo detectado, o `null` si no está en el catálogo |
 
 **Panel** (requiere `Authorization: Bearer <accessToken>`)
 
@@ -1297,6 +1344,11 @@ consume igual, sin cambios.
 | `GET` | `/admin/reports/dashboard` · `/admin/reports/comisiones` | Reportes |
 | `DELETE` | `/admin/reservations/:id` | Quita del panel una reserva terminada (borrado lógico; OWNER, STAFF, SUPERADMIN) |
 | `DELETE` | `/admin/staff/:id/definitivo` | Elimina un usuario |
+| `POST` | `/auth/cambiar-password` | Cambia la contraseña propia (pide la actual; cierra todas las sesiones) |
+| `GET` | `/admin/reservations/nuevas` | Reservas confirmadas que el usuario todavía no vio (contador del menú) |
+| `POST` | `/admin/reservations/vistas` | Las marca como vistas (lo llama la pantalla de Reservas) |
+| `PATCH` | `/admin/reservations/:id/vehiculo` | Corrige el tipo de vehículo y ajusta lo que se paga en el lugar |
+| `GET/POST/PATCH/DELETE` | `/admin/vehiculos-catalogo` | Catálogo de marca/modelo/tipo (solo SUPERADMIN) |
 
 Todos los errores responden igual:
 
@@ -1316,7 +1368,7 @@ npm --prefix backend run test:unit         # sin base de datos
 npm --prefix backend run test:integration  # contra la base real
 ```
 
-**169 tests**, sobre lo que duele si se rompe:
+**188 tests**, sobre lo que duele si se rompe:
 
 - **Patentes argentinas** — formatos viejo, Mercosur y de moto; normalización.
 - **Teléfonos** — las diez formas en que la gente escribe un número (`011 15 …`,
@@ -1351,6 +1403,14 @@ npm --prefix backend run test:integration  # contra la base real
 - **Email y WhatsApp sin red** — lo que se le manda a Resend, Twilio y Meta: el
   adjunto en base64, el reintento con el remitente de prueba, la imagen como
   `MediaUrl` o subida por id, y el corte cuando Twilio no podría descargarla.
+- **Los cinco casos del bug de tarifas** — 2 h, 6 h, 12 h, 20 h y 26 h con la
+  hora a $7.500, y la seña del 20% sobre el precio de los escalones.
+- **Catálogo de vehículos** — que "VW T-Cross" y "volkswagen tcross" sean lo
+  mismo, que "Corolla Cross" no se confunda con "Corolla", que lo desconocido
+  no se adivine, y que solo el SUPERADMIN lo edite.
+- **Panel** — el contador de reservas nuevas (sube y vuelve a 0), la
+  corrección del tipo de vehículo en el check-in (ajusta lo que se paga allá,
+  no la seña) y el cambio de contraseña (pide la actual, cada uno la suya).
 - **Eliminar reservas** — que solo se eliminen las terminadas, cada
   estacionamiento las suyas, y que Comisiones y el comprobante no cambien.
 - **Horarios** — que cada uno de los tres modos valide lo suyo: que 24 h acepte
@@ -1527,6 +1587,112 @@ Lo que sí se perdió: el nombre **en la fila de `Customer`** de las reservas m�
 viejas, que quedó con el del último que reservó. No importa para nada que se
 muestre, porque todo lo que se ve sale de la copia congelada; solo afecta al
 contacto como agenda.
+
+### El "bug de tarifas" no estaba en el motor: estaba en la barra de resultados
+
+Reporte: con 2 horas, resultados y checkout mostraban la media estadía ($30.000
+con la hora a $7.500) en vez de $15.000.
+
+**El motor de precios estaba bien.** Se probaron los cinco casos contra la API
+local y contra la de Render, y los tres escalones daban lo correcto (`< 4 h`,
+`[4, 12)`, `[12, 24)` y reinicio a las 24 h). Tampoco había lógica duplicada:
+búsqueda, checkout y carga manual del panel llaman todos a `calcularPrecio()`.
+
+**La causa real:** la barra de horario de la pantalla de **resultados**
+guardaba el cambio solo en el campo y no lo aplicaba hasta apretar la lupa. Si
+el cliente cambiaba la salida ahí (por ejemplo, de las 4 h que trae el Hero por
+defecto a 2 h), la barra mostraba 2 horas pero las tarjetas seguían cotizadas
+con 4 (media estadía), y "Reservar" llevaba al checkout ese rango viejo. Lo que
+se veía y lo que se cotizaba estaban desincronizados.
+
+**El arreglo:** cambiar el horario, el destino o la modalidad en esa barra
+relanza la búsqueda sola (con una pausa de 0,6 s, porque el campo de fecha y
+hora dispara un cambio por cada parte que se edita). Si el rango no es válido,
+lo avisa en el momento. Probado en el navegador: cambiar la salida a 2 h pasa
+la URL a 2 h y el precio a $15.000 + seña, sin tocar la lupa.
+
+### Cupos en la tarjeta: "15 lugares · 12 disponibles en tu horario"
+
+La tarjeta de resultados muestra la capacidad total y lo que queda libre **para
+el horario buscado**, con la misma cuenta que impide la sobreventa al confirmar
+(descuenta las reservas que se superponen y los cupos bloqueados). Se escribe
+"en tu horario" y no "ahora" porque la cuenta es para el rango que eligió el
+cliente, que puede ser la semana que viene. En el mapa, el mismo dato va en el
+tooltip de cada precio.
+
+Un estacionamiento sin lugar en ese horario **ya no desaparece**: la pantalla
+de resultados pide `soloDisponibles=false`, y aparece al final de la lista con
+"Sin disponibilidad en este horario" y el botón Reservar deshabilitado. Antes
+se ocultaba sin explicación.
+
+### Tipo de vehículo: catálogo propio de marca y modelo
+
+No existe una API pública y gratuita para saber el tipo por patente en
+Argentina, así que SpotNear tiene **su propio catálogo**
+(`VehicleModelCatalog`): 106 modelos comunes del mercado argentino en la carga
+inicial (40 autos, 34 SUV, 14 camionetas, 8 utilitarios y 10 motos). Va en una
+**migración** y no en el seed, para que también esté en producción.
+
+- En el checkout, **marca, modelo y color son obligatorios** (en el formulario
+  y en la API). Al escribir marca y modelo se consulta el catálogo y, si hay
+  coincidencia, se preselecciona el tipo y el precio de la derecha se
+  recalcula solo, con el aviso "Lo detectamos por Renault Duster. Si no es
+  así, cambialo".
+- La comparación ignora mayúsculas, tildes, guiones y espacios ("VW T-Cross" =
+  "volkswagen tcross"), entiende alias de marca (VW, Chevy, Mercedes) y tolera
+  la versión detrás del modelo ("Hilux SRV 4x4"). Si dos modelos empiezan
+  igual, gana el más específico: "Corolla Cross" es SUV y "Corolla", auto.
+- **Si no lo encuentra, el tipo queda sin elegir.** No se asume "Auto" (antes
+  venía preseleccionado), porque equivocarse para abajo le cobra de menos al
+  estacionamiento. El resumen muestra "Tarifa de referencia" hasta que se
+  elige.
+- El tipo **no se bloquea**: el cliente lo puede cambiar, y el precio se
+  recalcula igual. Una detección nueva solo ocurre si cambia la marca o el
+  modelo; una elección manual se respeta.
+- El SUPERADMIN amplía el catálogo desde **Panel → Catálogo de vehículos**
+  (alta, edición y baja; avisa si un modelo ya existe escrito de otra forma).
+- **Corrección en el check-in:** en el detalle de una reserva confirmada o en
+  curso, el playero puede corregir el tipo si lo que ve no coincide. El ajuste
+  es **automático y solo sobre lo que se paga en el lugar**: se recotiza con el
+  tipo nuevo y la diferencia se suma o se resta; la seña ya cobrada no cambia.
+  El panel muestra cuánto cobrar de más ("Cobrale $1.000 más en el lugar").
+
+### Contador de reservas nuevas en el menú
+
+Criterio elegido: **reservas confirmadas después de la última vez que el
+usuario abrió la lista de Reservas**, y que todavía están por atenderse
+(confirmadas o en curso). Cada usuario tiene su propio "visto"
+(`User.reservasVistasEn`): lo que vio el dueño sigue siendo nuevo para el
+playero. Las que el usuario cargó él mismo desde el panel no cuentan.
+
+Se mide contra el momento de la **confirmación** (`pagadaEn`), no el de
+creación: una reserva con Mercado Pago nace pendiente y se confirma después, y
+para el estacionamiento es nueva cuando se confirma. Se descartó la
+alternativa "pendientes de check-in de hoy" porque no responde la pregunta
+"¿entró algo desde la última vez que miré?". Se refresca igual que el de
+Solicitudes (cada minuto y al volver a la pestaña) y desaparece en 0. Lo ven
+OWNER y STAFF; el SUPERADMIN no tiene un estacionamiento propio.
+
+### Panel: menú contraíble y "Mi cuenta"
+
+- **Menú lateral contraíble** (escritorio): el botón de arriba lo deja en 72 px
+  con solo los íconos; el nombre de cada sección queda como tooltip y el
+  contador se monta sobre el ícono. La preferencia se guarda en el navegador
+  (`localStorage`). En el celular el menú sigue siendo el panel desplegable.
+- **Mi cuenta** (los tres roles): en el menú y tocando el nombre arriba a la
+  derecha. Por ahora solo cambia la contraseña: pide la actual, la nueva (8
+  caracteres como mínimo, la misma regla del resto del sistema, y distinta de
+  la actual) y la confirmación. El usuario sale del token, nunca del
+  formulario, así que cada uno cambia solo la suya. Al cambiarla se cierran
+  todas las sesiones y se vuelve a ingresar con la nueva.
+
+### Hero en el celular
+
+Mismo contenido, otro orden: sin la foto (empujaba el buscador fuera de la
+primera pantalla), título de 28 px en vez de 40, pestañas en una sola línea y
+la tarjeta con menos relleno lateral y más aire entre campos, siguiendo el
+hero mobile de SpotHero. Verificado en 360, 375 y 430 px, sin scroll
+horizontal.
 
 ### Antes de pagar, nunca se dice "tu lugar está apartado"
 

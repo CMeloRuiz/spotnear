@@ -8,6 +8,7 @@ import { Cargando, ErrorCarga, Vacio } from '../../components/ui/Estado.jsx';
 import { EstadoReserva, Aviso } from '../../components/ui/Varios.jsx';
 import ModalWhatsApp from '../../components/admin/ModalWhatsApp.jsx';
 import ModalEliminarReserva, { sePuedeEliminar } from '../../components/admin/ModalEliminarReserva.jsx';
+import CorregirVehiculo, { puedeCorregirVehiculo } from '../../components/admin/CorregirVehiculo.jsx';
 import { accionesDisponibles } from '../../components/admin/TablaReservas.jsx';
 import { admin } from '../../services/spotnear.service.js';
 import { usePedido, useTitulo } from '../../hooks/index.js';
@@ -61,7 +62,9 @@ export function DetalleReserva() {
   const reserva = datos?.reserva;
   useTitulo(reserva ? `Reserva ${reserva.codigo}` : textos.admin.detalleReserva.titulo);
 
-  if (cargando) return <Cargando />;
+  // Pantalla de carga completa solo la primera vez: al recargar después de una
+  // acción (check-in, corregir el vehículo) se queda lo que ya se ve.
+  if (cargando && !datos) return <Cargando />;
 
   if (error) {
     return error.status === 404 ? (
@@ -242,6 +245,12 @@ export function DetalleReserva() {
                   </Dato>
                 )}
               </dl>
+
+              {/* En la entrada el playero ve el vehículo: si no es el tipo
+                  cargado, lo corrige y se ajusta lo que se cobra en el lugar. */}
+              {puedeCorregirVehiculo(reserva) && (
+                <CorregirVehiculo reserva={reserva} alCorregir={recargar} />
+              )}
             </div>
           </section>
 

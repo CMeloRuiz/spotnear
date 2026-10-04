@@ -28,6 +28,10 @@ import ratesRoutes from './rates/rates.routes.js';
 import staffRoutes from './staff/staff.routes.js';
 import reportsRoutes from './reports/reports.routes.js';
 import paymentsRoutes from './payments/payments.routes.js';
+import {
+  routerPublico as vehiculosPublicRoutes,
+  routerAdmin as vehiculosAdminRoutes,
+} from './vehiculos/vehiculos.routes.js';
 
 const router = Router();
 
@@ -100,6 +104,8 @@ router.use('/reservations', reservationsPublicRoutes);
 // vuelve a leer contra la API (ver payments.routes.js).
 router.use('/payments', paymentsRoutes);
 router.use('/onboarding', onboardingPublicRoutes);
+// Catálogo marca/modelo → tipo de vehículo, para el checkout.
+router.use('/vehiculos', vehiculosPublicRoutes);
 
 // ─────────────────────── Panel (requiere JWT) ───────────────────────
 router.use('/admin/parkings', parkingsAdminRoutes);
@@ -108,5 +114,6 @@ router.use('/admin/onboarding', onboardingAdminRoutes);
 router.use('/admin/rates', ratesRoutes);
 router.use('/admin/staff', staffRoutes);
 router.use('/admin/reports', reportsRoutes);
+router.use('/admin/vehiculos-catalogo', vehiculosAdminRoutes);
 
 export default router;

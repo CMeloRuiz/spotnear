@@ -189,7 +189,7 @@ routerPublico.post(
         errorMap: () => ({ message: 'Tenés que aceptar los términos para continuar.' }),
       }),
       aceptaComision: z.literal(true, {
-        errorMap: () => ({ message: 'Tenés que aceptar la comisión del 10% para continuar.' }),
+        errorMap: () => ({ message: 'Tenés que aceptar la comisión del 20% para continuar.' }),
       }),
     }),
   }),

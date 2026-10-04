@@ -351,3 +351,83 @@
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
+
+/* ── Usuario de la barra: lleva a "Mi cuenta" ── */
+a.sn-admin__usuario-datos {
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--sn-radio-sm);
+  transition: opacity var(--sn-trans);
+}
+
+a.sn-admin__usuario-datos:hover {
+  opacity: 0.8;
+}
+
+/* ── Menú lateral contraíble ──
+   Contraído queda en 72px con solo los íconos; el nombre de cada sección va
+   como tooltip (title). El contenido gana ese ancho solo, porque es flex: 1. */
+.sn-admin__colapsar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .sn-admin__colapsar {
+    display: flex;
+    align-items: center;
+    gap: var(--sn-e3);
+    width: 100%;
+    margin-bottom: var(--sn-e3);
+    padding: var(--sn-e2) var(--sn-e3);
+    border-radius: var(--sn-radio);
+    font-size: var(--sn-texto-sm);
+    color: var(--sn-tinta-suave);
+    transition:
+      background-color var(--sn-trans),
+      color var(--sn-trans);
+  }
+
+  .sn-admin__colapsar:hover {
+    background: var(--sn-gris-100);
+    color: var(--sn-tinta);
+  }
+
+  .sn-admin__lateral {
+    transition: width var(--sn-trans-lenta), padding var(--sn-trans-lenta);
+  }
+
+  .sn-admin__lateral--colapsado {
+    width: 72px;
+    padding-left: var(--sn-e2);
+    padding-right: var(--sn-e2);
+  }
+
+  .sn-admin__lateral--colapsado .sn-admin__link,
+  .sn-admin__lateral--colapsado .sn-admin__colapsar {
+    justify-content: center;
+    position: relative;
+  }
+
+  .sn-admin__lateral--colapsado .sn-admin__link-texto,
+  .sn-admin__lateral--colapsado .sn-admin__rol {
+    display: none;
+  }
+
+  .sn-admin__lateral--colapsado .sn-admin__lateral-pie {
+    align-items: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Contraído, el contador se monta sobre la esquina del ícono. */
+  .sn-admin__lateral--colapsado .sn-admin__contador {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    font-size: 10px;
+    margin-left: 0;
+  }
+}

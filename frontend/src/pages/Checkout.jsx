@@ -11,7 +11,7 @@ import { Icono, ICONO_VEHICULO } from '../components/ui/Iconos.jsx';
 import { Cargando, ErrorCarga, Vacio } from '../components/ui/Estado.jsx';
 import { Aviso } from '../components/ui/Varios.jsx';
 import { publico } from '../services/spotnear.service.js';
-import { usePedido, useTitulo } from '../hooks/index.js';
+import { usePedido, useTitulo, useDebounce } from '../hooks/index.js';
 import { periodoPorDefecto } from '../hooks/useBusqueda.js';
 import {
   validarReserva,
@@ -37,6 +37,14 @@ import './Checkout.css';
  * tarifas, que cada estacionamiento define por tipo.
  */
 const TIPOS_VEHICULO = ['AUTO', 'SUV', 'CAMIONETA', 'MOTO', 'UTILITARIO'];
+
+/** "Citroën" → "citroen": para filtrar las sugerencias de modelo por marca. */
+const sinTildes = (texto) =>
+  String(texto ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
 
 /** Imagen que se muestra cuando el estacionamiento todavía no cargó fotos. */
 const FOTO_POR_DEFECTO = '/assets/parkings/sin-foto.svg';
@@ -68,10 +76,20 @@ export function Checkout() {
     };
   }, [params]);
 
+  // El tipo de vehículo arranca SIN elegir (salvo que venga en la URL): lo
+  // detecta el catálogo a partir de la marca y el modelo, o lo elige el
+  // cliente. Nunca se asume uno: asumir "Auto" le cobraba de menos al
+  // estacionamiento cuando era una camioneta.
   const [form, setForm] = useState(() => ({
     ...FORM_INICIAL,
-    tipoVehiculo: params.get('tipoVehiculo') ?? 'AUTO',
+    tipoVehiculo: params.get('tipoVehiculo') ?? '',
   }));
+  // Lo que detectó el catálogo para la marca y el modelo escritos (o null).
+  const [deteccion, setDeteccion] = useState(null);
+  // De dónde salió el tipo elegido: 'auto' (lo puso el catálogo) o 'manual'
+  // (lo tocó el cliente). Si el modelo deja de reconocerse, solo se borra un
+  // tipo que había puesto el catálogo, nunca uno que eligió el cliente.
+  const origenTipo = useRef(null);
   const [paso, setPaso] = useState(1);
   const [errores, setErrores] = useState({});
   const [enviando, setEnviando] = useState(false);
@@ -97,7 +115,9 @@ export function Checkout() {
         {
           inicio: periodo.inicio.toISOString(),
           fin: periodo.fin.toISOString(),
-          tipoVehiculo: form.tipoVehiculo,
+          // Sin tipo elegido se cotiza con la tarifa de referencia (la
+          // general, o la de auto): el resumen lo aclara.
+          tipoVehiculo: form.tipoVehiculo || undefined,
         },
         { signal },
       ),
@@ -122,24 +142,90 @@ export function Checkout() {
 
   const parking = datos?.parking;
 
-  // Si el estacionamiento no acepta el tipo elegido, se vuelve al primero válido.
+  // Si el estacionamiento no acepta el tipo que vino en la URL, queda sin
+  // elegir: que lo elija el cliente entre los que sí acepta.
   useEffect(() => {
-    if (parking && !parking.tiposVehiculo.includes(form.tipoVehiculo)) {
-      setForm((f) => ({ ...f, tipoVehiculo: parking.tiposVehiculo[0] ?? 'AUTO' }));
+    if (parking && form.tipoVehiculo && !parking.tiposVehiculo.includes(form.tipoVehiculo)) {
+      setForm((f) => ({ ...f, tipoVehiculo: '' }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parking?.id]);
 
+  /* ── Catálogo de marca/modelo: autocompletado y detección del tipo ── */
+  const { datos: catalogo } = usePedido(() => publico.catalogoVehiculos(), []);
+  const modelosDelCatalogo = useMemo(() => catalogo?.modelos ?? [], [catalogo]);
+  const marcasDelCatalogo = useMemo(
+    () => [...new Set(modelosDelCatalogo.map((m) => m.marca))],
+    [modelosDelCatalogo],
+  );
+  const modelosDeLaMarca = useMemo(() => {
+    const marca = sinTildes(form.marca);
+    return modelosDelCatalogo.filter((m) => !marca || sinTildes(m.marca).startsWith(marca));
+  }, [modelosDelCatalogo, form.marca]);
+
+  /**
+   * Cuando el cliente escribe la marca y el modelo, se busca en el catálogo y,
+   * si hay coincidencia, se preselecciona el tipo. El precio de la derecha se
+   * recalcula solo, porque la cotización depende de `form.tipoVehiculo`.
+   *
+   * Solo se dispara con un cambio de marca o modelo: si después el cliente
+   * corrige el tipo a mano, eso se respeta. Si el modelo no está en el
+   * catálogo, el tipo queda sin elegir (o con lo que eligió el cliente): no
+   * se asume ninguno.
+   */
+  const marcaYModelo = useDebounce(`${form.marca}|${form.modelo}`, 450);
+  useEffect(() => {
+    const [marca, modelo] = marcaYModelo.split('|');
+    if (!marca.trim() || !modelo.trim()) {
+      setDeteccion(null);
+      return undefined;
+    }
+    let vigente = true;
+    publico
+      .clasificarVehiculo(marca, modelo)
+      .then(({ coincidencia }) => {
+        if (!vigente) return;
+        if (!coincidencia) {
+          setDeteccion(null);
+          // Si el tipo lo había puesto una detección anterior, deja de valer.
+          setForm((f) => (origenTipo.current === 'auto' ? { ...f, tipoVehiculo: '' } : f));
+          return;
+        }
+        const aceptado = !parking || parking.tiposVehiculo.includes(coincidencia.tipo);
+        setDeteccion({ ...coincidencia, aceptado });
+        if (aceptado) {
+          origenTipo.current = 'auto';
+          setForm((f) => ({ ...f, tipoVehiculo: coincidencia.tipo }));
+          setErrores((e) => (e.tipoVehiculo ? { ...e, tipoVehiculo: undefined } : e));
+        }
+      })
+      .catch(() => {
+        // Sin catálogo el formulario sigue funcionando: el tipo se elige a mano.
+      });
+    return () => {
+      vigente = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [marcaYModelo, parking?.id]);
+
   const set = (campo, valor) => {
     setForm((f) => ({ ...f, [campo]: valor }));
+    if (campo === 'tipoVehiculo') origenTipo.current = 'manual';
     // El error del campo se limpia apenas el usuario lo corrige.
     setErrores((e) => (e[campo] ? { ...e, [campo]: undefined } : e));
   };
 
   const continuar = (e) => {
     e.preventDefault();
-    const nuevos = validarReserva(form);
+    const { tipoVehiculo: faltaTipo, ...nuevos } = validarReserva(form);
     if (emailObligatorio && !form.email.trim()) nuevos.email = textos.checkout.emailObligatorio;
+    // Marca, modelo y color son obligatorios: con marca y modelo se detecta
+    // el tipo de vehículo. Se agregan en el orden del formulario (y el tipo al
+    // final), así el foco cae en el primer campo que falta.
+    if (!form.marca.trim()) nuevos.marca = textos.errores.campoObligatorio;
+    if (!form.modelo.trim()) nuevos.modelo = textos.errores.campoObligatorio;
+    if (!form.color.trim()) nuevos.color = textos.errores.campoObligatorio;
+    if (faltaTipo) nuevos.tipoVehiculo = textos.checkout.elegiTipoVehiculo;
     setErrores(nuevos);
 
     if (!sinErrores(nuevos)) {
@@ -170,9 +256,9 @@ export function Checkout() {
         vehiculo: {
           patente: normalizarPatente(form.patente),
           tipo: form.tipoVehiculo,
-          marca: form.marca.trim() || undefined,
-          modelo: form.modelo.trim() || undefined,
-          color: form.color.trim() || undefined,
+          marca: form.marca.trim(),
+          modelo: form.modelo.trim(),
+          color: form.color.trim(),
         },
         idempotencyKey: claveIntento.current,
       });
@@ -216,7 +302,12 @@ export function Checkout() {
     }
   };
 
-  if (cargando) return <Cargando texto="Preparando tu reserva..." />;
+  // La pantalla de carga completa solo la primera vez. Cuando se recotiza
+  // (cambió el tipo de vehículo) el formulario se queda donde está y solo el
+  // resumen de precio muestra que se está actualizando: si no, el formulario
+  // desaparecía un instante y el cliente perdía el campo en el que escribía.
+  if (cargando && !datos) return <Cargando texto="Preparando tu reserva..." />;
+  const recotizando = cargando && Boolean(datos);
 
   if (error) {
     return (
@@ -229,6 +320,21 @@ export function Checkout() {
   if (!parking) return null;
 
   const sinLugar = parking.disponibilidad && !parking.disponibilidad.hayLugar;
+
+  /** Texto bajo el tipo de vehículo: qué detectó el catálogo, o qué hacer. */
+  const ayudaTipoVehiculo = (() => {
+    if (deteccion && !deteccion.aceptado) {
+      return textos.checkout.tipoDetectadoNoAceptado(
+        textos.parking.tiposVehiculo[deteccion.tipo],
+        `${deteccion.marca} ${deteccion.modelo}`,
+      );
+    }
+    if (deteccion && form.tipoVehiculo === deteccion.tipo) {
+      return textos.checkout.tipoDetectado(`${deteccion.marca} ${deteccion.modelo}`);
+    }
+    if (!form.tipoVehiculo) return textos.checkout.tipoSinDetectar;
+    return undefined;
+  })();
 
   /**
    * La pasarela no está en condiciones de cobrar (típicamente: faltan las
@@ -366,6 +472,57 @@ export function Checkout() {
                     error={errores.patente}
                   />
 
+                  {/* Marca y modelo van antes del tipo: con ellos se detecta el
+                      tipo de vehículo en el catálogo de SpotNear. Las listas
+                      sugieren lo que ya está cargado, pero se puede escribir
+                      cualquier cosa. */}
+                  <div className="sn-grilla-campos sn-grilla-campos--3">
+                    <Campo
+                      name="marca"
+                      autoComplete="off"
+                      list="sn-catalogo-marcas"
+                      label={textos.checkout.marca}
+                      obligatorio
+                      placeholder="Toyota"
+                      value={form.marca}
+                      onChange={(e) => set('marca', e.target.value)}
+                      error={errores.marca}
+                    />
+                    <Campo
+                      name="modelo"
+                      autoComplete="off"
+                      list="sn-catalogo-modelos"
+                      label={textos.checkout.modelo}
+                      obligatorio
+                      placeholder="Corolla"
+                      value={form.modelo}
+                      onChange={(e) => set('modelo', e.target.value)}
+                      error={errores.modelo}
+                    />
+                    <Campo
+                      name="color"
+                      autoComplete="off"
+                      label={textos.checkout.color}
+                      obligatorio
+                      placeholder="Gris"
+                      value={form.color}
+                      onChange={(e) => set('color', e.target.value)}
+                      error={errores.color}
+                    />
+                  </div>
+                  <datalist id="sn-catalogo-marcas">
+                    {marcasDelCatalogo.map((m) => (
+                      <option key={m} value={m} />
+                    ))}
+                  </datalist>
+                  <datalist id="sn-catalogo-modelos">
+                    {modelosDeLaMarca.map((m) => (
+                      <option key={`${m.marca}-${m.modelo}`} value={m.modelo}>
+                        {m.marca}
+                      </option>
+                    ))}
+                  </datalist>
+
                   <CampoOpciones
                     name="tipoVehiculo"
                     label={textos.checkout.tipoVehiculo}
@@ -373,6 +530,7 @@ export function Checkout() {
                     valor={form.tipoVehiculo}
                     onChange={(v) => set('tipoVehiculo', v)}
                     error={errores.tipoVehiculo}
+                    ayuda={ayudaTipoVehiculo}
                     opciones={TIPOS_VEHICULO.filter((t) => parking.tiposVehiculo.includes(t)).map(
                       (t) => ({
                         valor: t,
@@ -381,33 +539,6 @@ export function Checkout() {
                       }),
                     )}
                   />
-
-                  <div className="sn-grilla-campos sn-grilla-campos--3">
-                    <Campo
-                      name="marca"
-                    autoComplete="off"
-                      label={textos.checkout.marca}
-                      placeholder="Toyota"
-                      value={form.marca}
-                      onChange={(e) => set('marca', e.target.value)}
-                    />
-                    <Campo
-                      name="modelo"
-                    autoComplete="off"
-                      label={textos.checkout.modelo}
-                      placeholder="Corolla"
-                      value={form.modelo}
-                      onChange={(e) => set('modelo', e.target.value)}
-                    />
-                    <Campo
-                      name="color"
-                    autoComplete="off"
-                      label={textos.checkout.color}
-                      placeholder="Gris"
-                      value={form.color}
-                      onChange={(e) => set('color', e.target.value)}
-                    />
-                  </div>
                 </section>
 
 
@@ -554,7 +685,10 @@ export function Checkout() {
               </div>
 
               {parking.precio && (
-                <div className="sn-checkout__precio">
+                <div
+                  className={`sn-checkout__precio ${recotizando ? 'sn-checkout__precio--actualizando' : ''}`}
+                  aria-busy={recotizando || undefined}
+                >
                   <span className="sn-checkout__precio-titulo">{textos.checkout.desglose}</span>
 
                   {/* Lo que cobra el estacionamiento: entero, sin descuentos.
@@ -563,6 +697,13 @@ export function Checkout() {
                     <span>
                       {textos.checkout.enElEstacionamiento}
                       <em className="sn-checkout__detalle">{parking.precio.desglose.etiqueta}</em>
+                      {/* Para qué vehículo es este precio: cada tipo tiene su
+                          tarifa, y sin elegirlo se muestra la de referencia. */}
+                      <em className="sn-checkout__detalle sn-checkout__tarifa-para">
+                        {form.tipoVehiculo
+                          ? textos.checkout.tarifaPara(textos.parking.tiposVehiculo[form.tipoVehiculo])
+                          : textos.checkout.tarifaReferencia}
+                      </em>
                     </span>
                     <span>{fmtPrecio(parking.precio.desglose.subtotal)}</span>
                   </div>

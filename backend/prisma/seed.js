@@ -101,7 +101,7 @@ const PARKINGS = [
     calificacion: 4.7,
     cantidadResenas: 312,
     destacado: true,
-    comisionPorcentaje: 10,
+    comisionPorcentaje: 20,
     tarifas: { hora: 2400, dia: 16000, mensual: 128000 },
     principal: true,
   },
@@ -128,7 +128,7 @@ const PARKINGS = [
     calificacion: 4.9,
     cantidadResenas: 528,
     destacado: true,
-    comisionPorcentaje: 10,
+    comisionPorcentaje: 20,
     tarifas: { hora: 2800, dia: 18500, mensual: 145000 },
   },
   {
@@ -149,7 +149,7 @@ const PARKINGS = [
     horarios: HORARIO_COMERCIAL,
     calificacion: 4.3,
     cantidadResenas: 146,
-    comisionPorcentaje: 10,
+    comisionPorcentaje: 20,
     tarifas: { hora: 1900, dia: 13000, mensual: 98000 },
   },
   {
@@ -171,7 +171,7 @@ const PARKINGS = [
     alturaMaximaCm: 220,
     calificacion: 4.5,
     cantidadResenas: 874,
-    comisionPorcentaje: 12,
+    comisionPorcentaje: 20,
     tarifas: { hora: 2200, dia: 15000, mensual: 118000 },
   },
   {
@@ -192,7 +192,7 @@ const PARKINGS = [
     horarios: HORARIO_24H,
     calificacion: 4.1,
     cantidadResenas: 203,
-    comisionPorcentaje: 10,
+    comisionPorcentaje: 20,
     tarifas: { hora: 1700, dia: 11500, mensual: 89000 },
   },
   {
@@ -214,7 +214,7 @@ const PARKINGS = [
     alturaMaximaCm: 190,
     calificacion: 4.8,
     cantidadResenas: 421,
-    comisionPorcentaje: 15,
+    comisionPorcentaje: 20,
     tarifas: { hora: 3200, dia: 21000, mensual: 165000 },
   },
   {
@@ -236,7 +236,7 @@ const PARKINGS = [
     alturaMaximaCm: 200,
     calificacion: 4.2,
     cantidadResenas: 189,
-    comisionPorcentaje: 10,
+    comisionPorcentaje: 20,
     tarifas: { hora: 1800, dia: 12000, mensual: 92000 },
   },
   {
@@ -258,7 +258,7 @@ const PARKINGS = [
     alturaMaximaCm: 230,
     calificacion: 4.6,
     cantidadResenas: 1247,
-    comisionPorcentaje: 10,
+    comisionPorcentaje: 20,
     tarifas: { hora: 2600, dia: 17500, mensual: 138000 },
   },
 ];

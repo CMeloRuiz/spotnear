@@ -26,7 +26,7 @@ const schema = z.object({
   PUBLIC_WEB_URL: z.string().url().default('http://localhost:5173'),
   PUBLIC_API_URL: z.string().url().default('http://localhost:4000'),
 
-  COMISION_DEFAULT_PORCENTAJE: z.coerce.number().min(0).max(100).default(10),
+  COMISION_DEFAULT_PORCENTAJE: z.coerce.number().min(0).max(100).default(20),
   TZ: z.string().default('America/Argentina/Buenos_Aires'),
   MONEDA: z.string().default('ARS'),
 

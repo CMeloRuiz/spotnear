@@ -75,7 +75,9 @@ enum RateType {
   MENSUAL
 }
 
-/** De dónde entró la reserva. Sirve para medir cuánto se corrió del WhatsApp. */
+/**
+ * De dónde entró la reserva. Sirve para medir cuánto se corrió del WhatsApp.
+ */
 enum ReservationSource {
   WEB
   ADMIN
@@ -84,7 +86,9 @@ enum ReservationSource {
   API
 }
 
-/** Tipo de los campos extra que cada estacionamiento agrega al formulario. */
+/**
+ * Tipo de los campos extra que cada estacionamiento agrega al formulario.
+ */
 enum CustomFieldType {
   TEXTO
   NUMERO
@@ -117,8 +121,12 @@ model User {
   parkingId String?
   parking   Parking? @relation(fields: [parkingId], references: [id], onDelete: Cascade)
 
-  activo      Boolean   @default(true)
-  ultimoLogin DateTime?
+  activo           Boolean   @default(true)
+  ultimoLogin      DateTime?
+  /// Hasta cuándo vio las reservas nuevas de su estacionamiento (al abrir
+  /// Reservas). Lo usa el contador azul del menú: cuenta las confirmadas
+  /// después de esta fecha. Null = nunca abrió la lista.
+  reservasVistasEn DateTime?
 
   refreshTokens   RefreshToken[]
   reservasCreadas Reservation[]  @relation("ReservationCreatedBy")
@@ -149,14 +157,14 @@ model RefreshToken {
 // ─────────────────────────── Estacionamientos ───────────────────────────
 
 model Parking {
-  id          String  @id @default(cuid())
+  id          String    @id @default(cuid())
   /// Eliminación definitiva (distinta de "dado de baja", que es activo=false).
   /// Un estacionamiento con reservas no se puede borrar de la tabla sin
   /// llevarse el historial contable por cascada, así que la fila queda como
   /// ancla de esas reservas y se esconde de TODAS las consultas. Sin reservas,
   /// la fila se borra de verdad y esta columna nunca se usa.
   eliminadoEn DateTime?
-  slug        String  @unique // URL amigable: /estacionamiento/humboldt-450
+  slug        String    @unique // URL amigable: /estacionamiento/humboldt-450
   nombre      String
   descripcion String?
 
@@ -192,8 +200,8 @@ model Parking {
   alturaMaximaCm Int?
 
   // Negocio
-  comisionPorcentaje Decimal           @default(10.00) @db.Decimal(5, 2)
-  moneda             String            @default("ARS")
+  comisionPorcentaje Decimal @default(20.00) @db.Decimal(5, 2)
+  moneda             String  @default("ARS")
   // null = usa el ciclo global (CICLO_LIQUIDACION_DEFAULT en el .env).
   // Se puede pisar por estacionamiento sin tocar código.
 
@@ -211,12 +219,12 @@ model Parking {
   calificacion    Decimal? @db.Decimal(2, 1)
   cantidadResenas Int      @default(0)
 
-  usuarios      User[]
-  fotos         ParkingPhoto[]
-  tarifas       Rate[]
-  reservas      Reservation[]
-  camposExtra   CustomFieldConfig[]
-  bloqueos      CapacityBlock[]
+  usuarios    User[]
+  fotos       ParkingPhoto[]
+  tarifas     Rate[]
+  reservas    Reservation[]
+  camposExtra CustomFieldConfig[]
+  bloqueos    CapacityBlock[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -299,6 +307,26 @@ model Vehicle {
   @@index([patente])
 }
 
+/// Catálogo propio de marca/modelo → tipo de vehículo (mercado argentino).
+/// Lo usa el checkout para preseleccionar el tipo cuando el cliente escribe
+/// la marca y el modelo. Se mantiene a mano desde el panel del SUPERADMIN.
+/// Las columnas normalizadas (sin tildes, espacios ni signos) son las que se
+/// comparan, así "VW T-Cross" y "volkswagen tcross" son lo mismo.
+model VehicleModelCatalog {
+  id                String      @id @default(cuid())
+  marca             String
+  modelo            String
+  tipo              VehicleType
+  marcaNormalizada  String
+  modeloNormalizado String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([marcaNormalizada, modeloNormalizado])
+  @@index([marcaNormalizada])
+}
+
 // ─────────────────────────── Reservas ───────────────────────────
 
 /**
@@ -326,16 +354,16 @@ model Reservation {
   /// reporte de Comisiones, porque es facturación que existió.
   eliminadaEn DateTime?
 
-  parkingId String
-  parking   Parking @relation(fields: [parkingId], references: [id], onDelete: Cascade)
+  parkingId        String
+  parking          Parking @relation(fields: [parkingId], references: [id], onDelete: Cascade)
   /// Copia del nombre y la dirección del estacionamiento, guardada cuando se
   /// lo elimina definitivamente. El comprobante y el historial se siguen
   /// leyendo aunque el estacionamiento ya no exista como tal.
   parkingNombre    String?
   parkingDireccion String?
 
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id])
   /// Copia de los datos del cliente TAL COMO ESTABAN al reservar.
   ///
   /// Una reserva es un documento de algo que ya pasó: no se puede re-etiquetar

@@ -2,7 +2,7 @@
  * Barra de búsqueda persistente de la pantalla de resultados.
  * Deja cambiar destino y horario sin volver a la home.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import BuscadorDireccion from './BuscadorDireccion.jsx';
 import SelectorPeriodo from './SelectorPeriodo.jsx';
 import Logo from '../layout/Logo.jsx';
@@ -10,6 +10,9 @@ import { Icono } from '../ui/Iconos.jsx';
 import { validarRango } from '../../utils/validaciones.js';
 import textos from '../../i18n/textos.js';
 import './BarraBusqueda.css';
+
+/** Pausa antes de relanzar la búsqueda cuando cambia el horario o el destino. */
+const ESPERA_ANTES_DE_BUSCAR_MS = 600;
 
 export function BarraBusqueda({ busqueda, onBuscar }) {
   const [destino, setDestino] = useState(busqueda.destino);
@@ -24,6 +27,48 @@ export function BarraBusqueda({ busqueda, onBuscar }) {
     setPeriodo({ inicio: busqueda.inicio, fin: busqueda.fin });
     setModalidad(busqueda.modalidad);
   }, [busqueda.destino, busqueda.inicio, busqueda.fin, busqueda.modalidad]);
+
+  /**
+   * Cambiar el horario o el destino en la barra se aplica SOLO, sin apretar
+   * la lupa.
+   *
+   * Era la causa del "bug de tarifas": la barra mostraba el horario nuevo (por
+   * ejemplo 2 horas) pero las tarjetas seguían con el precio de la búsqueda
+   * anterior (las 4 horas que trae el Hero por defecto, o sea media estadía),
+   * y "Reservar" llevaba al checkout ese rango viejo. El motor de precios
+   * estaba bien: lo que estaba desincronizado era lo que se veía con lo que se
+   * cotizaba. Ahora lo que dice la barra es siempre lo que se cotiza.
+   *
+   * Con una pausa corta: el campo de fecha y hora dispara un cambio por cada
+   * parte que se edita (día, hora, minutos), y no tiene sentido buscar en cada
+   * una.
+   */
+  const onBuscarRef = useRef(onBuscar);
+  onBuscarRef.current = onBuscar;
+
+  useEffect(() => {
+    const mismoPeriodo =
+      periodo.inicio.getTime() === busqueda.inicio.getTime() &&
+      periodo.fin.getTime() === busqueda.fin.getTime();
+    const mismoDestino =
+      destino?.lat === busqueda.destino?.lat && destino?.lng === busqueda.destino?.lng;
+    const mismaModalidad = modalidad === busqueda.modalidad;
+    if ((mismoPeriodo && mismoDestino && mismaModalidad) || !destino) return undefined;
+
+    const errorRango = validarRango(periodo.inicio, periodo.fin);
+    if (errorRango) {
+      // Se avisa ya: si no, el precio de la tarjeta seguiría siendo el del
+      // horario anterior sin que nada lo diga.
+      setError(errorRango);
+      return undefined;
+    }
+
+    const temporizador = setTimeout(() => {
+      setError(null);
+      onBuscarRef.current({ destino, ...periodo, modalidad });
+    }, ESPERA_ANTES_DE_BUSCAR_MS);
+    return () => clearTimeout(temporizador);
+  }, [periodo, destino, modalidad, busqueda.inicio, busqueda.fin, busqueda.destino, busqueda.modalidad]);
 
   const enviar = (e) => {
     e?.preventDefault();

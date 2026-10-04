@@ -34,6 +34,29 @@
   margin-bottom: 0;
 }
 
+/* ── Corregir el tipo de vehículo (check-in) ── */
+.sn-corregir-vehiculo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sn-e3);
+  margin-top: var(--sn-e4);
+  padding-top: var(--sn-e4);
+  border-top: 1px solid var(--sn-borde);
+}
+
+.sn-corregir-vehiculo__fila {
+  display: flex;
+  gap: var(--sn-e2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sn-corregir-vehiculo__fila .sn-select {
+  flex: 1;
+  min-width: 160px;
+  max-width: 240px;
+}
+
 /* ── Período ── */
 
 .sn-detalle-reserva__periodo {

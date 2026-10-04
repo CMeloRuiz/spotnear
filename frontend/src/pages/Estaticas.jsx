@@ -71,7 +71,7 @@ export function SobreNosotros() {
           <li>
             <Icono nombre="checkCirculo" tam={18} />
             <span>
-              <strong>Comisión del 10%.</strong> Solo por reserva confirmada. Si no entra nadie, no
+              <strong>Seña del 20%.</strong> La paga el cliente al reservar. Si no entra nadie, no
               pagás nada.
             </span>
           </li>
@@ -79,9 +79,9 @@ export function SobreNosotros() {
 
         <h2>Cómo cobramos</h2>
         <p>
-          SpotNear cobra una comisión del 10% sobre cada reserva confirmada (es configurable por
-          estacionamiento). El precio que ve el cliente es el precio final: la comisión sale de ahí,
-          no es un cargo extra que se le suma.
+          Al reservar, el cliente paga online una seña no reembolsable del 20% de tu tarifa (es
+          configurable por estacionamiento): esa seña es el cargo de SpotNear. Tu tarifa la cobrás
+          entera, en tu estacionamiento, directo del cliente: no te descontamos nada.
         </p>
 
         <h2>Hacia dónde vamos</h2>

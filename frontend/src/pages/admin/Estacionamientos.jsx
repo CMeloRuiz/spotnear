@@ -28,7 +28,7 @@ const FORM_VACIO = {
   capacidadTotal: 30,
   // Sin tildar a propósito: ver el comentario del mismo campo en el registro.
   cubierto: false,
-  comisionPorcentaje: 10,
+  comisionPorcentaje: 20,
   publicado: true,
   ownerNombre: '',
   ownerEmail: '',
@@ -391,7 +391,7 @@ export function Estacionamientos() {
               max={100}
               step={0.5}
               label="Comisión SpotNear (%)"
-              ayuda="Por defecto 10%."
+              ayuda="Por defecto 20%."
               value={form.comisionPorcentaje}
               onChange={(e) => set({ comisionPorcentaje: e.target.value })}
             />

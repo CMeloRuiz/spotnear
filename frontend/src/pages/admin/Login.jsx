@@ -26,11 +26,14 @@ export function Login() {
   const [enviando, setEnviando] = useState(false);
   const [verPassword, setVerPassword] = useState(false);
 
-  // El panel manda el motivo al redirigir: inactividad o cierre en otra pestaña.
+  // El panel manda el motivo al redirigir: inactividad, cierre en otra
+  // pestaña o cambio de contraseña (que cierra todas las sesiones).
+  const MOTIVOS = {
+    inactividad: 'cerradaPorInactividad',
+    passwordCambiada: 'cerradaPorCambioDePassword',
+  };
   const motivoCierre = ubicacion.state?.motivo
-    ? textos.admin.sesion[
-        ubicacion.state.motivo === 'inactividad' ? 'cerradaPorInactividad' : 'cerradaEnOtraPestana'
-      ]
+    ? textos.admin.sesion[MOTIVOS[ubicacion.state.motivo] ?? 'cerradaEnOtraPestana']
     : null;
 
   // Ya logueado: derecho al panel (o a donde quería ir antes).

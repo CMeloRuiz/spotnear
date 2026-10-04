@@ -33,6 +33,10 @@ export const publico = {
         servicios: filtros.servicios?.length ? filtros.servicios.join(',') : undefined,
         cantidadVehiculos: filtros.cantidadVehiculos,
         orden: filtros.orden,
+        // También los que no tienen lugar en ese horario: la tarjeta lo dice
+        // ("Sin disponibilidad en este horario") en vez de que desaparezcan sin
+        // explicación. El backend los manda al final de la lista.
+        soloDisponibles: 'false',
       },
     }),
 
@@ -73,6 +77,12 @@ export const publico = {
   /** URL del QR en SVG (para imprimir). */
   urlQrSvg: (token) =>
     `${import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1'}/reservations/comprobante/${encodeURIComponent(token)}/qr.svg`,
+
+  /** Catálogo de marca/modelo/tipo, para el autocompletado del checkout. */
+  catalogoVehiculos: ({ signal } = {}) => api.get('/vehiculos/catalogo', { signal }),
+
+  /** Tipo de vehículo según marca y modelo: { coincidencia: { tipo, marca, modelo } | null }. */
+  clasificarVehiculo: (marca, modelo) => api.get('/vehiculos/clasificar', { params: { marca, modelo } }),
 
   /** Manda la imagen del comprobante al WhatsApp que el cliente cargó en la reserva. */
   enviarComprobantePorWhatsApp: (token) =>
@@ -137,9 +147,28 @@ export const auth = {
 const conAuth = { auth: true };
 
 export const admin = {
+  /* ── Catálogo de vehículos (SUPERADMIN) ── */
+  catalogoVehiculos: {
+    listar: ({ signal } = {}) => api.get('/admin/vehiculos-catalogo', { ...conAuth, signal }),
+    crear: (datos) => api.post('/admin/vehiculos-catalogo', datos, conAuth),
+    editar: (id, datos) =>
+      api.patch(`/admin/vehiculos-catalogo/${encodeURIComponent(id)}`, datos, conAuth),
+    eliminar: (id) => api.delete(`/admin/vehiculos-catalogo/${encodeURIComponent(id)}`, conAuth),
+  },
+
   /* ── Reservas ── */
   reservas: {
-    /** Eliminación desde el panel (solo SUPERADMIN). */
+    /** Reservas confirmadas que el usuario todavía no vio (contador del menú). */
+    nuevas: ({ signal } = {}) => api.get('/admin/reservations/nuevas', { ...conAuth, signal }),
+
+    /** Marca las reservas nuevas como vistas (al abrir la lista). */
+    marcarVistas: () => api.post('/admin/reservations/vistas', {}, conAuth),
+
+    /** Corrige el tipo de vehículo (en el check-in) y ajusta lo que se paga en el lugar. */
+    cambiarVehiculo: (id, tipo) =>
+      api.patch(`/admin/reservations/${encodeURIComponent(id)}/vehiculo`, { tipo }, conAuth),
+
+    /** Quita del panel una reserva terminada (borrado lógico). */
     eliminar: (id) => api.delete(`/admin/reservations/${encodeURIComponent(id)}`, conAuth),
     listar: (filtros, { signal } = {}) =>
       api.get('/admin/reservations', { ...conAuth, signal, params: filtros }),

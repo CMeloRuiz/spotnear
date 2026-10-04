@@ -66,12 +66,15 @@ export const esquemaReservaPublica = z
       telefono,
       email: emailOpcional,
     }),
+    // Marca, modelo y color son obligatorios: con marca y modelo se detecta el
+    // tipo de vehículo contra el catálogo propio (ver modules/vehiculos), y el
+    // tipo no tiene default: si no se detectó, lo elige el cliente.
     vehiculo: z.object({
       patente,
-      tipo: vehicleType.default('AUTO'),
-      marca: textoOpcional(40),
-      modelo: textoOpcional(40),
-      color: textoOpcional(30),
+      tipo: vehicleType,
+      marca: texto(40, 'La marca'),
+      modelo: texto(40, 'El modelo'),
+      color: texto(30, 'El color'),
     }),
 
     // ── Opcionales ──

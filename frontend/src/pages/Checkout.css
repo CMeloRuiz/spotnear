@@ -358,3 +358,16 @@
   flex-shrink: 0;
   margin-top: 2px;
 }
+
+/* "Tarifa para: SUV": el precio es el de ese tipo de vehículo. */
+.sn-checkout__tarifa-para {
+  font-weight: var(--sn-peso-semi);
+  color: var(--sn-marca-texto);
+}
+
+/* Mientras se recotiza (cambió el tipo de vehículo), el resumen se atenúa en
+   vez de desaparecer: el cliente ve que el número se está actualizando. */
+.sn-checkout__precio--actualizando {
+  opacity: 0.55;
+  transition: opacity var(--sn-trans);
+}

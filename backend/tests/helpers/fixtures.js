@@ -111,6 +111,10 @@ export async function crearSuperadminDePrueba() {
 
 /** Cuerpo válido de reserva, listo para postear. */
 export function cuerpoReserva(parkingId, inicio, fin, extra = {}) {
+  // `cliente` y `vehiculo` se combinan campo por campo con los de por defecto:
+  // pasar solo la patente no tiene que borrar la marca, el modelo y el color,
+  // que son obligatorios.
+  const { cliente, vehiculo, ...resto } = extra;
   return {
     parkingId,
     inicio: inicio.toISOString(),
@@ -119,14 +123,17 @@ export function cuerpoReserva(parkingId, inicio, fin, extra = {}) {
       nombre: 'Juan',
       apellido: 'Pérez',
       telefono: '11 1234 5678',
-      ...extra.cliente,
+      ...cliente,
     },
     vehiculo: {
       patente: 'AB123CD',
       tipo: 'AUTO',
-      ...extra.vehiculo,
+      marca: 'Toyota',
+      modelo: 'Corolla',
+      color: 'Gris',
+      ...vehiculo,
     },
-    ...extra,
+    ...resto,
   };
 }
 

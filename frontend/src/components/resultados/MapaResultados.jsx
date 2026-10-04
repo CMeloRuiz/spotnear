@@ -17,6 +17,14 @@ import './MapaResultados.css';
 
 /* ═══════════════════ Burbuja de precio ═══════════════════ */
 
+/** "Parking X · 60 lugares · 12 disponibles en tu horario", para el tooltip. */
+function cupos(resultado) {
+  const d = resultado.disponibilidad;
+  if (!d?.capacidadTotal) return resultado.nombre;
+  const libres = d.hayLugar ? textos.resultados.disponibles(d.libres) : textos.resultados.sinDisponibilidad;
+  return `${resultado.nombre} · ${textos.resultados.capacidad(d.capacidadTotal)} · ${libres}`;
+}
+
 function Burbuja({ resultado, resaltado, seleccionado, mostrarTotal, onClick, onHover }) {
   const valor = mostrarTotal ? resultado.precio.total : resultado.precioDesde;
   const sinLugar = !resultado.disponibilidad?.hayLugar;
@@ -39,6 +47,7 @@ function Burbuja({ resultado, resaltado, seleccionado, mostrarTotal, onClick, on
       onMouseEnter={() => onHover(resultado.id)}
       onMouseLeave={() => onHover(null)}
       aria-label={`${resultado.nombre}, ${fmtPrecio(valor)}`}
+      title={cupos(resultado)}
     >
       {fmtPrecio(valor)}
     </button>

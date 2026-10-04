@@ -6,13 +6,19 @@ import { z } from 'zod';
 import { validarPatente, MENSAJE_PATENTE_INVALIDA } from '../../utils/patente.js';
 import { normalizarTelefono, MENSAJE_TELEFONO_INVALIDO } from '../../utils/phone.js';
 
-/** Texto obligatorio con trim y largo máximo. */
-export const texto = (max = 120, etiqueta = 'Este campo') =>
-  z
-    .string({ required_error: `${etiqueta} es obligatorio.`, invalid_type_error: `${etiqueta} debe ser texto.` })
+/**
+ * Texto obligatorio con trim y largo máximo.
+ * El mensaje concuerda con el artículo de la etiqueta: "La marca es
+ * obligatoria", "El modelo es obligatorio".
+ */
+export const texto = (max = 120, etiqueta = 'Este campo') => {
+  const obligatorio = /^las? /i.test(etiqueta) ? 'obligatoria' : 'obligatorio';
+  return z
+    .string({ required_error: `${etiqueta} es ${obligatorio}.`, invalid_type_error: `${etiqueta} debe ser texto.` })
     .trim()
-    .min(1, `${etiqueta} es obligatorio.`)
+    .min(1, `${etiqueta} es ${obligatorio}.`)
     .max(max, `${etiqueta} no puede superar los ${max} caracteres.`);
+};
 
 /** Texto opcional: '' se convierte en undefined para no guardar vacíos. */
 export const textoOpcional = (max = 240) =>

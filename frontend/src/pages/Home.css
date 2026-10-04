@@ -358,3 +358,63 @@
 .sn-cta .sn-boton {
   flex-shrink: 0;
 }
+
+/* ───────────────────── Hero en el celular ─────────────────────
+   Mismo contenido que en escritorio, ordenado como un buscador de app: sin la
+   foto (en el celular empujaba el buscador fuera de la pantalla), título más
+   chico y la tarjeta con aire entre los campos. Referencia: el hero mobile de
+   SpotHero. Probado de 360 a 430 px de ancho. */
+@media (max-width: 899px) {
+  .sn-hero {
+    padding-block: var(--sn-e6) var(--sn-e10);
+  }
+
+  .sn-hero__imagen {
+    display: none;
+  }
+
+  .sn-hero__texto {
+    gap: var(--sn-e5);
+  }
+
+  .sn-hero__titulo {
+    font-size: 1.875rem;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+  }
+
+  .sn-hero__buscador {
+    margin-top: 0;
+    max-width: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .sn-hero__titulo {
+    font-size: 1.75rem;
+  }
+
+  /* La tarjeta del buscador: menos relleno lateral y más separación vertical
+     entre bloques, como en las apps de estacionamiento. */
+  .sn-hero__buscador.sn-tarjeta-busqueda {
+    gap: var(--sn-e5);
+    padding: var(--sn-e5) var(--sn-e4);
+    border-radius: var(--sn-radio-lg);
+  }
+
+  /* "Por hora / Diario" y "Mensual" en una sola línea cada una. */
+  .sn-hero__buscador .sn-tarjeta-busqueda__pestana {
+    padding: var(--sn-e2) var(--sn-e2);
+    font-size: var(--sn-texto-sm);
+    white-space: nowrap;
+    min-height: 42px;
+  }
+
+  .sn-hero__buscador .sn-tarjeta-busqueda__campos {
+    gap: var(--sn-e4);
+  }
+
+  .sn-hero__buscador .sn-periodo__fila {
+    gap: var(--sn-e3);
+  }
+}

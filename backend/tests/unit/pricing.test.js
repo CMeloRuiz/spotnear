@@ -124,6 +124,30 @@ describe('escalones de estadía', () => {
   });
 });
 
+/**
+ * Los cinco casos del reporte del bug de tarifas (Parking Thames 350, hora a
+ * $7.500). El motor ya los calculaba bien: el error estaba en la barra de la
+ * pantalla de resultados, que mostraba un horario y cotizaba otro. Quedan
+ * fijados acá para que el motor no se rompa nunca en estos números.
+ */
+describe('los cinco casos del reporte, con la hora a $7.500', () => {
+  const tarifas = [tarifa('HORA', 7500)];
+  const casos = [
+    [2, 15_000, 'por hora: 2 × 7.500'],
+    [6, 30_000, 'media estadía: 4 × 7.500'],
+    [12, 37_500, 'estadía completa: 5 × 7.500 (12 h exactas ya son completa)'],
+    [20, 37_500, 'estadía completa: 5 × 7.500'],
+    [26, 52_500, 'ciclo reiniciado: una completa (37.500) + 2 horas (15.000)'],
+  ];
+
+  for (const [horas, esperado, regla] of casos) {
+    test(`${horas} h → $${esperado.toLocaleString('es-AR')} (${regla})`, () => {
+      const r = calcularPrecio({ parking, tarifas, inicio: BASE, fin: enHoras(BASE, horas) });
+      assert.equal(r.subtotal, esperado);
+    });
+  }
+});
+
 describe('por hora vs. por día', () => {
   const tarifas = [tarifa('HORA', 2000), tarifa('DIA', 15000)];
 
@@ -227,13 +251,31 @@ describe('estacionamiento con tarifas SOLO por tipo de vehículo', () => {
 describe('comisión y servicio', () => {
   // El servicio se calcula sobre el subtotal y se SUMA. El estacionamiento
   // cobra su tarifa completa; el cliente paga esa tarifa más el servicio.
-  test('10% por defecto: el ejemplo del checkout', () => {
-    const r = calcularPrecio({ parking, tarifas: [tarifa('HORA', 4000)], inicio: BASE, fin: enHoras(BASE, 3) });
+  test('20% por defecto: el ejemplo del checkout', () => {
+    // Sin porcentaje configurado en el estacionamiento se usa el default.
+    const r = calcularPrecio({
+      parking: { moneda: 'ARS' },
+      tarifas: [tarifa('HORA', 4000)],
+      inicio: BASE,
+      fin: enHoras(BASE, 3),
+    });
 
     assert.equal(r.subtotal, 12000, 'lo que cobra el estacionamiento');
-    assert.equal(r.montoComision, 1200, 'el servicio de SpotNear');
-    assert.equal(r.precioTotal, 13200, 'lo que paga el cliente');
+    assert.equal(r.montoComision, 2400, 'la seña de SpotNear: 20%');
+    assert.equal(r.precioTotal, 14400, 'lo que paga el cliente');
     assert.equal(r.montoNeto, 12000, 'al dueño le queda su tarifa entera');
+  });
+
+  test('un estacionamiento con 20% cobra la seña sobre el precio de los escalones', () => {
+    // El caso del reporte: 2 horas a $7.500 → $15.000 de tarifa, $3.000 de seña.
+    const r = calcularPrecio({
+      parking: { comisionPorcentaje: 20, moneda: 'ARS' },
+      tarifas: [tarifa('HORA', 7500)],
+      inicio: BASE,
+      fin: enHoras(BASE, 2),
+    });
+    assert.equal(r.montoComision, 3000);
+    assert.equal(r.precioTotal, 18000);
   });
 
   test('comisión + neto === total, sin centavos perdidos', () => {

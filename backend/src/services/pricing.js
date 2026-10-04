@@ -340,7 +340,7 @@ export function calcularPrecio({
   const porcentaje =
     parking?.comisionPorcentaje !== undefined && parking?.comisionPorcentaje !== null
       ? aNumero(parking.comisionPorcentaje)
-      : 10;
+      : 20;
 
   const cobro = calcularCobro(subtotal, porcentaje);
 

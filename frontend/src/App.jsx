@@ -35,6 +35,8 @@ const Solicitudes = lazy(() => import('./pages/admin/Solicitudes.jsx'));
 const Tarifas = lazy(() => import('./pages/admin/Tarifas.jsx'));
 const Equipo = lazy(() => import('./pages/admin/Equipo.jsx'));
 const Comisiones = lazy(() => import('./pages/admin/Comisiones.jsx'));
+const MiCuenta = lazy(() => import('./pages/admin/MiCuenta.jsx'));
+const CatalogoVehiculos = lazy(() => import('./pages/admin/CatalogoVehiculos.jsx'));
 
 const cargando = <Cargando />;
 
@@ -90,6 +92,8 @@ const router = createBrowserRouter([
       { path: 'tarifas', element: <Suspense fallback={cargando}><Tarifas /></Suspense> },
       { path: 'equipo', element: <Suspense fallback={cargando}><Equipo /></Suspense> },
       { path: 'comisiones', element: <Suspense fallback={cargando}><Comisiones /></Suspense> },
+      { path: 'cuenta', element: <Suspense fallback={cargando}><MiCuenta /></Suspense> },
+      { path: 'catalogo-vehiculos', element: <Suspense fallback={cargando}><CatalogoVehiculos /></Suspense> },
     ],
   },
 ]);

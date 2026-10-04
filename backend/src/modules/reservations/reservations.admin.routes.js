@@ -43,6 +43,7 @@ import {
 import { formatearPatente } from '../../utils/patente.js';
 import { normalizarCodigo } from '../../utils/codes.js';
 import { requierePagoPrevio } from '../../services/payments/index.js';
+import { calcularPrecio } from '../../services/pricing.js';
 
 const router = Router();
 
@@ -333,6 +334,61 @@ router.get(
       mensaje,
       link: linkWhatsApp(parking?.whatsappGrupo ?? '', mensaje),
     });
+  }),
+);
+
+/**
+ * Reservas "nuevas" para un usuario: las que se confirmaron (seña acreditada,
+ * o creadas ya confirmadas) DESPUÉS de la última vez que abrió el listado de
+ * Reservas, y que todavía están por atenderse (confirmadas o en curso). Las
+ * que cargó él mismo desde el panel no cuentan: ya las vio.
+ *
+ * Se mide contra `pagadaEn` y no contra `createdAt` porque una reserva con
+ * Mercado Pago nace pendiente y se confirma después: para el estacionamiento
+ * es "nueva" cuando se confirma, no cuando el cliente empezó a pagar.
+ */
+function whereNuevas(req, desde) {
+  return {
+    parkingId: parkingDelUsuario(req),
+    estado: { in: ['CONFIRMADA', 'EN_CURSO'] },
+    AND: [
+      { OR: [{ pagadaEn: { gt: desde } }, { pagadaEn: null, createdAt: { gt: desde } }] },
+      { OR: [{ createdByUserId: null }, { createdByUserId: { not: req.usuario.id } }] },
+    ],
+  };
+}
+
+/**
+ * GET /api/v1/admin/reservations/nuevas
+ * El número del contador azul junto a "Reservas" en el menú (OWNER y STAFF).
+ * El SUPERADMIN no tiene un estacionamiento propio: para él es siempre 0.
+ */
+router.get(
+  '/nuevas',
+  asyncHandler(async (req, res) => {
+    if (!parkingDelUsuario(req)) return res.json({ nuevas: 0 });
+
+    const usuario = await prisma.user.findUnique({
+      where: { id: req.usuario.id },
+      select: { reservasVistasEn: true, createdAt: true },
+    });
+    // Si nunca abrió la lista, cuenta desde que tiene la cuenta.
+    const desde = usuario?.reservasVistasEn ?? usuario?.createdAt ?? new Date(0);
+
+    res.json({ nuevas: await prisma.reservation.count({ where: whereNuevas(req, desde) }) });
+  }),
+);
+
+/**
+ * POST /api/v1/admin/reservations/vistas
+ * Marca como vistas las reservas nuevas: lo llama la pantalla de Reservas al
+ * abrirse, y el contador vuelve a 0.
+ */
+router.post(
+  '/vistas',
+  asyncHandler(async (req, res) => {
+    await prisma.user.update({ where: { id: req.usuario.id }, data: { reservasVistasEn: new Date() } });
+    res.json({ ok: true });
   }),
 );
 
@@ -634,6 +690,95 @@ router.patch(
     });
 
     res.json({ reserva: servicio.aReservaAdmin(reserva) });
+  }),
+);
+
+/**
+ * PATCH /api/v1/admin/reservations/:id/vehiculo
+ *
+ * Corrige el tipo de vehículo, típicamente en el check-in: el cliente cargó
+ * "Auto" (o una marca/modelo que el catálogo clasificó así) y en la entrada se
+ * ve que es una camioneta.
+ *
+ * El ajuste de precio es automático y solo sobre lo que se paga en el lugar:
+ * se recalcula la tarifa con el tipo nuevo (mismos escalones, mismo horario) y
+ * la diferencia se suma (o resta) a lo que el cliente le paga al
+ * estacionamiento al llegar. La seña ya cobrada no se toca: entró por Mercado
+ * Pago y no es reembolsable. La respuesta trae la diferencia para que el
+ * playero sepa cuánto cobrar de más.
+ */
+router.patch(
+  '/:id/vehiculo',
+  validar({ params: z.object({ id: z.string().min(1) }), body: z.object({ tipo: vehicleType }) }),
+  asyncHandler(async (req, res) => {
+    const reserva = await prisma.reservation.findFirst({
+      where: { id: req.params.id, ...filtroTenant(req) },
+      include: servicio.INCLUDE_COMPLETO,
+    });
+    if (!reserva) throw errores.noEncontrado('La reserva');
+
+    if (!['CONFIRMADA', 'EN_CURSO'].includes(reserva.estado)) {
+      throw errores.conflicto('El tipo de vehículo se corrige en reservas confirmadas o en curso.');
+    }
+
+    const { tipo } = req.body;
+    const anterior = reserva.vehicle.tipo;
+    if (tipo === anterior) return res.json({ reserva: servicio.aReservaAdmin(reserva), ajuste: null });
+
+    const parking = await prisma.parking.findUnique({
+      where: { id: reserva.parkingId },
+      include: { tarifas: true },
+    });
+    if (!parking.tiposVehiculo.includes(tipo)) {
+      throw new AppError('Este estacionamiento no acepta ese tipo de vehículo.', 422, 'VEHICULO_NO_ACEPTADO');
+    }
+
+    // Mismo cálculo que al reservar: el motor central de precios, con el
+    // porcentaje congelado en la reserva.
+    const precio = calcularPrecio({
+      parking: { comisionPorcentaje: reserva.comisionPorcentaje, moneda: reserva.moneda },
+      tarifas: parking.tarifas,
+      inicio: reserva.inicio,
+      fin: reserva.fin,
+      vehicleType: tipo,
+      cantidadVehiculos: reserva.cantidadVehiculos,
+    });
+
+    const subtotalAnterior = Number(reserva.subtotal);
+    const subtotalNuevo = precio.subtotal;
+    const sena = Number(reserva.montoComision);
+
+    const [, actualizada] = await prisma.$transaction([
+      prisma.vehicle.update({ where: { id: reserva.vehicleId }, data: { tipo } }),
+      prisma.reservation.update({
+        where: { id: reserva.id },
+        data: {
+          subtotal: subtotalNuevo,
+          montoNeto: subtotalNuevo,
+          precioTotal: subtotalNuevo + sena,
+          desglosePrecio: { ...precio.desglose, sena, ajustePorTipoDeVehiculo: { de: anterior, a: tipo } },
+        },
+        include: servicio.INCLUDE_COMPLETO,
+      }),
+    ]);
+
+    const ajuste = {
+      tipoAnterior: anterior,
+      tipoNuevo: tipo,
+      aPagarEnElLugarAntes: subtotalAnterior,
+      aPagarEnElLugarAhora: subtotalNuevo,
+      diferencia: subtotalNuevo - subtotalAnterior,
+    };
+
+    await auditar(req, {
+      accion: 'reserva.corregir_vehiculo',
+      entidad: 'Reservation',
+      entidadId: reserva.id,
+      parkingId: reserva.parkingId,
+      datos: ajuste,
+    });
+
+    res.json({ reserva: servicio.aReservaAdmin(actualizada), ajuste });
   }),
 );
 

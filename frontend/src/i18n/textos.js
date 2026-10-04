@@ -128,6 +128,12 @@ export const textos = {
     caminando: (min) => `${min} min caminando`,
     lugaresLibres: (n) =>
       n === 1 ? 'Queda 1 lugar' : n <= 5 ? `Quedan ${n} lugares` : `${n} lugares disponibles`,
+    // Leyenda de cupos de la tarjeta. La disponibilidad es para el horario
+    // buscado (descuenta las reservas que se superponen), no para "ahora".
+    capacidad: (total) => (total === 1 ? '1 lugar' : `${total} lugares`),
+    disponibles: (n) =>
+      n === 1 ? '1 disponible en tu horario' : `${n} disponibles en tu horario`,
+    sinDisponibilidad: 'Sin disponibilidad en este horario',
     ultimosLugares: '¡Últimos lugares!',
     etiquetas: {
       MAS_CERCA: 'Más cerca',
@@ -215,6 +221,15 @@ export const textos = {
     marca: 'Marca',
     modelo: 'Modelo',
     color: 'Color',
+    // Detección del tipo con el catálogo de marca/modelo de SpotNear.
+    elegiTipoVehiculo: 'Elegí el tipo de vehículo',
+    tipoDetectado: (vehiculo) => `Lo detectamos por ${vehiculo}.`,
+    tipoDetectadoNoAceptado: (tipo, vehiculo) =>
+      `Un ${vehiculo} es ${tipo.toLowerCase()}, y este estacionamiento no recibe ese tipo de vehículo.`,
+    tipoSinDetectar: 'Completá la marca y el modelo y lo detectamos.',
+    // Resumen de precio: para qué vehículo es la tarifa.
+    tarifaPara: (tipo) => `Tarifa para: ${tipo}`,
+    tarifaReferencia: 'Tarifa de referencia: elegí tu tipo de vehículo',
     cantidadVehiculos: 'Cantidad de vehículos',
     notas: 'Notas o comentarios',
     notasPlaceholder: 'Ej: llego con una camioneta alta, necesito lugar en planta baja.',
@@ -340,6 +355,52 @@ export const textos = {
   },
 
   admin: {
+    // Catálogo propio de marca/modelo → tipo de vehículo (SUPERADMIN).
+    catalogo: {
+      titulo: 'Catálogo de vehículos',
+      subtitulo:
+        'Con esta lista el checkout detecta el tipo de vehículo cuando el cliente escribe la marca y el modelo, y le cotiza la tarifa que corresponde. Si aparece un modelo que no reconoce, agregalo acá.',
+      agregar: 'Agregar modelo',
+      agregarTitulo: 'Agregar un modelo',
+      editarTitulo: 'Editar modelo',
+      buscar: 'Buscar',
+      marca: 'Marca',
+      modelo: 'Modelo',
+      tipo: 'Tipo de vehículo',
+      acciones: 'Acciones',
+      editar: 'Editar',
+      eliminar: 'Eliminar',
+      ayudaModelo:
+        'Sin la versión: "Hilux" alcanza para "Hilux SRV 4x4". Si un modelo tiene variantes de distinto tipo ("Corolla" y "Corolla Cross"), cargá las dos.',
+      cantidad: (visibles, total) =>
+        visibles === total ? `${total} modelos` : `${visibles} de ${total} modelos`,
+      vacio: 'No hay modelos',
+      vacioTexto: 'Agregá el primero con "Agregar modelo".',
+      vacioFiltro: 'Ningún modelo coincide con la búsqueda.',
+      agregado: (nombre) => `Se agregó ${nombre}.`,
+      editado: 'Modelo actualizado.',
+      eliminado: (nombre) => `Se eliminó ${nombre} del catálogo.`,
+      eliminarTitulo: (nombre) => `¿Eliminar ${nombre}?`,
+      eliminarTexto:
+        'Desde ahora el checkout no va a detectar el tipo de este modelo: el cliente lo va a tener que elegir a mano. Las reservas ya hechas no cambian.',
+    },
+    // Mi cuenta: por ahora, solo cambiar la contraseña propia.
+    cuenta: {
+      titulo: 'Mi cuenta',
+      cambiarPassword: 'Cambiar contraseña',
+      actual: 'Contraseña actual',
+      nueva: 'Contraseña nueva',
+      confirmacion: 'Repetí la contraseña nueva',
+      ayudaNueva: (n) => `Al menos ${n} caracteres. Usá una que no uses en otro lado.`,
+      mostrar: 'Mostrar las contraseñas',
+      guardar: 'Cambiar contraseña',
+      aviso: 'Al cambiarla se cierran todas tus sesiones abiertas, incluida esta: vas a volver a ingresar con la nueva.',
+      faltaActual: 'Ingresá tu contraseña actual.',
+      muyCorta: (n) => `Tiene que tener al menos ${n} caracteres.`,
+      igualALaActual: 'Tiene que ser distinta de la actual.',
+      noCoinciden: 'Las dos contraseñas nuevas no coinciden.',
+      listo: 'Contraseña actualizada.',
+    },
     login: {
       titulo: 'Panel de administración',
       subtitulo: 'Ingresá con tu usuario para ver las reservas de tu estacionamiento.',
@@ -359,10 +420,17 @@ export const textos = {
       solicitudes: 'Solicitudes',
       equipo: 'Equipo',
       comisiones: 'Comisiones',
+      catalogoVehiculos: 'Catálogo de vehículos',
+      miCuenta: 'Mi cuenta',
+      contraerMenu: 'Contraer menú',
+      expandirMenu: 'Expandir menú',
+      verSitio: 'Ver el sitio',
+      reservasNuevas: (n) => (n === 1 ? '1 reserva nueva' : `${n} reservas nuevas`),
     },
     sesion: {
       cerradaPorInactividad: 'Tu sesión se cerró por inactividad. Volvé a ingresar.',
       cerradaEnOtraPestana: 'Cerraste sesión en otra pestaña.',
+      cerradaPorCambioDePassword: 'Cambiaste tu contraseña: ingresá de nuevo con la nueva.',
       avisoTitulo: '¿Seguís ahí?',
       avisoTexto: (segundos) =>
         `Tu sesión está por cerrarse por inactividad en ${segundos} segundo${segundos === 1 ? '' : 's'}.`,
@@ -453,6 +521,17 @@ export const textos = {
       busquedaRapidaAyuda: 'Escribí el código o la patente que te muestra el cliente.',
     },
     detalleReserva: {
+      corregirVehiculo: {
+        label: 'Corregir el tipo de vehículo',
+        boton: 'Corregir',
+        ayuda:
+          'Si en la entrada ves que no es el tipo cargado, corregilo: se recalcula lo que el cliente paga en el lugar. La seña no cambia.',
+        listo: 'Tipo de vehículo corregido.',
+        cobrarDeMas: (diferencia, total) =>
+          `Cobrale ${diferencia} más en el lugar: con el tipo corregido le quedan ${total} por pagar.`,
+        cobrarDeMenos: (diferencia, total) =>
+          `Son ${diferencia} menos: con el tipo corregido le quedan ${total} por pagar en el lugar.`,
+      },
       titulo: 'Reserva',
       volver: 'Volver a reservas',
       datosCliente: 'Cliente',
@@ -799,11 +878,11 @@ export const textos = {
     seccionCondiciones: 'Condiciones',
     comisionTitulo: 'Vos cobrás el 100% de tu tarifa',
     comisionTexto:
-      'Al reservar, el cliente nos paga una seña del 10% que no se le devuelve. Esa seña se queda en SpotNear como cargo por el uso de la plataforma. Tu tarifa la cobrás entera, en tu estacionamiento, directo del cliente: no te retenemos nada ni tenés que esperar transferencias nuestras.',
+      'Al reservar, el cliente nos paga una seña del 20% que no se le devuelve. Esa seña se queda en SpotNear como cargo por el uso de la plataforma. Tu tarifa la cobrás entera, en tu estacionamiento, directo del cliente: no te retenemos nada ni tenés que esperar transferencias nuestras.',
     comisionEjemplo: (tarifa, sena, total) =>
       `Ejemplo: si tu tarifa es ${tarifa}, el cliente paga ${sena} de seña al reservar y te paga los ${tarifa} a vos cuando llega. Su reserva le sale ${total}.`,
     aceptaComision:
-      'Entiendo que SpotNear le cobra al cliente una seña no reembolsable del 10% por el uso de la plataforma, y que yo cobro el valor de mi tarifa directamente del cliente en mi estacionamiento',
+      'Entiendo que SpotNear le cobra al cliente una seña no reembolsable del 20% por el uso de la plataforma, y que yo cobro el valor de mi tarifa directamente del cliente en mi estacionamiento',
     aceptaTerminos: 'Acepto los términos y condiciones y la política de privacidad',
 
     anterior: 'Volver',

@@ -129,11 +129,29 @@ export function TarjetaParking({
             ))}
           </div>
 
-          {pocosLugares && !sinLugar && (
-            <span className="sn-tarjeta-parking__urgencia">
-              <Icono nombre="alerta" tam={13} />
-              {textos.resultados.lugaresLibres(disponibilidad.libres)}
-            </span>
+          {/* Cupos: capacidad total y lo que queda para el horario buscado,
+              con la misma cuenta que impide la sobreventa al confirmar. */}
+          {disponibilidad?.capacidadTotal > 0 && (
+            <p
+              className={[
+                'sn-tarjeta-parking__cupos',
+                sinLugar ? 'sn-tarjeta-parking__cupos--sin-lugar' : '',
+                pocosLugares ? 'sn-tarjeta-parking__cupos--pocos' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <Icono nombre={sinLugar ? 'sinLugar' : 'auto'} tam={14} />
+              <span>
+                {textos.resultados.capacidad(disponibilidad.capacidadTotal)}
+                {' · '}
+                <strong>
+                  {sinLugar
+                    ? textos.resultados.sinDisponibilidad
+                    : textos.resultados.disponibles(disponibilidad.libres)}
+                </strong>
+              </span>
+            </p>
           )}
         </div>
 

@@ -83,7 +83,7 @@ services:
 
       # ── Negocio ──
       - key: COMISION_DEFAULT_PORCENTAJE
-        value: "10"
+        value: "20"
       - key: TZ
         value: America/Argentina/Buenos_Aires
       - key: MONEDA

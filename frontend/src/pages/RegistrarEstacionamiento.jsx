@@ -671,7 +671,7 @@ export function RegistrarEstacionamiento() {
               <h2>{t.seccionCondiciones}</h2>
 
               {/* El acuerdo comercial va explícito y destacado, no escondido en
-                  la letra chica. Con un ejemplo numérico: "10%" en abstracto no
+                  la letra chica. Con un ejemplo numérico: "20%" en abstracto no
                   le dice a nadie cuánta plata termina cobrando. */}
               <div className="sn-registro__comision">
                 <span className="sn-registro__comision-icono" aria-hidden="true">
@@ -683,8 +683,8 @@ export function RegistrarEstacionamiento() {
                   <p className="sn-registro__comision-ejemplo">
                     {t.comisionEjemplo(
                       fmtPrecio(26000),
-                      fmtPrecio(2600),
-                      fmtPrecio(28600),
+                      fmtPrecio(5200),
+                      fmtPrecio(31200),
                     )}
                   </p>
                 </div>
