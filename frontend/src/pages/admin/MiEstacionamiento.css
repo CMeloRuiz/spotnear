@@ -290,3 +290,25 @@
   font-size: var(--sn-texto-sm);
   color: var(--sn-tinta-media);
 }
+
+/* Subir fotos desde el dispositivo (van a Cloudinary). El input queda oculto
+   detrás del botón, que es el label: clic y teclado funcionan igual. */
+.sn-est__subir-fotos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sn-e2);
+  margin-bottom: var(--sn-e4);
+  cursor: pointer;
+}
+
+.sn-est__subir-fotos input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.sn-est__subir-fotos input:focus-visible + .sn-boton {
+  box-shadow: var(--sn-sombra-foco);
+}

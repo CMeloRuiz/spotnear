@@ -162,3 +162,12 @@
 .sn-llegada .sn-boton {
   flex-shrink: 0;
 }
+
+/* Próximos 7 días, debajo de la barra de "ahora". */
+.sn-ocupacion__proximas {
+  margin-top: var(--sn-e3);
+  padding-top: var(--sn-e3);
+  border-top: 1px solid var(--sn-borde);
+  font-size: var(--sn-texto-sm);
+  color: var(--sn-tinta-media);
+}

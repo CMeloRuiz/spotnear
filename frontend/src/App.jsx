@@ -11,6 +11,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import { ProveedorMapas } from './components/mapas/ProveedorMapas.jsx';
 import { Cargando } from './components/ui/Estado.jsx';
+import AvisoServidor from './components/layout/AvisoServidor.jsx';
 
 import LayoutPublico from './layouts/LayoutPublico.jsx';
 import Home from './pages/Home.jsx';
@@ -104,6 +105,7 @@ export function App() {
       <AuthProvider>
         <ToastProvider>
           <RouterProvider router={router} />
+          <AvisoServidor />
         </ToastProvider>
       </AuthProvider>
     </ProveedorMapas>

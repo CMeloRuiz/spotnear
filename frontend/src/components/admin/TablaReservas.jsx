@@ -155,14 +155,22 @@ export function TablaReservas({
                   </div>
                 </td>
 
-                <td className="sn-tabla-reservas__horario">
-                  <strong>{hora(r.inicio)}</strong>
-                  <small>{fechaCorta(r.inicio)}</small>
+                <td>
+                  {/* El flex va en un div: con display:flex en el <td> la celda deja
+                      de ser celda y la tabla se descuadra. */}
+                  <div className="sn-tabla-reservas__horario">
+                    <strong>{hora(r.inicio)}</strong>
+                    <small>{fechaCorta(r.inicio)}</small>
+                  </div>
                 </td>
 
-                <td className="sn-tabla-reservas__horario">
-                  <strong>{hora(r.fin)}</strong>
-                  <small>{fechaCorta(r.fin)}</small>
+                <td>
+                  {/* El flex va en un div: con display:flex en el <td> la celda deja
+                      de ser celda y la tabla se descuadra. */}
+                  <div className="sn-tabla-reservas__horario">
+                    <strong>{hora(r.fin)}</strong>
+                    <small>{fechaCorta(r.fin)}</small>
+                  </div>
                 </td>
 
                 <td>

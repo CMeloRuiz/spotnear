@@ -59,6 +59,20 @@ describe('catálogo de vehículos', () => {
     assert.equal(tipo('Peugeot', '208'), 'AUTO');
   });
 
+  test('Mercedes-Benz y BMW: la línea y la denominación con número', () => {
+    assert.equal(tipo('Mercedes-Benz', 'Clase C'), 'AUTO');
+    assert.equal(tipo('Mercedes', 'C200 Avantgarde'), 'AUTO');
+    assert.equal(tipo('Mercedez Benz', 'GLA 200'), 'SUV');
+    assert.equal(tipo('Mercedes-Benz', 'GLC Coupé'), 'SUV');
+    assert.equal(tipo('Mercedes-Benz', 'Sprinter 415'), 'UTILITARIO');
+    assert.equal(tipo('Mercedes-Benz', 'Clase X'), 'CAMIONETA');
+    assert.equal(tipo('BMW', '320i'), 'AUTO');
+    assert.equal(tipo('BMW', 'Serie 3'), 'AUTO');
+    assert.equal(tipo('bmw', 'X1 sDrive20i'), 'SUV');
+    assert.equal(tipo('BMW', 'X5 M'), 'SUV');
+    assert.equal(tipo('BMW', 'R 1250 GS'), 'MOTO');
+  });
+
   test('lo que no está en el catálogo no se adivina', () => {
     assert.equal(tipo('Fiat', 'Modelo Inventado'), null);
     assert.equal(tipo('Marca Rara', 'Corolla'), null);

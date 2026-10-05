@@ -12,7 +12,6 @@ import prisma from '../../config/prisma.js';
 import env from '../../config/env.js';
 import { enviarWhatsApp, linkWhatsApp, envioAutomatico } from './whatsapp.js';
 import { enviarEmail } from './email.js';
-import { qrDataUrl } from '../qr.js';
 import { comprobantePng } from '../comprobante-imagen.js';
 import {
   mensajeClienteWhatsApp,
@@ -20,6 +19,7 @@ import {
   mensajeResumenDelDia,
   pieComprobanteWhatsApp,
   emailComprobanteHTML,
+  CID_COMPROBANTE,
   emailComprobanteTexto,
   asuntoEmail,
   urlComprobante,
@@ -166,25 +166,25 @@ export async function notificarClienteEmail(reserva) {
     return { enviado: false, estado: 'PENDIENTE', proveedor: null, error: 'El cliente no dejó email.' };
   }
 
-  let qr = null;
-  try {
-    qr = await qrDataUrl(reserva);
-  } catch (error) {
-    console.error('[notificaciones] no se pudo generar el QR:', error.message);
-  }
-
-  const asunto = asuntoEmail(reserva);
-  const html = emailComprobanteHTML(reserva, qr);
-  const texto = emailComprobanteTexto(reserva);
-
-  // La imagen del comprobante va adjunta: es lo que se muestra en la entrada,
-  // y Gmail no muestra el QR embebido en el HTML (bloquea las imágenes data:).
+  // La imagen del comprobante es el email: va embebida en el cuerpo (cid) y,
+  // además, adjunta. Es el mismo PNG de "Guardar imagen" y de WhatsApp
+  // (services/comprobante-imagen.js), no una versión aparte.
   let adjuntos = [];
   try {
-    adjuntos = [{ filename: `spotnear-${reserva.codigo}.png`, content: await comprobantePng(reserva) }];
+    adjuntos = [
+      {
+        filename: `spotnear-${reserva.codigo}.png`,
+        content: await comprobantePng(reserva),
+        cid: CID_COMPROBANTE,
+      },
+    ];
   } catch (error) {
     console.error('[notificaciones] no se pudo generar la imagen del comprobante:', error.message);
   }
+
+  const asunto = asuntoEmail(reserva);
+  const html = emailComprobanteHTML(reserva, { conImagen: adjuntos.length > 0 });
+  const texto = emailComprobanteTexto(reserva);
 
   const resultado = await enviarEmail({
     destino: reserva.customer.email,

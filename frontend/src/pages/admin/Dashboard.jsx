@@ -141,6 +141,19 @@ export function Dashboard() {
                   </span>
                 </div>
               </div>
+
+              {/* "Libres ahora" no cambia con una reserva para más tarde: esto
+                  sí, así una reserva recién pagada se ve en el panel. */}
+              {ocupacion.proximosDias && (
+                <p className="sn-ocupacion__proximas">
+                  {textos.admin.dashboard.proximosDias(
+                    ocupacion.proximosDias.reservas,
+                    ocupacion.proximosDias.minimoLibres,
+                    ocupacion.capacidadTotal,
+                    ocupacion.proximosDias.momentoPico,
+                  )}
+                </p>
+              )}
             </div>
           </section>
         )}

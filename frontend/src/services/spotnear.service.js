@@ -19,6 +19,9 @@ export const publico = {
   buscarParkings: (filtros, { signal } = {}) =>
     api.get('/parkings', {
       signal,
+      // Margen para un backend que está despertando (Render free): si igual se
+      // pasa, el cliente reintenta solo (ver ESPERAS_DE_DESPERTAR en api.js).
+      timeout: 45_000,
       params: {
         lat: filtros.lat,
         lng: filtros.lng,
@@ -85,6 +88,29 @@ export const publico = {
   clasificarVehiculo: (marca, modelo) => api.get('/vehiculos/clasificar', { params: { marca, modelo } }),
 
   /** Manda la imagen del comprobante al WhatsApp que el cliente cargó en la reserva. */
+  /**
+   * Descarga la imagen del comprobante: el MISMO PNG que el backend adjunta al
+   * email y manda por WhatsApp (GET /comprobante/:token/comprobante.png). Antes
+   * el navegador dibujaba una versión propia en un canvas; ahora hay un solo
+   * archivo y los tres canales mandan exactamente lo mismo.
+   */
+  async descargarImagenComprobante(token, codigo) {
+    const respuesta = await pedir(`/reservations/comprobante/${encodeURIComponent(token)}/comprobante.png`, {
+      crudo: true,
+      timeout: 60_000,
+    });
+    const blob = await respuesta.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `spotnear-${codigo}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Se libera en el próximo tick: si se revoca al instante, Safari cancela la descarga.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+
   enviarComprobantePorWhatsApp: (token) =>
     api.post(`/reservations/comprobante/${encodeURIComponent(token)}/enviar-whatsapp`, {}),
 
@@ -223,6 +249,17 @@ export const admin = {
     darDeBaja: (id) => api.delete(`/admin/parkings/${encodeURIComponent(id)}`, conAuth),
 
     agregarFoto: (id, datos) => api.post(`/admin/parkings/${encodeURIComponent(id)}/fotos`, datos, conAuth),
+    /** Sube archivos a Cloudinary y los agrega al estacionamiento. */
+    subirFotos: (id, archivos) => {
+      const cuerpo = new FormData();
+      for (const a of archivos) cuerpo.append('fotos', a);
+      return pedir(`/admin/parkings/${encodeURIComponent(id)}/fotos/archivos`, {
+        method: 'POST',
+        body: cuerpo,
+        auth: true,
+        timeout: 120_000,
+      });
+    },
     borrarFoto: (id, fotoId) =>
       api.delete(`/admin/parkings/${encodeURIComponent(id)}/fotos/${encodeURIComponent(fotoId)}`, conAuth),
 

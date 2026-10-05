@@ -125,6 +125,8 @@ export const textos = {
     reservar: 'Reservar',
     porHora: 'por hora',
     total: 'Total',
+    desde: 'Desde',
+    precioParaAuto: 'Precio para auto · varía según el vehículo',
     caminando: (min) => `${min} min caminando`,
     lugaresLibres: (n) =>
       n === 1 ? 'Queda 1 lugar' : n <= 5 ? `Quedan ${n} lugares` : `${n} lugares disponibles`,
@@ -455,6 +457,10 @@ export const textos = {
       netoPrevisto: 'Te queda neto',
       comisionSpotNear: 'Comisión SpotNear',
       ocupacion: 'Ocupación ahora',
+      proximosDias: (reservas, minimoLibres, capacidad, momento) =>
+        reservas === 0
+          ? 'Próximos 7 días: sin reservas.'
+          : `Próximos 7 días: ${reservas} ${reservas === 1 ? 'reserva' : 'reservas'} · en el momento más cargado${momento ? ` (${new Date(momento).toLocaleString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' })})` : ''} quedan ${minimoLibres} de ${capacidad} lugares libres.`,
       adentro: 'Vehículos adentro',
       proximasLlegadas: 'Próximas llegadas',
       sinLlegadas: 'No hay llegadas previstas en las próximas 12 horas.',
@@ -765,6 +771,7 @@ export const textos = {
   },
 
   comunes: {
+    servidorDespertando: "Estamos despertando el servidor, puede tardar hasta un minuto la primera vez...",
     cargando: 'Cargando...',
     guardar: 'Guardar',
     guardando: 'Guardando...',
@@ -791,7 +798,7 @@ export const textos = {
   registro: {
     titulo: 'Sumá tu estacionamiento a SpotNear',
     subtitulo:
-      'Recibí reservas por internet, sin anotar nada a mano. Cargás tus datos, lo revisamos y en 48 horas hábiles estás publicado.',
+      'Recibí reservas por internet, sin anotar nada a mano. Cargás tus datos, lo revisamos y en menos de 24 horas estás publicado.',
     beneficios: [
       {
         titulo: 'Reservas que llegan solas',
@@ -900,7 +907,7 @@ export const textos = {
 
     exitoTitulo: '¡Recibimos tu solicitud!',
     exitoTexto:
-      'La revisamos a mano, así que puede demorar hasta 48 horas hábiles. Te escribimos a tu email apenas esté lista.',
+      'La revisamos a mano y te respondemos en menos de 24 horas. Te escribimos a tu email apenas esté lista.',
     exitoQueSigue: 'Mientras tanto',
     exitoPasos: [
       'Te mandamos un mail confirmando que la recibimos.',

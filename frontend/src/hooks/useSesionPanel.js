@@ -42,8 +42,28 @@ export const MINUTOS_INACTIVIDAD = 15;
 /** Cuánto antes del cierre se avisa al usuario. */
 export const MINUTOS_AVISO = 1;
 
-const MS_INACTIVIDAD = MINUTOS_INACTIVIDAD * 60_000;
-const MS_AVISO = MINUTOS_AVISO * 60_000;
+/**
+ * Modo de prueba: con `localStorage.setItem('spotnear.inactividadMinutos', '2')`
+ * la sesión se cierra a los 2 minutos, para verificarlo en producción sin esperar
+ * 15. Solo puede ACORTAR el tiempo (1 a 15): nadie lo usa para quedarse
+ * conectado más de lo debido. Ver README.
+ */
+const CLAVE_MINUTOS_PRUEBA = 'spotnear.inactividadMinutos';
+
+function msInactividad() {
+  try {
+    const prueba = Number(localStorage.getItem(CLAVE_MINUTOS_PRUEBA));
+    if (Number.isFinite(prueba) && prueba >= 1 && prueba < MINUTOS_INACTIVIDAD) return prueba * 60_000;
+  } catch {
+    /* sin storage: el tiempo normal */
+  }
+  return MINUTOS_INACTIVIDAD * 60_000;
+}
+
+/** El aviso sale un minuto antes, o a la mitad si el tiempo de prueba es corto. */
+function msAviso() {
+  return Math.min(MINUTOS_AVISO * 60_000, msInactividad() / 2);
+}
 
 /** Cada cuánto se revisa el reloj. Corto: el cierre llega a lo sumo así de tarde. */
 const MS_CHEQUEO = 5_000;
@@ -113,7 +133,7 @@ export function olvidarActividad() {
  */
 export function sesionVencidaPorInactividad(ahora = Date.now()) {
   const ultima = leerUltimaActividad();
-  return ultima > 0 && ahora - ultima >= MS_INACTIVIDAD;
+  return ultima > 0 && ahora - ultima >= msInactividad();
 }
 
 const CLAVE_MOTIVO_AL_CARGAR = 'spotnear.motivoCierre';
@@ -191,7 +211,7 @@ export function useSesionPanel({ activo, alCerrar }) {
   /** Compara la última actividad con el reloj y decide. */
   const revisar = useCallback(() => {
     if (cerradaRef.current) return;
-    const restante = MS_INACTIVIDAD - (Date.now() - leerUltimaActividad());
+    const restante = msInactividad() - (Date.now() - leerUltimaActividad());
 
     if (restante <= 0) {
       cerradaRef.current = true;
@@ -200,7 +220,7 @@ export function useSesionPanel({ activo, alCerrar }) {
       alCerrarRef.current('inactividad');
       return;
     }
-    if (restante <= MS_AVISO) {
+    if (restante <= msAviso()) {
       avisandoRef.current = true;
       setAvisando(true);
       setSegundosRestantes(Math.ceil(restante / 1000));

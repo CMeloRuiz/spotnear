@@ -1,0 +1,17 @@
+.sn-aviso-servidor {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sn-e5);
+  transform: translateX(-50%);
+  z-index: var(--sn-z-toast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e2);
+  max-width: calc(100vw - 32px);
+  padding: var(--sn-e3) var(--sn-e4);
+  border-radius: var(--sn-radio-full);
+  background: var(--sn-tinta);
+  color: #fff;
+  font-size: var(--sn-texto-sm);
+  box-shadow: var(--sn-sombra-lg);
+}

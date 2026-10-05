@@ -328,10 +328,22 @@ lo mismo se puede correr desde el *Shell* del backend.
 ### Límites del plan free que conviene saber
 
 - **El backend se duerme** tras 15 minutos sin tráfico, y la primera visita
-  tarda ~1 minuto en despertarlo. Si en ese rato llega un webhook de Mercado
-  Pago, Mercado Pago lo reintenta, y la pantalla de pago y la vuelta del
-  checkout confirman la seña por su cuenta: no se pierde nada. Para un
-  servicio real, plan *Starter*.
+  tarda ~1 minuto en despertarlo. Antes, la primera búsqueda mostraba "No
+  pudimos conectarnos con el servidor" y recién al recargar andaba. Ahora:
+  - al abrir el sitio se manda un pedido liviano a `/health`, así el backend
+    empieza a despertar mientras la persona elige destino y horario;
+  - las **consultas (GET)** se reintentan solas durante ~1 minuto con esperas
+    crecientes (1, 2, 4, 7, 10, 15 y 20 s), también cuando Render responde
+    502/503/504 mientras levanta o cuando una consulta se pasa del tiempo; la
+    búsqueda tiene 45 s de timeout por intento;
+  - mientras tanto se ve el esqueleto de carga y un aviso abajo: "Estamos
+    despertando el servidor, puede tardar hasta un minuto la primera vez".
+  Los POST (crear una reserva, pagar) no se reintentan tanto: no se repite algo
+  que pudo haberse procesado. **Esto mitiga, no resuelve:** la causa es el
+  plan gratuito. Un plan pago (*Starter*) no duerme el servicio y elimina el
+  problema de raíz. Si en ese rato llega un webhook de Mercado Pago, Mercado
+  Pago lo reintenta, y la pantalla de pago confirma la seña por su cuenta: no
+  se pierde nada.
 - **La base free vence a los 30 días** de creada (Render la borra si no se
   pasa a un plan pago). Antes de tener clientes reales, pasala a un plan pago,
   o usá otra base (por ejemplo la de Neon de desarrollo, poniendo su URL en
@@ -556,6 +568,17 @@ a cualquier redeploy porque lo único que necesita es la base.
 
 El API Secret es una credencial: va solo en variables de entorno, nunca en el
 código ni en el frontend.
+
+### Subir fotos desde el panel
+
+*Mi estacionamiento → Fotos → Agregar foto* ahora deja **elegir archivos** del
+dispositivo (además de pegar un link). Van a Cloudinary igual que las del alta
+(`POST /admin/parkings/:id/fotos/archivos`), con el aislamiento por
+estacionamiento validado antes de leer el archivo. Es la forma de reponer las
+fotos que se perdieron cuando vivían en el disco de Render.
+
+Las fotos de ejemplo del seed son archivos del frontend
+(`/assets/parkings/*.svg`), no del disco del backend: no se pierden.
 
 ### Si Cloudinary no está configurado
 
@@ -1424,7 +1447,7 @@ npm --prefix backend run test:unit         # sin base de datos
 npm --prefix backend run test:integration  # contra la base real
 ```
 
-**189 tests**, sobre lo que duele si se rompe:
+**193 tests**, sobre lo que duele si se rompe:
 
 - **Patentes argentinas** — formatos viejo, Mercosur y de moto; normalización.
 - **Teléfonos** — las diez formas en que la gente escribe un número (`011 15 …`,
@@ -1686,9 +1709,15 @@ se ocultaba sin explicación.
 
 No existe una API pública y gratuita para saber el tipo por patente en
 Argentina, así que SpotNear tiene **su propio catálogo**
-(`VehicleModelCatalog`): 106 modelos comunes del mercado argentino en la carga
-inicial (40 autos, 34 SUV, 14 camionetas, 8 utilitarios y 10 motos). Va en una
-**migración** y no en el seed, para que también esté en producción.
+(`VehicleModelCatalog`): **188 modelos** del mercado argentino (94 autos,
+52 SUV, 15 camionetas, 10 utilitarios y 17 motos). Van en **migraciones** y no
+en el seed, para que también estén en producción: 106 en la carga inicial y 82
+de Mercedes-Benz y BMW en `20261005100000_catalogo_mercedes_bmw` (Clase
+A/B/C/E/S, CLA, CLS, GLA/GLB/GLC/GLE/GLS, Clase G, Clase X → camioneta, Clase
+V y Citan → utilitario; BMW Serie 1 a 8, M2–M5, Z4, X1–X7, iX y las motos G,
+F, R y S). Como la búsqueda es por prefijo, además de la línea van las
+denominaciones con número como se escriben en la calle: "C 200", "320" (así
+"320i" o "C200 Avantgarde" se reconocen).
 
 - En el checkout, **marca, modelo y color son obligatorios** (en el formulario
   y en la API). Al escribir marca y modelo se consulta el catálogo y, si hay
@@ -1816,6 +1845,70 @@ día puede tener la suya); si ese día cierra, dice "Cerrado ese día". También
 en el tooltip del marcador del mapa. Sale de `utils/horarios.js` →
 `leyendaHorario`, la misma lógica de los tres modos que ya usaba la ficha.
 
+### Columnas descuadradas en las tablas del panel
+
+En *Reservas*, las celdas de Ingreso y Salida tenían `display: flex` puesto
+directamente en el `<td>`. Eso las saca del modelo de tabla: el navegador las
+apilaba en una sola columna y todas las siguientes (Estado, Monto) quedaban
+corridas respecto de su título. Lo mismo pasaba con la celda de acciones de
+*Equipo*. El flex pasó a un `<div>` dentro de la celda, como ya estaba en
+Cliente y Vehículo. Verificado midiendo el borde izquierdo de cada encabezado
+contra su celda: coinciden al píxel en las nueve columnas.
+
+### El precio de la tarjeta dice "Desde"
+
+El monto de la tarjeta de resultados es el de la tarifa de **auto**. Si en el
+checkout el cliente elige SUV, camioneta o moto, puede cambiar. Por eso ahora
+dice "Desde $36.000" con la aclaración "Precio para auto · varía según el
+vehículo" debajo. La burbuja del mapa sigue mostrando solo el número: es un
+marcador y no entra más texto.
+
+### Cupos: "seguía diciendo 15 disponibles" (dos bases distintas)
+
+**Causa real:** el backend local (`npm run dev`) usa la base de **Neon**
+(`DATABASE_URL` de `backend/.env`) y el de Render usa **su propia base**. La
+reserva pagada de prueba (`SN-PRRR39`, Bilbo, 06/10 19:00 a 07/10 00:30) se
+hizo contra el backend local, y la búsqueda de la captura era la del sitio de
+Render: esa reserva ahí no existe. El cálculo de cupos estaba bien y se
+verificó: para ese horario la API local responde `libres: 14` de 15. Cuentan
+las reservas PENDIENTE (durante los 30 minutos que dura el pago), CONFIRMADA y
+EN_CURSO; no hay caché ni en el backend ni en el frontend.
+
+Lo que sí se mejoró: el tablero del panel mostraba solo "libres **ahora**", que
+una reserva para mañana no cambia. Ahora, debajo, dice **"Próximos 7 días: N
+reservas · en el momento más cargado (fecha y hora) quedan X de Y lugares
+libres"**, calculado con el mismo criterio que la búsqueda
+(`picoDeOcupacion` en `services/availability.js`). Una reserva recién pagada
+se ve ahí aunque empiece mañana.
+
+Si querés que local y Render vean lo mismo, apuntá los dos a la misma base (la
+`DATABASE_URL` de Render en tu `.env`, o al revés). Ojo: entonces lo que
+pruebes en local aparece en producción.
+
+### El modo de prueba del cierre por inactividad
+
+Para verificar el cierre sin esperar 15 minutos, en la consola del navegador
+(F12) del panel:
+
+```js
+localStorage.setItem('spotnear.inactividadMinutos', '2')
+```
+
+y recargá. La sesión se cierra a los 2 minutos sin tocar nada (aviso a los
+60 s). Solo puede **acortar** el tiempo (de 1 a 14 minutos): un valor más alto
+se ignora. Para volver a los 15: `localStorage.removeItem('spotnear.inactividadMinutos')`.
+
+Verificado además con el **build de producción** (minificado, sin modo
+estricto) contra el backend local: sesión abierta en *Reservas*, pestaña en
+segundo plano, contadores refrescándose cada minuto. La marca de actividad no
+se movió (los pedidos automáticos no cuentan), el aviso apareció y la sesión se
+cerró sola. En el sitio de Render se verificó el cierre al recargar una sesión
+vieja.
+
+Si probaste con una pestaña del panel que estaba abierta **antes** de un
+deploy, esa pestaña sigue corriendo el código viejo hasta que se recarga:
+recargá antes de probar.
+
 ### Si los pagos de prueba fallan con «Algo salió mal»
 
 El 04/10/2026 todos los pagos de prueba empezaron a fallar con "Algo salió
@@ -1850,6 +1943,15 @@ aplicación de Mercado Pago:
    (`APP_USR-…`) en el backend; pagá iniciando sesión con la compradora.
 3. Si nada de eso alcanza, reclamo al soporte de Mercado Pago con el
    `x-request-id` que imprime el diagnóstico.
+
+**«Una de las partes con la que intentás hacer el pago es de prueba»** (05/10):
+quiere decir que el vendedor y el comprador son de mundos distintos. Se
+diagnosticó creando una preferencia desde el backend de Render: el vendedor era
+`3293676301`, **tu cuenta real** (Render seguía con las credenciales `TEST-`
+viejas), y el comprador era una **cuenta de prueba**. En local, con las
+`APP_USR-` de la cuenta vendedora de prueba (`3723109745`) y la compradora de
+prueba, el pago se aprobó (reservas `SN-J63CWE` y `SN-PRRR39`). No era el
+código: hay que cargar en Render las mismas credenciales que en local.
 
 **Con las credenciales `APP_USR-` de prueba, el comprador también tiene que
 ser de prueba.** Probado el 04/10/2026: pagando como invitado con la tarjeta
@@ -2198,14 +2300,24 @@ conoce el resto del sistema. Ver *"Enviar a mi WhatsApp"* más arriba.
 
 El email lleva el mismo PNG como adjunto.
 
-### El diseño del comprobante vive en dos lugares
+### El comprobante es una sola imagen
 
-`backend/src/services/comprobante-imagen.js` (SVG, para WhatsApp) y
-`frontend/src/utils/comprobanteImagen.js` (canvas, para el botón "Guardar
-imagen"). Se duplicó a propósito: el backend no tiene canvas y el navegador no
-va a instalar `sharp`. Si cambia uno, hay que mirar el otro; son ~200 líneas
-cada uno y la alternativa era meter un renderizador compartido para ahorrar una
-copia.
+Antes había dos dibujos del comprobante: `backend/src/services/comprobante-imagen.js`
+(SVG rasterizado con `sharp`, para WhatsApp y el adjunto del email) y un canvas
+en el navegador para "Guardar imagen". Ahora hay **uno solo**, el del backend
+(`GET /reservations/comprobante/:token/comprobante.png`): "Guardar imagen" lo
+descarga, el email lo muestra embebido en el cuerpo (`cid:`) y además adjunto,
+y WhatsApp manda ese mismo archivo. Lo que el cliente guarda, lo que recibe por
+mail y lo que muestra en la entrada es exactamente lo mismo.
+
+El email ya no es una tabla de texto con los datos: el cuerpo es la imagen del
+comprobante, con los botones "Ver mi comprobante" y "Cómo llegar" debajo. Para
+que salga de verdad hace falta `RESEND_API_KEY` (ver *Emails*); sin ella el
+botón "Enviar por email" avisa que el envío no está configurado.
+
+"Enviar a mi WhatsApp" se sacó de la pantalla del comprobante hasta que
+WhatsApp esté activo (ver *Qué falta para activar WhatsApp*): un botón que no
+manda nada es peor que no tenerlo. El endpoint sigue en el backend.
 
 ### Eliminar un estacionamiento: qué se borra y qué no
 

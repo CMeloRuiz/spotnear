@@ -173,12 +173,16 @@ export function TarjetaParking({
             </span>
           ) : (
             <>
+              {/* El precio es el de la tarifa de auto: si el cliente elige
+                  SUV, camioneta o moto en el checkout, puede cambiar. */}
               <span className="sn-tarjeta-parking__monto">
+                <span className="sn-tarjeta-parking__desde">{textos.resultados.desde}</span>
                 {fmtPrecio(mostrarTotal ? precio.total : precioDesde)}
               </span>
               <span className="sn-tarjeta-parking__unidad">
                 {mostrarTotal ? textos.resultados.total : textos.resultados.porHora}
               </span>
+              <span className="sn-tarjeta-parking__nota-precio">{textos.resultados.precioParaAuto}</span>
             </>
           )}
         </div>

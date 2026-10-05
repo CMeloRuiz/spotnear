@@ -14,7 +14,6 @@ import { Campo } from '../components/ui/Campo.jsx';
 import { publico } from '../services/spotnear.service.js';
 import { usePedido, useTitulo, useCopiar } from '../hooks/index.js';
 import { useToast } from '../context/ToastContext.jsx';
-import { descargarImagenComprobante } from '../utils/comprobanteImagen.js';
 import { esEmailValido } from '../utils/validaciones.js';
 import {
   precio as fmtPrecio,
@@ -43,7 +42,6 @@ export function Comprobante() {
   const [errorEmail, setErrorEmail] = useState(null);
   const [enviandoEmail, setEnviandoEmail] = useState(false);
   const [generandoImagen, setGenerandoImagen] = useState(false);
-  const [enviandoWhatsApp, setEnviandoWhatsApp] = useState(false);
 
   const { datos, cargando, error, recargar } = usePedido(
     ({ signal }) => publico.comprobante(token, { signal }),
@@ -89,24 +87,9 @@ export function Comprobante() {
 
   /* ── Acciones ── */
 
-  /**
-   * Manda la IMAGEN del comprobante al WhatsApp del cliente, por la API de
-   * WhatsApp del backend. No abre wa.me: ese link solo arma texto, no puede
-   * adjuntar la imagen. Si el envío no está configurado, el backend lo dice.
-   */
-  const enviarPorWhatsApp = async () => {
-    setEnviandoWhatsApp(true);
-    try {
-      const r = await publico.enviarComprobantePorWhatsApp(token);
-      if (r.ok) toast.ok(r.mensaje);
-      else if (r.estado === 'NO_CONFIGURADO') toast.info(r.mensaje);
-      else toast.error(r.mensaje);
-    } catch (e) {
-      toast.error(e.message ?? textos.errores.generico);
-    } finally {
-      setEnviandoWhatsApp(false);
-    }
-  };
+  // "Enviar a mi WhatsApp" se sacó de esta pantalla hasta que la integración
+  // con WhatsApp esté activa (ver README → WhatsApp): un botón que no manda
+  // nada es peor que no tenerlo. El endpoint del backend sigue existiendo.
 
   const enviarPorEmail = async () => {
     const destino = emailDestino.trim() || reserva.cliente.email;
@@ -136,7 +119,7 @@ export function Comprobante() {
   const guardarImagen = async () => {
     setGenerandoImagen(true);
     try {
-      await descargarImagenComprobante(reserva, qr);
+      await publico.descargarImagenComprobante(token, reserva.codigo);
       toast.ok('Imagen guardada');
     } catch {
       toast.error('No pudimos generar la imagen. Probá con "Descargar PDF".');
@@ -309,20 +292,6 @@ export function Comprobante() {
 
         {/* ═══════════ Acciones ═══════════ */}
         <div className="sn-comprobante__acciones sn-no-imprimir">
-          <button
-            type="button"
-            onClick={enviarPorWhatsApp}
-            disabled={enviandoWhatsApp}
-            className="sn-boton sn-boton--whatsapp sn-boton--lg sn-boton--bloque"
-          >
-            {enviandoWhatsApp ? (
-              <span className="sn-spinner" style={{ width: 18, height: 18 }} aria-hidden="true" />
-            ) : (
-              <Icono nombre="whatsapp" tam={19} />
-            )}
-            {enviandoWhatsApp ? textos.comprobante.enviando : textos.comprobante.enviarWhatsApp}
-          </button>
-
           <a
             href={links.comoLlegar}
             target="_blank"

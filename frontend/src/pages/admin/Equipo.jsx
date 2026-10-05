@@ -193,9 +193,9 @@ export function Equipo() {
                         {u.activo ? textos.admin.equipo.activo : textos.admin.equipo.inactivo}
                       </span>
                     </td>
-                    <td className="sn-equipo__acciones">
+                    <td>
                       {u.id !== usuario.id && (
-                        <>
+                        <div className="sn-equipo__acciones">
                           <button
                             type="button"
                             className="sn-boton sn-boton--fantasma sn-boton--sm"
@@ -214,7 +214,7 @@ export function Equipo() {
                               {textos.admin.equipo.eliminar} a {u.nombre}
                             </span>
                           </button>
-                        </>
+                        </div>
                       )}
                     </td>
                   </tr>

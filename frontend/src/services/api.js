@@ -22,6 +22,41 @@ const TIMEOUT_MS = 20_000;
  */
 const ESPERAS_DE_RED = [300, 700, 1500, 2500];
 
+/**
+ * Esperas para las CONSULTAS (GET) cuando el servidor no responde.
+ *
+ * El backend en el plan gratuito de Render se duerme a los 15 minutos sin
+ * tráfico y tarda ~50 s en despertar. El primer pedido después de eso falla
+ * (sin respuesta, timeout o un 502/503 del proxy de Render) y con los ~5 s de
+ * ESPERAS_DE_RED el usuario veía "No pudimos conectarnos" justo antes de que
+ * el servidor volviera. Un GET se puede repetir sin riesgo, así que se le da
+ * un presupuesto de ~1 minuto con esperas crecientes. Los POST mantienen el
+ * presupuesto corto.
+ */
+const ESPERAS_DE_DESPERTAR = [1000, 2000, 4000, 7000, 10000, 15000, 20000];
+
+/** Estados con los que responde el proxy de Render mientras levanta el servicio. */
+const ESTADOS_DE_ARRANQUE = [502, 503, 504];
+
+/**
+ * Avisos de "el servidor está tardando": la UI los usa para explicar la espera
+ * en vez de dejar un spinner mudo. Se avisa al primer reintento y al terminar.
+ */
+const suscriptoresEspera = new Set();
+export function alEsperarServidor(fn) {
+  suscriptoresEspera.add(fn);
+  return () => suscriptoresEspera.delete(fn);
+}
+function avisarEspera(esperando) {
+  for (const fn of suscriptoresEspera) {
+    try {
+      fn(esperando);
+    } catch {
+      /* que un suscriptor falle no corta el pedido */
+    }
+  }
+}
+
 const CLAVE_ACCESS = 'spotnear.accessToken';
 const CLAVE_REFRESH = 'spotnear.refreshToken';
 const CLAVE_USUARIO = 'spotnear.usuario';
@@ -212,10 +247,23 @@ export async function pedir(ruta, opciones = {}) {
      * Para los POST que crean algo, el reintento va acompañado de una clave de
      * idempotencia, así el servidor no crea dos.
      */
-    reintentosDeRed = ESPERAS_DE_RED.length,
+    reintentosDeRed,
     _reintento = false,
     _intentoRed = 0,
   } = opciones;
+
+  // Las consultas (GET) se pueden repetir sin riesgo: aguantan un servidor
+  // que está despertando. El resto, el presupuesto corto de siempre.
+  const esConsulta = method === 'GET';
+  const esperas = esConsulta ? ESPERAS_DE_DESPERTAR : ESPERAS_DE_RED;
+  const maxReintentos = reintentosDeRed ?? esperas.length;
+
+  /** Espera y repite el mismo pedido, avisando a la UI que el servidor tarda. */
+  const reintentar = async () => {
+    if (_intentoRed === 0) avisarEspera(true);
+    await new Promise((r) => setTimeout(r, esperas[_intentoRed]));
+    return pedir(ruta, { ...opciones, _intentoRed: _intentoRed + 1 });
+  };
 
   // Subida de archivos: el body va tal cual y el navegador arma el
   // Content-Type con su boundary. Si lo escribiéramos nosotros, el servidor no
@@ -245,6 +293,14 @@ export async function pedir(ruta, opciones = {}) {
   } catch (error) {
     if (signal?.aborted) throw error; // cancelación pedida por la app: se propaga
     if (error.name === 'AbortError') {
+      // Una consulta que se pasó del tiempo se puede repetir (no crea nada):
+      // típicamente es el servidor que todavía está levantando.
+      if (esConsulta && _intentoRed < maxReintentos) {
+        clearTimeout(temporizador);
+        signal?.removeEventListener('abort', cancelarExterno);
+        return reintentar();
+      }
+      if (_intentoRed > 0) avisarEspera(false);
       throw new ApiError('La consulta tardó demasiado. Probá de nuevo.', { codigo: 'TIMEOUT' });
     }
 
@@ -254,12 +310,12 @@ export async function pedir(ruta, opciones = {}) {
 
     // Falla de red con conexión presente: el pedido no llegó porque el servidor
     // no estaba. Se reintenta hasta agotar el presupuesto.
-    if (!sinRed && _intentoRed < reintentosDeRed) {
+    if (!sinRed && _intentoRed < maxReintentos) {
       clearTimeout(temporizador);
       signal?.removeEventListener('abort', cancelarExterno);
-      await new Promise((r) => setTimeout(r, ESPERAS_DE_RED[_intentoRed]));
-      return pedir(ruta, { ...opciones, _intentoRed: _intentoRed + 1 });
+      return reintentar();
     }
+    if (_intentoRed > 0) avisarEspera(false);
 
     throw new ApiError(
       sinRed
@@ -271,6 +327,16 @@ export async function pedir(ruta, opciones = {}) {
     clearTimeout(temporizador);
     signal?.removeEventListener('abort', cancelarExterno);
   }
+
+  // El proxy de Render responde 502/503/504 mientras levanta el servicio, sin
+  // el JSON de error de la API. Una consulta se reintenta; un error propio de
+  // la API (que sí trae su JSON, como "pasarela no configurada") no.
+  if (esConsulta && ESTADOS_DE_ARRANQUE.includes(respuesta.status) && _intentoRed < maxReintentos) {
+    const tipo = respuesta.headers.get('Content-Type') ?? '';
+    if (!tipo.includes('application/json')) return reintentar();
+  }
+
+  if (_intentoRed > 0) avisarEspera(false);
 
   // Token vencido: se renueva y se reintenta una sola vez.
   if (respuesta.status === 401 && auth && !_reintento) {
@@ -322,6 +388,18 @@ async function construirError(respuesta) {
     codigo: datos?.error?.codigo ?? 'ERROR',
     detalle: datos?.error?.detalle ?? null,
   });
+}
+
+/**
+ * Pedido liviano a /health al cargar el sitio, sin esperar la respuesta: si el
+ * backend de Render estaba dormido, empieza a despertar antes de la primera
+ * búsqueda. Una vez por carga de página.
+ */
+let yaDespertado = false;
+export function despertarServidor() {
+  if (yaDespertado) return;
+  yaDespertado = true;
+  fetch(`${BASE}/health`, { method: 'GET' }).catch(() => {});
 }
 
 /* ─────────────────────────── Atajos ─────────────────────────── */

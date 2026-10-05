@@ -275,18 +275,30 @@ export function linkWhatsApp(telefonoE164, texto) {
  * @param {object} reserva
  * @param {string} [qrDataUrl] PNG del QR en base64 (data:image/png;base64,...)
  */
-export function emailComprobanteHTML(reserva, qrDataUrl = null) {
-  const { parking, customer, vehicle } = reserva;
+/** content-id con el que la imagen del comprobante va embebida en el email. */
+export const CID_COMPROBANTE = 'comprobante-spotnear';
+
+/**
+ * Email del comprobante.
+ *
+ * El cuerpo ES la imagen del comprobante —el mismo PNG que se ve en pantalla,
+ * que se adjunta y que baja "Guardar imagen"—, embebida con `cid:`. Antes era
+ * una tabla de texto con los datos y el QR como imagen `data:`, que Gmail
+ * bloquea: el cliente recibía datos sueltos y no el comprobante. Abajo van los
+ * dos botones (ver online y cómo llegar). Si el cliente de correo no muestra
+ * imágenes embebidas, el mismo PNG sigue estando como adjunto.
+ *
+ * @param {object} reserva
+ * @param {{ conImagen?: boolean }} [opciones]  false si no se pudo generar el PNG
+ */
+export function emailComprobanteHTML(reserva, { conImagen = true } = {}) {
+  const { parking } = reserva;
   const link = urlComprobante(reserva);
   const comoLlegar = urlComoLlegar(parking);
 
-  const fila = (etiqueta, valor) =>
-    valor
-      ? `<tr>
-           <td style="padding:10px 0;color:#6b7280;font-size:14px;width:42%;vertical-align:top;">${etiqueta}</td>
-           <td style="padding:10px 0;color:#111827;font-size:14px;font-weight:600;vertical-align:top;">${valor}</td>
-         </tr>`
-      : '';
+  const imagen = conImagen
+    ? `<img src="cid:${CID_COMPROBANTE}" alt="Comprobante de la reserva ${reserva.codigo}" width="520" style="display:block;width:100%;max-width:520px;height:auto;margin:0 auto;border-radius:12px;border:1px solid #e5e7eb;">`
+    : `<div style="font-size:30px;font-weight:800;letter-spacing:2px;color:#0f172a;text-align:center;padding:24px 0;">${reserva.codigo}</div>`;
 
   return `<!doctype html>
 <html lang="es-AR">
@@ -294,47 +306,27 @@ export function emailComprobanteHTML(reserva, qrDataUrl = null) {
 <body style="margin:0;padding:24px 12px;background:#f3f4f6;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);">
     <tr>
-      <td style="background:#0f172a;padding:24px;text-align:center;">
-        <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-.4px;">
-          <span style="color:${COLOR_MARCA};">●</span> SpotNear
-        </div>
-        <div style="color:#94a3b8;font-size:13px;margin-top:4px;">Tu reserva está confirmada</div>
+      <td style="padding:24px 20px 8px;text-align:center;color:#0f172a;font-size:18px;font-weight:700;">
+        Tu reserva ${reserva.codigo} está confirmada
       </td>
     </tr>
-
     <tr>
-      <td style="padding:28px 24px 8px;text-align:center;">
-        <div style="color:#6b7280;font-size:13px;">Código de reserva</div>
-        <div style="font-size:32px;font-weight:800;letter-spacing:2px;color:#0f172a;margin:6px 0 16px;">${reserva.codigo}</div>
-        ${qrDataUrl ? `<img src="${qrDataUrl}" alt="Código QR de la reserva ${reserva.codigo}" width="168" height="168" style="display:block;margin:0 auto;border-radius:12px;border:1px solid #e5e7eb;">` : ''}
-        <div style="color:#6b7280;font-size:13px;margin-top:14px;">Presentá este comprobante al ingresar al estacionamiento.</div>
+      <td style="padding:0 20px 8px;text-align:center;color:#6b7280;font-size:14px;line-height:1.5;">
+        Este es tu comprobante. Mostralo al llegar al estacionamiento: también lo tenés adjunto.
       </td>
     </tr>
-
     <tr>
-      <td style="padding:8px 24px 0;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e5e7eb;margin-top:16px;">
-          ${fila('Estacionamiento', parking.nombre)}
-          ${fila('Dirección', `${parking.direccion}${parking.barrio ? `, ${parking.barrio}` : ''}`)}
-          ${fila('Ingreso', `${formatearFechaLarga(reserva.inicio)} · ${formatearHora(reserva.inicio)}`)}
-          ${fila('Salida', `${formatearFechaLarga(reserva.fin)} · ${formatearHora(reserva.fin)}`)}
-          ${fila('A nombre de', nombreDelCliente(reserva))}
-          ${fila('Vehículo', describirVehiculo(vehicle))}
-          ${fila('Total', `${formatearARS(reserva.precioTotal)} <span style="font-weight:400;color:#6b7280;">(${ETIQUETA_PAGO[reserva.paymentStatus] ?? 'pago pendiente'})</span>`)}
-        </table>
-      </td>
+      <td style="padding:12px 20px;">${imagen}</td>
     </tr>
-
     <tr>
-      <td style="padding:24px;">
+      <td style="padding:12px 20px 24px;">
         <a href="${link}" style="display:block;background:${COLOR_MARCA};color:#ffffff;text-decoration:none;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;">Ver mi comprobante</a>
         <a href="${comoLlegar}" style="display:block;margin-top:10px;background:#ffffff;color:#0f172a;text-decoration:none;text-align:center;padding:13px;border-radius:10px;font-weight:600;font-size:15px;border:1px solid #d1d5db;">Cómo llegar</a>
       </td>
     </tr>
-
     <tr>
-      <td style="padding:0 24px 28px;color:#9ca3af;font-size:12px;line-height:1.6;text-align:center;">
-        Cancelación gratuita hasta la hora de inicio.<br>
+      <td style="padding:0 20px 24px;color:#9ca3af;font-size:12px;line-height:1.6;text-align:center;">
+        La seña no es reembolsable. El resto se paga en el estacionamiento.<br>
         SpotNear es un producto de ColdevIA.
       </td>
     </tr>
@@ -428,8 +420,8 @@ export function emailSolicitudRecibida({ parking, owner }) {
       cuerpo: `
         <p style="margin:0;color:#334155;font-size:15px;line-height:1.6;">
           Recibimos la solicitud para sumar tu estacionamiento a SpotNear. La revisamos
-          a mano, así que puede demorar hasta 48 horas hábiles. Te escribimos a este
-          mismo mail apenas esté lista.
+          a mano y te respondemos en menos de 24 horas. Te escribimos a este mismo
+          mail apenas esté lista.
         </p>
         ${filasParking(parking)}
         <p style="margin:0;color:#64748b;font-size:14px;line-height:1.6;">

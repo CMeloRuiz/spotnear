@@ -93,11 +93,13 @@ async function enviarPorResend({ destino, asunto, html, texto, adjuntos }, remit
         html,
         text: texto,
         // Resend espera el contenido en base64; nodemailer acepta Buffer.
+        // content_id: la imagen se muestra dentro del email (src="cid:…").
         attachments: adjuntos.map((a) => ({
           filename: a.filename,
           content: Buffer.isBuffer(a.content)
             ? a.content.toString('base64')
             : a.content,
+          ...(a.cid ? { content_id: a.cid } : {}),
         })),
       }),
     });

@@ -11,7 +11,7 @@ import { Modal, Aviso } from '../../components/ui/Varios.jsx';
 import { Campo, CampoTexto, CampoSelect, CampoCheck } from '../../components/ui/Campo.jsx';
 import BuscadorDireccion from '../../components/busqueda/BuscadorDireccion.jsx';
 import { MAP_ID, useEstadoMapas } from '../../components/mapas/ProveedorMapas.jsx';
-import { admin } from '../../services/spotnear.service.js';
+import { admin, publico } from '../../services/spotnear.service.js';
 import { usePedido, useTitulo } from '../../hooks/index.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
@@ -51,6 +51,10 @@ export function MiEstacionamiento() {
 
   const [modalFoto, setModalFoto] = useState(false);
   const [urlFoto, setUrlFoto] = useState('');
+  const [subiendoFotos, setSubiendoFotos] = useState(false);
+  // ¿Hay dónde guardar archivos (Cloudinary)? Si no, solo queda pegar una URL.
+  const { datos: configServidor } = usePedido(() => publico.config(), []);
+  const subidaConfigurada = configServidor?.fotos?.configurado !== false;
   const [modalCampo, setModalCampo] = useState(false);
   const [campoNuevo, setCampoNuevo] = useState({ key: '', label: '', tipo: 'TEXTO', requerido: false, opciones: '' });
   const [modalBloqueo, setModalBloqueo] = useState(false);
@@ -205,6 +209,22 @@ export function MiEstacionamiento() {
       toast.ok('Foto agregada');
     } catch (e) {
       toast.error(e.message ?? textos.errores.generico);
+    }
+  };
+
+  const subirArchivos = async (lista) => {
+    const archivos = Array.from(lista ?? []);
+    if (archivos.length === 0) return;
+    setSubiendoFotos(true);
+    try {
+      await admin.parkings.subirFotos(parkingId, archivos);
+      setModalFoto(false);
+      recargar();
+      toast.ok(archivos.length === 1 ? 'Foto agregada' : 'Fotos agregadas');
+    } catch (e) {
+      toast.error(e.message ?? textos.errores.generico);
+    } finally {
+      setSubiendoFotos(false);
     }
   };
 
@@ -899,10 +919,38 @@ export function MiEstacionamiento() {
           </>
         }
       >
+        {subidaConfigurada ? (
+          <label className="sn-est__subir-fotos">
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif,image/heic"
+              multiple
+              disabled={subiendoFotos}
+              onChange={(e) => {
+                subirArchivos(e.target.files);
+                e.target.value = '';
+              }}
+            />
+            <span className="sn-boton sn-boton--primario">
+              {subiendoFotos ? (
+                <span className="sn-spinner" style={{ width: 16, height: 16 }} aria-hidden="true" />
+              ) : (
+                <Icono nombre="camara" tam={17} />
+              )}
+              {subiendoFotos ? textos.registro.fotosSubiendo : textos.registro.fotosBoton}
+            </span>
+            <span className="sn-silencio">{textos.registro.fotosLimites(8, 5)}</span>
+          </label>
+        ) : (
+          <Aviso tipo="aviso">
+            <strong>{textos.registro.fotosNoConfiguradasTitulo}.</strong> Mientras tanto podés pegar el link
+            de una foto publicada en otro lado.
+          </Aviso>
+        )}
         <Campo
           label={textos.admin.miEstacionamiento.urlFoto}
-          placeholder="/assets/parkings/mi-foto.jpg"
-          ayuda="En esta versión las fotos se cargan por URL. La subida de archivos queda para más adelante."
+          placeholder="https://..."
+          ayuda="O pegá el link de una foto que ya esté publicada en internet."
           value={urlFoto}
           onChange={(e) => setUrlFoto(e.target.value)}
         />

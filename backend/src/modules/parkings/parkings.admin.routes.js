@@ -26,6 +26,7 @@ import {
 } from '../shared/schemas.js';
 import { aNumero } from '../../utils/money.js';
 import { TIPOS_HORARIO } from '../../utils/horarios.js';
+import { subirFotosParking, guardarFotos, traducirErrorDeSubida, MAX_FOTOS } from '../../services/uploads.js';
 
 /** Modo de cierre: fijo, 24 horas o atado al evento del día. */
 const tipoHorario = z.enum(TIPOS_HORARIO, {
@@ -536,6 +537,56 @@ router.post(
     });
 
     res.status(201).json({ foto });
+  }),
+);
+
+/**
+ * POST /api/v1/admin/parkings/:id/fotos/archivos
+ *
+ * Sube fotos desde el dispositivo (multipart, campo `fotos`) a Cloudinary y
+ * las agrega al estacionamiento. Es la forma de reponer las fotos que se
+ * perdieron cuando vivían en el disco de Render. Sin Cloudinary configurado
+ * responde 503 ALMACENAMIENTO_NO_CONFIGURADO, igual que el alta pública.
+ */
+router.post(
+  '/:id/fotos/archivos',
+  requiereRol('SUPERADMIN', 'OWNER'),
+  (req, res, next) => {
+    // El tenant se valida ANTES de leer los archivos: nadie sube nada a un
+    // estacionamiento ajeno, ni siquiera a Cloudinary.
+    try {
+      asegurarTenant(req, req.params.id);
+    } catch (error) {
+      next(error);
+      return;
+    }
+    subirFotosParking(req, res, (error) => next(error ? traducirErrorDeSubida(error) : undefined));
+  },
+  asyncHandler(async (req, res) => {
+    const archivos = req.files ?? [];
+    if (archivos.length === 0) throw errores.datosInvalidos(undefined, 'No llegó ninguna foto.');
+
+    const yaHay = await prisma.parkingPhoto.count({ where: { parkingId: req.params.id } });
+    if (yaHay + archivos.length > MAX_FOTOS) {
+      throw errores.datosInvalidos(undefined, `Puede haber hasta ${MAX_FOTOS} fotos por estacionamiento.`);
+    }
+
+    const subidas = await guardarFotos(archivos);
+    const fotos = await prisma.$transaction(
+      subidas.map((s, i) =>
+        prisma.parkingPhoto.create({
+          data: {
+            parkingId: req.params.id,
+            url: s.url,
+            orden: yaHay + i,
+            // Si no había ninguna, la primera que se sube es la portada.
+            portada: yaHay === 0 && i === 0,
+          },
+        }),
+      ),
+    );
+
+    res.status(201).json({ fotos });
   }),
 );
 

@@ -211,7 +211,72 @@ export async function disponibilidadEnLote(parkings, inicio, fin, cantidad = 1) 
 }
 
 /**
- * Ocupación actual (para el dashboard): cuántos autos hay adentro ahora.
+ * Pico de ocupación en una ventana: el momento en que más lugares están
+ * tomados a la vez, contando reservas que ocupan (las mismas que cuenta la
+ * búsqueda, sin las abandonadas) y bloqueos de cupo.
+ *
+ * Barrido de eventos: cada reserva suma al empezar y resta al terminar. El
+ * máximo de esa suma es el pico. Intervalos semiabiertos, igual que el resto.
+ */
+/** Cuántos días hacia adelante mira el tablero. */
+export const DIAS_HACIA_ADELANTE = 7;
+
+export async function picoDeOcupacion(parkingId, desde, hasta, capacidadTotal) {
+  const [reservas, bloqueos] = await Promise.all([
+    prisma.reservation.findMany({
+      where: {
+        parkingId,
+        estado: { in: ESTADOS_QUE_OCUPAN },
+        ...filtroDeAbandonadas(),
+        inicio: { lt: hasta },
+        fin: { gt: desde },
+      },
+      select: { inicio: true, fin: true, cantidadVehiculos: true },
+    }),
+    prisma.capacityBlock.findMany({
+      where: { parkingId, desde: { lt: hasta }, hasta: { gt: desde } },
+      select: { desde: true, hasta: true, lugares: true },
+    }),
+  ]);
+
+  const eventos = [];
+  const sumar = (ini, fin, n) => {
+    const a = Math.max(ini.getTime(), desde.getTime());
+    const b = Math.min(fin.getTime(), hasta.getTime());
+    if (a >= b) return;
+    eventos.push([a, n], [b, -n]);
+  };
+  for (const r of reservas) sumar(r.inicio, r.fin, r.cantidadVehiculos ?? 1);
+  for (const b of bloqueos) sumar(b.desde, b.hasta, b.lugares);
+  // A igual hora, primero las salidas: salir 19:00 y entrar 19:00 no se pisan.
+  eventos.sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+
+  let actual = 0;
+  let pico = 0;
+  let momentoPico = null;
+  for (const [t, n] of eventos) {
+    actual += n;
+    if (actual > pico) {
+      pico = actual;
+      momentoPico = new Date(t);
+    }
+  }
+
+  return {
+    reservas: reservas.length,
+    picoOcupados: pico,
+    minimoLibres: Math.max(0, capacidadTotal - pico),
+    momentoPico,
+  };
+}
+
+/**
+ * Ocupación actual (para el dashboard): cuántos autos hay adentro ahora, y
+ * cómo vienen los próximos días.
+ *
+ * "Libres ahora" mira solo este momento: una reserva para mañana no lo cambia.
+ * Por eso va además `proximosDias`, para que una reserva recién pagada se vea
+ * reflejada en el panel aunque todavía no haya empezado.
  */
 export async function ocupacionActual(parkingId) {
   const ahora = new Date();
@@ -234,11 +299,19 @@ export async function ocupacionActual(parkingId) {
     capacidadTotal: parking.capacidadTotal,
   });
 
+  const proximosDias = await picoDeOcupacion(
+    parkingId,
+    ahora,
+    new Date(ahora.getTime() + DIAS_HACIA_ADELANTE * 24 * 3_600_000),
+    parking.capacidadTotal,
+  );
+
   return {
     capacidadTotal: parking.capacidadTotal,
     adentro,
     libres: disponibleAhora.libres,
     comprometidos: disponibleAhora.ocupados,
+    proximosDias,
     porcentaje:
       parking.capacidadTotal > 0 ? Math.round((adentro / parking.capacidadTotal) * 100) : 0,
   };
