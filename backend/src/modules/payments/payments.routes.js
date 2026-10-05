@@ -25,7 +25,7 @@ import crypto from 'node:crypto';
 import { Router } from 'express';
 import env from '../../config/env.js';
 import { asyncHandler } from '../../middleware/error.js';
-import { leerPago } from '../../services/payments/mercadopago.js';
+import { leerPago, credencialesDePrueba } from '../../services/payments/mercadopago.js';
 import * as servicio from '../reservations/reservations.service.js';
 
 const router = Router();
@@ -197,17 +197,19 @@ router.get(
  * GET /api/v1/payments/estado
  * Diagnóstico rápido de la configuración de la pasarela. No expone secretos.
  */
-router.get('/estado', (req, res) => {
-  res.json({
-    proveedor: env.PAYMENT_PROVIDER,
-    credencialesCargadas: Boolean(env.MERCADOPAGO_ACCESS_TOKEN),
-    modo: env.MERCADOPAGO_ACCESS_TOKEN
-      ? env.MERCADOPAGO_ACCESS_TOKEN.startsWith('TEST-')
-        ? 'prueba'
-        : 'produccion'
-      : null,
-    firmaDeWebhook: Boolean(env.MERCADOPAGO_WEBHOOK_SECRET),
-  });
-});
+router.get(
+  '/estado',
+  asyncHandler(async (req, res) => {
+    // "prueba" también con APP_USR-… de una cuenta de prueba: el prefijo solo
+    // no alcanza (ver credencialesDePrueba).
+    const dePrueba = env.PAYMENT_PROVIDER === 'mercadopago' ? await credencialesDePrueba() : null;
+    res.json({
+      proveedor: env.PAYMENT_PROVIDER,
+      credencialesCargadas: Boolean(env.MERCADOPAGO_ACCESS_TOKEN),
+      modo: dePrueba === null ? (env.MERCADOPAGO_ACCESS_TOKEN ? 'desconocido' : null) : dePrueba ? 'prueba' : 'produccion',
+      firmaDeWebhook: Boolean(env.MERCADOPAGO_WEBHOOK_SECRET),
+    });
+  }),
+);
 
 export default router;

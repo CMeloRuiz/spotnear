@@ -249,7 +249,7 @@ localhost, y dice cuál falta. El build del frontend hace lo mismo con
 
 | Variable | ¿Obligatoria? | De dónde sale |
 |---|---|---|
-| `MERCADOPAGO_ACCESS_TOKEN` | **Sí** (sin ella no se puede reservar) | [mercadopago.com.ar/developers/panel/app](https://www.mercadopago.com.ar/developers/panel/app) → tu aplicación → *Credenciales de producción* (`APP_USR-…`). Para probar en Render antes de cobrar de verdad, las *de prueba* (`TEST-…`). |
+| `MERCADOPAGO_ACCESS_TOKEN` | **Sí** (sin ella no se puede reservar) | [mercadopago.com.ar/developers/panel/app](https://www.mercadopago.com.ar/developers/panel/app) → tu aplicación → *Credenciales de producción* (`APP_USR-…`). Para probar en Render antes de cobrar de verdad, las *Credenciales de prueba*: el panel actual las da como `APP_USR-…` de una cuenta de prueba que crea solo (las viejas `TEST-…` de tu cuenta real también funcionan). SpotNear distingue prueba de producción preguntándole a Mercado Pago si la cuenta es de prueba, no por el prefijo. |
 | `MERCADOPAGO_PUBLIC_KEY` | No (Checkout Pro no la usa) | Mismo lugar, al lado del access token. |
 | `MERCADOPAGO_WEBHOOK_SECRET` | No, recomendada | Panel de Mercado Pago → tu aplicación → *Webhooks* → *Configurar notificaciones* → URL `https://<backend>/api/v1/payments/mercadopago/webhook`, evento *Pagos* → *Clave secreta*. Sin ella el webhook igual funciona: el estado del pago se relee siempre contra la API. |
 | `CLOUDINARY_CLOUD_NAME` · `CLOUDINARY_API_KEY` · `CLOUDINARY_API_SECRET` | **Sí, para que haya fotos** | [console.cloudinary.com](https://console.cloudinary.com) → *Dashboard* → *API Keys*. Paso a paso en *Fotos de los estacionamientos*. Sin ellas el alta funciona igual, pero sin fotos. |
@@ -1837,15 +1837,40 @@ son, si se puede crear una preferencia y si se puede crear un pago de prueba con
 la tarjeta `APRO`. Si el último paso falla con 500, es de la cuenta o de la
 aplicación de Mercado Pago:
 
-1. Regenerá las **credenciales de prueba** en Mercado Pago Developers → *Tus
-   integraciones* → *SpotNear* → *Credenciales de prueba*, cargalas en
-   `backend/.env` y en Render, y volvé a correr el diagnóstico.
+1. Cargá las **credenciales de prueba actuales** de Mercado Pago Developers →
+   *Tus integraciones* → *SpotNear* → *Credenciales de prueba*. Hoy el panel
+   las da con formato `APP_USR-…` (son de una cuenta vendedora de prueba que
+   crea solo; el diagnóstico lo reconoce y dice "credenciales de PRUEBA"). Las
+   `TEST-…` de la cuenta real son el formato viejo, que fue el que dejó de
+   andar. Cargalas en `backend/.env` y en Render, y volvé a correr el
+   diagnóstico.
 2. Si sigue fallando, usá cuentas de prueba: en la aplicación, *Cuentas de
    prueba* → creá una **vendedora** y una **compradora**; con la vendedora
    (en incógnito) creá una aplicación y usá sus **credenciales de producción**
    (`APP_USR-…`) en el backend; pagá iniciando sesión con la compradora.
 3. Si nada de eso alcanza, reclamo al soporte de Mercado Pago con el
    `x-request-id` que imprime el diagnóstico.
+
+**Con las credenciales `APP_USR-` de prueba, el comprador también tiene que
+ser de prueba.** Probado el 04/10/2026: pagando como invitado con la tarjeta
+`APRO`, Mercado Pago corta con "Algo salió mal... Una de las partes con la
+que intentás hacer el pago es de prueba". Y la API de Pagos directa responde
+"Unauthorized use of live credentials" (por eso `mp:diagnostico` saltea ese
+paso con estas credenciales). La compra de prueba se hace así:
+
+1. Mercado Pago Developers → *Tus integraciones* → la aplicación → *Cuentas de
+   prueba* → **+ Crear cuenta de prueba** → país Argentina, tipo
+   **Comprador**, con algo de dinero ficticio.
+2. En SpotNear, reservá con cualquier email que no sea el de esa cuenta y tocá
+   *Pagar la seña*.
+3. En el checkout de Mercado Pago elegí **Ingresar con mi cuenta** e iniciá
+   sesión con el usuario y la contraseña de la cuenta compradora (si pide un
+   código, es el *Código de verificación* que figura en la tabla de cuentas de
+   prueba). Mejor en una ventana de incógnito, para no mezclar con tu sesión
+   real.
+4. Pagá con el dinero de la cuenta o con la tarjeta `5031 7557 3453 0604`,
+   titular `APRO`. Mercado Pago vuelve solo a SpotNear y aparece el
+   comprobante.
 
 ### Antes de pagar, nunca se dice "tu lugar está apartado"
 

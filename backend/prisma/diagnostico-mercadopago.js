@@ -27,7 +27,10 @@ const ok = (msg) => console.log(`  ✔ ${msg}`);
 const mal = (msg) => console.log(`  ✘ ${msg}`);
 const info = (msg) => console.log(`    ${msg}`);
 const enmascarar = (v) => (v ? `${v.split('-')[0]}-…${v.slice(-4)}` : '(vacía)');
-const tipo = (v) => (v.startsWith('TEST-') ? 'prueba' : v.startsWith('APP_USR-') ? 'producción' : 'desconocido');
+// Por el prefijo solo se sabe el formato. APP_USR-… puede ser producción o
+// una cuenta de prueba (lo que muestra hoy el panel en "Credenciales de
+// prueba"); eso se resuelve en el paso 2 con el tag test_user de la cuenta.
+const tipo = (v) => (v.startsWith('TEST-') ? 'TEST' : v.startsWith('APP_USR-') ? 'APP_USR' : 'desconocido');
 
 async function api(metodo, ruta, cuerpo, { conToken = true } = {}) {
   const res = await fetch(`${API}${ruta}`, {
@@ -58,7 +61,7 @@ if (!token) {
 info(`MERCADOPAGO_ACCESS_TOKEN = ${enmascarar(token)} (${tipo(token)})`);
 info(`MERCADOPAGO_PUBLIC_KEY   = ${enmascarar(publicKey)} (${publicKey ? tipo(publicKey) : '—'})`);
 if (publicKey && tipo(publicKey) !== tipo(token)) {
-  mal('Las dos credenciales son de distinto tipo (una de prueba y otra de producción). Tienen que ser del mismo par.');
+  mal('Las dos credenciales tienen distinto formato (una TEST- y otra APP_USR-). Tienen que ser del mismo par.');
   fallas++;
 } else {
   ok('Mismo tipo de credenciales.');
@@ -73,7 +76,11 @@ if (yo.status !== 200) {
   mal(`El access token no sirve (HTTP ${yo.status}): ${yo.datos?.message ?? ''}`);
   process.exit(1);
 }
-ok(`Cuenta ${yo.datos.id} (${yo.datos.site_id}), tipo "${yo.datos.user_type}".`);
+const cuentaDePrueba = tipo(token) === 'TEST' || (yo.datos.tags ?? []).includes('test_user');
+ok(`Cuenta ${yo.datos.id} (${yo.datos.site_id}) → credenciales de ${cuentaDePrueba ? 'PRUEBA' : 'PRODUCCIÓN'}.`);
+if (tipo(token) === 'APP_USR' && cuentaDePrueba) {
+  info('Es una cuenta de prueba con credenciales APP_USR-: el formato actual de las credenciales de prueba.');
+}
 if (yo.datos.status?.sell?.allow === false) {
   mal(`La cuenta no está habilitada para vender: ${JSON.stringify(yo.datos.status.sell.codes)}`);
   fallas++;
@@ -96,8 +103,19 @@ if (pref.status === 201) {
 }
 
 console.log('\n4. Pago de prueba directo contra la API');
-if (tipo(token) !== 'prueba') {
+if (!cuentaDePrueba) {
   info('Se saltea: con credenciales de producción esto sería un cobro real.');
+} else if (tipo(token) === 'APP_USR') {
+  // Con APP_USR-… de una cuenta de prueba, Mercado Pago rechaza SIEMPRE el
+  // pago directo con tarjeta de prueba ("Unauthorized use of live
+  // credentials"), con cualquier email: es una restricción de la API de Pagos,
+  // no un problema de las credenciales. SpotNear no usa esa API sino Checkout
+  // Pro, que sí funciona. La prueba que vale es esa, en el navegador.
+  info('Se saltea: con credenciales APP_USR- de una cuenta de prueba, la API de Pagos directa');
+  info('no acepta tarjetas de prueba ("Unauthorized use of live credentials") aunque todo esté bien.');
+  info('SpotNear cobra con Checkout Pro: probalo reservando en la web y, en el checkout, tocando');
+  info('"Ingresar con mi cuenta" con una cuenta de prueba COMPRADORA (como invitado Mercado Pago');
+  info('responde "una de las partes es de prueba"). Ver README → "Si los pagos de prueba fallan".');
 } else if (!publicKey) {
   info('Se saltea: falta MERCADOPAGO_PUBLIC_KEY para tokenizar la tarjeta de prueba.');
 } else {

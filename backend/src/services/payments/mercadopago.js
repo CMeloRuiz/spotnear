@@ -291,6 +291,42 @@ export async function leerPago(pagoId) {
 }
 
 let emailVendedorCacheado;
+let cuentaVendedoraCacheada;
+
+/**
+ * Datos de la cuenta dueña del access token (GET /users/me), una sola vez.
+ * Si la consulta falla no se cachea: se reintenta en la próxima.
+ */
+async function cuentaVendedora() {
+  if (cuentaVendedoraCacheada) return cuentaVendedoraCacheada;
+  cuentaVendedoraCacheada = await new User(config()).get();
+  return cuentaVendedoraCacheada;
+}
+
+/**
+ * ¿Las credenciales son de prueba (sandbox)?
+ *
+ * No alcanza con mirar el prefijo. Hay dos formatos de credenciales de prueba
+ * y los dos están vigentes:
+ *  · `TEST-…`: las de prueba de una cuenta REAL (el formato viejo);
+ *  · `APP_USR-…` de una CUENTA DE PRUEBA: es lo que muestra hoy el panel de
+ *    Mercado Pago en "Credenciales de prueba". Tienen el mismo prefijo que las
+ *    de producción; lo que las distingue es que la cuenta tiene el tag
+ *    `test_user`.
+ *
+ * @returns {Promise<boolean|null>} null si no se pudo averiguar.
+ */
+export async function credencialesDePrueba() {
+  if (!env.MERCADOPAGO_ACCESS_TOKEN) return null;
+  if (env.MERCADOPAGO_ACCESS_TOKEN.startsWith('TEST-')) return true;
+  try {
+    const yo = await cuentaVendedora();
+    return Array.isArray(yo?.tags) && yo.tags.includes('test_user');
+  } catch (error) {
+    console.warn('[mercadopago] no se pudo saber si la cuenta es de prueba:', error.message);
+    return null;
+  }
+}
 
 /**
  * Email de la cuenta de Mercado Pago dueña del access token (la vendedora).
@@ -307,7 +343,7 @@ let emailVendedorCacheado;
 export async function emailDelVendedor() {
   if (emailVendedorCacheado !== undefined) return emailVendedorCacheado;
   try {
-    const yo = await new User(config()).get();
+    const yo = await cuentaVendedora();
     emailVendedorCacheado = yo?.email ? String(yo.email).toLowerCase() : null;
   } catch (error) {
     console.warn('[mercadopago] no se pudo leer el email de la cuenta vendedora:', error.message);

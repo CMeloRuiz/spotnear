@@ -150,6 +150,9 @@ export const env = {
   /** ¿Se puede cobrar de verdad con Mercado Pago? */
   mercadopagoHabilitado: Boolean(raw.MERCADOPAGO_ACCESS_TOKEN),
   /** Credenciales de prueba (sandbox) vs. de producción. */
+  // Ojo: solo detecta el formato viejo. Las de prueba nuevas son APP_USR-… de
+  // una cuenta de prueba; para saberlo bien, credencialesDePrueba() en
+  // services/payments/mercadopago.js.
   mercadopagoEnPrueba: raw.MERCADOPAGO_ACCESS_TOKEN.startsWith('TEST-'),
   whatsappTwilioHabilitado:
     raw.WHATSAPP_PROVIDER === 'twilio' &&
