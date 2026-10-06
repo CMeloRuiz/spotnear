@@ -281,14 +281,19 @@ export function RegistrarEstacionamiento() {
   /* ── Pantalla de confirmación ── */
 
   if (listo) {
+    // Si el servidor no pide confirmar el email (VERIFICACION_EMAIL_ALTA=false),
+    // la solicitud ya está en revisión: no hay link que esperar ni reenviar.
+    const esperaVerificacion = listo.estado === 'PENDIENTE_VERIFICACION';
     return (
       <div className="sn-contenedor sn-registro sn-registro--listo">
         <div className="sn-registro__exito">
           <span className="sn-registro__exito-icono" aria-hidden="true">
             <Icono nombre="check" tam={32} />
           </span>
-          <h1>{t.exitoTitulo}</h1>
-          <p className="sn-registro__exito-texto">{t.exitoTexto(listo.email)}</p>
+          <h1>{esperaVerificacion ? t.exitoTitulo : t.exitoTituloRevision}</h1>
+          <p className="sn-registro__exito-texto">
+            {esperaVerificacion ? t.exitoTexto(listo.email) : t.exitoTextoRevision}
+          </p>
 
           <div className="sn-registro__exito-ficha">
             <span className="sn-registro__exito-etiqueta">{t.nombreComercial}</span>
@@ -299,13 +304,17 @@ export function RegistrarEstacionamiento() {
 
           <h2 className="sn-registro__exito-subtitulo">{t.exitoQueSigue}</h2>
           <ol className="sn-registro__exito-pasos">
-            {t.exitoPasos.map((p) => (
+            {(esperaVerificacion ? t.exitoPasos : t.exitoPasosRevision).map((p) => (
               <li key={p}>{p}</li>
             ))}
           </ol>
 
-          <p className="sn-registro__exito-texto">{t.exitoNoLlego}</p>
-          <ReenviarVerificacion email={listo.email} alEnlaceDePrueba={setEnlaceDePrueba} />
+          {esperaVerificacion && (
+            <>
+              <p className="sn-registro__exito-texto">{t.exitoNoLlego}</p>
+              <ReenviarVerificacion email={listo.email} alEnlaceDePrueba={setEnlaceDePrueba} />
+            </>
+          )}
 
           {enlaceDePrueba && (
             <p className="sn-verificar__dev">

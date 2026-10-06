@@ -196,3 +196,27 @@ describe('link vencido', () => {
     assert.equal(parking.estado, 'PENDIENTE_VERIFICACION');
   });
 });
+
+describe('con VERIFICACION_EMAIL_ALTA=false', () => {
+  test('el alta pasa directo a revisión, sin token ni link', async () => {
+    const env = (await import('../../src/config/env.js')).default;
+    const antes = env.verificacionEmailAlta;
+    env.verificacionEmailAlta = false;
+    try {
+      const res = await agente.post('/api/v1/onboarding/parkings').send(solicitud(`verif-3@${SUFIJO}.test`));
+      assert.equal(res.status, 201, JSON.stringify(res.body));
+      creados.push(res.body.solicitud.id);
+      assert.equal(res.body.solicitud.estado, 'PENDIENTE_APROBACION');
+      assert.equal(res.body.verificacion, null);
+      assert.equal(res.body.enlaceDePrueba, undefined);
+
+      const usuario = await prisma.user.findFirst({ where: { parkingId: res.body.solicitud.id } });
+      assert.equal(usuario.verificacionTokenHash, null);
+
+      const bandeja = await agente.get('/api/v1/admin/onboarding').set(auth(tokenSuper));
+      assert.ok(bandeja.body.solicitudes.some((s) => s.id === res.body.solicitud.id));
+    } finally {
+      env.verificacionEmailAlta = antes;
+    }
+  });
+});

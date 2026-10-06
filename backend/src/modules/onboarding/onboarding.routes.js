@@ -239,7 +239,10 @@ routerPublico.post(
 
     const slug = await slugDisponible(generarSlug(parking.nombre));
     const passwordHash = await hashearPassword(duenio.password);
-    const verificacion = nuevoToken();
+    // Con VERIFICACION_EMAIL_ALTA=false (sin email que le llegue a cualquiera)
+    // el alta pasa directo a revisión, como antes de la verificación.
+    const conVerificacion = env.verificacionEmailAlta;
+    const verificacion = conVerificacion ? nuevoToken() : null;
     const { fotos, ...datosParking } = parking;
 
     const creado = await prisma.$transaction(async (tx) => {
@@ -251,7 +254,7 @@ routerPublico.post(
           // El trío que lo mantiene invisible hasta la aprobación. Nace
           // esperando que el dueño confirme su email; recién ahí pasa a
           // PENDIENTE_APROBACION y aparece en Solicitudes.
-          estado: 'PENDIENTE_VERIFICACION',
+          estado: conVerificacion ? 'PENDIENTE_VERIFICACION' : 'PENDIENTE_APROBACION',
           activo: false,
           publicado: false,
           fotos: {
@@ -277,8 +280,8 @@ routerPublico.post(
           parkingId: nuevo.id,
           // Se habilita al aprobar la solicitud.
           activo: false,
-          verificacionTokenHash: verificacion.hash,
-          verificacionExpiraEn: verificacion.expiraEn,
+          verificacionTokenHash: verificacion?.hash ?? null,
+          verificacionExpiraEn: verificacion?.expiraEn ?? null,
         },
       });
 
@@ -293,11 +296,10 @@ routerPublico.post(
     // Primer mail: confirmar el email. El acuse de "la revisamos en menos de
     // 24 horas" sale recién cuando lo confirma (verificacion.js). Si este mail
     // falla, la solicitud igual quedó guardada y el dueño puede pedir el reenvío.
-    const aviso = await enviarEmailDeVerificacion({
-      owner: { nombre: `${duenio.nombre} ${duenio.apellido}`, email: duenio.email },
-      parking: completo,
-      token: verificacion.token,
-    });
+    const owner = { nombre: `${duenio.nombre} ${duenio.apellido}`, email: duenio.email };
+    const aviso = conVerificacion
+      ? await enviarEmailDeVerificacion({ owner, parking: completo, token: verificacion.token })
+      : await notificarAltaEstacionamiento('recibida', { parking: completo, owner });
 
     await auditar(req, {
       accion: 'parking.solicitud',
@@ -315,11 +317,13 @@ routerPublico.post(
         email: duenio.email,
       },
       emailEnviado: aviso.estado,
-      verificacion: { horasDeValidez: HORAS_DE_VALIDEZ },
-      // Solo fuera de producción y con el email sin configurar: para probar
-      // el flujo en desarrollo sin una casilla real.
+      verificacion: conVerificacion ? { horasDeValidez: HORAS_DE_VALIDEZ } : null,
+      // Solo fuera de producción y con el email sin salir: para probar el
+      // flujo en desarrollo sin una casilla real.
       enlaceDePrueba: aviso.enlaceDePrueba,
-      mensaje: `Te enviamos un email a ${duenio.email} para confirmar tu cuenta. Una vez que lo confirmes, tu solicitud entra en revisión y te avisamos en menos de 24 horas.`,
+      mensaje: conVerificacion
+        ? `Te enviamos un email a ${duenio.email} para confirmar tu cuenta. Una vez que lo confirmes, tu solicitud entra en revisión y te avisamos en menos de 24 horas.`
+        : 'Recibimos tu solicitud. La revisamos a mano y te respondemos en menos de 24 horas.',
     });
   }),
 );

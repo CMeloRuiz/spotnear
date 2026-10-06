@@ -99,6 +99,14 @@ services:
       - key: MERCADOPAGO_WEBHOOK_SECRET
         sync: false
 
+      # ── Verificación del email en el alta ──
+      # false hasta tener un dominio verificado en Resend: sin él, el link de
+      # confirmación no le llega a nadie más que a la cuenta de Resend y los
+      # registros quedarían trabados. Con el dominio listo, pasala a "true"
+      # desde el panel de Render (Environment). Ver README.
+      - key: VERIFICACION_EMAIL_ALTA
+        value: "false"
+
       # ── Imágenes: Cloudinary (las fotos NO se guardan en el disco de Render) ──
       - key: CLOUDINARY_CLOUD_NAME
         sync: false

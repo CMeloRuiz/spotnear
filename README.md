@@ -252,6 +252,7 @@ localhost, y dice cuál falta. El build del frontend hace lo mismo con
 | `MERCADOPAGO_ACCESS_TOKEN` | **Sí** (sin ella no se puede reservar) | [mercadopago.com.ar/developers/panel/app](https://www.mercadopago.com.ar/developers/panel/app) → tu aplicación → *Credenciales de producción* (`APP_USR-…`). Para probar en Render antes de cobrar de verdad, las *Credenciales de prueba*: el panel actual las da como `APP_USR-…` de una cuenta de prueba que crea solo (las viejas `TEST-…` de tu cuenta real también funcionan). SpotNear distingue prueba de producción preguntándole a Mercado Pago si la cuenta es de prueba, no por el prefijo. |
 | `MERCADOPAGO_PUBLIC_KEY` | No (Checkout Pro no la usa) | Mismo lugar, al lado del access token. |
 | `MERCADOPAGO_WEBHOOK_SECRET` | No, recomendada | Panel de Mercado Pago → tu aplicación → *Webhooks* → *Configurar notificaciones* → URL `https://<backend>/api/v1/payments/mercadopago/webhook`, evento *Pagos* → *Clave secreta*. Sin ella el webhook igual funciona: el estado del pago se relee siempre contra la API. |
+| `VERIFICACION_EMAIL_ALTA` | Viene en `false` | Pasala a `true` cuando tengas un dominio verificado en Resend. Ver *Verificación del email en el alta*. |
 | `CLOUDINARY_CLOUD_NAME` · `CLOUDINARY_API_KEY` · `CLOUDINARY_API_SECRET` | **Sí, para que haya fotos** | [console.cloudinary.com](https://console.cloudinary.com) → *Dashboard* → *API Keys*. Paso a paso en *Fotos de los estacionamientos*. Sin ellas el alta funciona igual, pero sin fotos. |
 | `RESEND_API_KEY` | Para mandar emails | [resend.com/api-keys](https://resend.com/api-keys) → *Create API Key*. Ver *Emails*. |
 | `SMTP_HOST` · `SMTP_USER` · `SMTP_PASS` | No (alternativa a Resend) | Los de tu casilla. Con Resend, dejalas vacías. |
@@ -470,6 +471,22 @@ Hay dos caminos, y los dos terminan en el mismo lugar.
    Ver *Verificación del email en el alta*.
 
 ### Verificación del email en el alta
+
+> **Se prende y se apaga con `VERIFICACION_EMAIL_ALTA`** (`true` por defecto;
+> en Render está en `false`). Necesita que los emails le lleguen a cualquiera,
+> y Resend **sin un dominio propio verificado** solo le manda a la casilla de
+> la cuenta (Resend no acepta `onrender.com` ni otros subdominios gratuitos).
+> Con `false` el alta pasa directo a `PENDIENTE_APROBACION`, como antes, y la
+> pantalla dice "¡Recibimos tu solicitud!": nadie queda trabado esperando un
+> link que no llega.
+>
+> **Para prenderla cuando tengas dominio:** (1) compralo (nic.ar para
+> `.com.ar`, o Cloudflare/Namecheap); (2) en [resend.com/domains](https://resend.com/domains)
+> → *Add domain*, cargá los registros DNS que te muestra y esperá *Verified*;
+> (3) en Render → *spotnear-backend → Environment*: `MAIL_FROM` con ese dominio
+> (`SpotNear <reservas@tudominio.com>`) y `VERIFICACION_EMAIL_ALTA=true`.
+> Guardás y Render redeploya: desde ahí las altas nuevas piden confirmar el
+> email. No hace falta tocar código.
 
 ```
 formulario ─▶ PENDIENTE_VERIFICACION ─(clic en el link)─▶ PENDIENTE_APROBACION ─▶ ACTIVO / RECHAZADO
@@ -1490,7 +1507,7 @@ npm --prefix backend run test:unit         # sin base de datos
 npm --prefix backend run test:integration  # contra la base real
 ```
 
-**208 tests**, sobre lo que duele si se rompe:
+**209 tests**, sobre lo que duele si se rompe:
 
 - **Patentes argentinas** — formatos viejo, Mercosur y de moto; normalización.
 - **Teléfonos** — las diez formas en que la gente escribe un número (`011 15 …`,

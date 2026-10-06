@@ -926,6 +926,15 @@ export const textos = {
       'Cuando esté aprobada vas a poder entrar al panel con tu email y contraseña.',
     ],
     exitoNoLlego: '¿No te llegó? Revisá la carpeta de spam o pedí que te lo reenviemos.',
+    // Sin verificación de email (VERIFICACION_EMAIL_ALTA=false): directo a revisión.
+    exitoTituloRevision: '¡Recibimos tu solicitud!',
+    exitoTextoRevision:
+      'La revisamos a mano y te respondemos en menos de 24 horas. Te escribimos a tu email apenas esté lista.',
+    exitoPasosRevision: [
+      'Te mandamos un mail confirmando que la recibimos.',
+      'Revisamos los datos y la ubicación del estacionamiento.',
+      'Cuando esté aprobada vas a poder entrar al panel con tu email y contraseña.',
+    ],
     verificacionPendiente: 'Ya empezaste una solicitud con ese email y falta confirmarlo.',
     verificacion: {
       tituloPagina: 'Confirmá tu email',
