@@ -42,10 +42,11 @@ const schema = z.object({
   // Verificación del email en el alta de estacionamientos. Necesita que los
   // emails le lleguen a cualquiera (Resend con dominio verificado, o SMTP).
   // Mientras no, va en false y el alta pasa directo a revisión: con el link
-  // sin llegar, los registros quedarían trabados. Ver README.
+  // sin llegar, los registros quedarían trabados. Sin cargar: prendida en
+  // desarrollo y APAGADA en producción (lo seguro). Ver README.
   VERIFICACION_EMAIL_ALTA: z
     .enum(['true', 'false'], { errorMap: () => ({ message: 'VERIFICACION_EMAIL_ALTA tiene que ser true o false.' }) })
-    .default('true'),
+    .optional(),
 
   // Almacenamiento de imágenes (fotos de estacionamientos). Render borra el
   // disco del servicio en cada deploy y cada vez que se duerme: las fotos van a
@@ -152,7 +153,9 @@ export const env = {
     raw.WHATSAPP_PROVIDER === 'cloud_api' &&
     Boolean(raw.WHATSAPP_PHONE_NUMBER_ID && raw.WHATSAPP_ACCESS_TOKEN),
   /** ¿El alta por autogestión pide confirmar el email antes de entrar en revisión? */
-  verificacionEmailAlta: raw.VERIFICACION_EMAIL_ALTA === 'true',
+  verificacionEmailAlta: raw.VERIFICACION_EMAIL_ALTA
+    ? raw.VERIFICACION_EMAIL_ALTA === 'true'
+    : raw.NODE_ENV !== 'production',
   /** ¿Están las tres credenciales de Cloudinary? Sin ellas no se pueden subir fotos. */
   cloudinaryHabilitado: Boolean(
     raw.CLOUDINARY_CLOUD_NAME && raw.CLOUDINARY_API_KEY && raw.CLOUDINARY_API_SECRET,

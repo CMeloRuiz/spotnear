@@ -94,6 +94,8 @@ router.get('/config', (req, res) => {
     email: { configurado: env.mailHabilitado },
     // false = el formulario de alta avisa que no se pueden subir fotos todavía.
     fotos: { configurado: env.cloudinaryHabilitado },
+    // ¿El alta de estacionamientos pide confirmar el email? (VERIFICACION_EMAIL_ALTA)
+    registro: { verificacionEmail: env.verificacionEmailAlta },
   });
 });
 

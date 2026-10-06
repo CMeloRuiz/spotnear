@@ -472,8 +472,9 @@ Hay dos caminos, y los dos terminan en el mismo lugar.
 
 ### Verificación del email en el alta
 
-> **Se prende y se apaga con `VERIFICACION_EMAIL_ALTA`** (`true` por defecto;
-> en Render está en `false`). Necesita que los emails le lleguen a cualquiera,
+> **Se prende y se apaga con `VERIFICACION_EMAIL_ALTA`.** Sin cargarla, está
+> prendida en desarrollo y **apagada en producción**; `render.yaml` la deja en
+> `false`. `GET /api/v1/config` dice cuál rige (`registro.verificacionEmail`). Necesita que los emails le lleguen a cualquiera,
 > y Resend **sin un dominio propio verificado** solo le manda a la casilla de
 > la cuenta (Resend no acepta `onrender.com` ni otros subdominios gratuitos).
 > Con `false` el alta pasa directo a `PENDIENTE_APROBACION`, como antes, y la
