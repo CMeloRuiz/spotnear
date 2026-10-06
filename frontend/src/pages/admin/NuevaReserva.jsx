@@ -420,9 +420,13 @@ export function NuevaReserva() {
 
             {cotizacion ? (
               <>
+                {/* El dueño ve lo que cobra en el lugar; el total con la seña
+                    de SpotNear es información interna (solo SUPERADMIN). */}
                 <div className="sn-nueva__precio">
-                  <span>{fmtPrecio(cotizacion.precioTotal)}</span>
-                  <small>{cotizacion.desglose.etiqueta}</small>
+                  <span>{fmtPrecio(esSuperadmin ? cotizacion.precioTotal : cotizacion.aPagarEnElLugar)}</span>
+                  <small>
+                    {esSuperadmin ? cotizacion.desglose.etiqueta : `${textos.admin.comisiones.aCobrar} · ${cotizacion.desglose.etiqueta}`}
+                  </small>
                 </div>
 
                 <div

@@ -22,6 +22,7 @@ import { esRestriccionDeModoPrueba } from '../../services/notifications/email.js
 import {
   notificarReservaCreada,
   notificarClienteEmail,
+  emailDeLaReserva,
   notificarClienteWhatsApp,
   envioAutomatico,
   mensajeClienteWhatsApp,
@@ -361,17 +362,15 @@ router.post(
     const reserva = await servicio.obtenerPorToken(req.params.token);
 
     // Si mandan un email distinto, se usa ese (sin pisar el de la reserva).
-    const destino = req.body.email ?? reserva.customer.email;
+    // Si no, el que el cliente escribió en ESTA reserva, nunca el del contacto.
+    const destino = req.body.email ?? emailDeLaReserva(reserva);
     if (!destino) {
       return res.status(422).json({
         error: { codigo: 'SIN_EMAIL', mensaje: 'Indicá a qué email querés que lo mandemos.' },
       });
     }
 
-    const resultado = await notificarClienteEmail({
-      ...reserva,
-      customer: { ...reserva.customer, email: destino },
-    });
+    const resultado = await notificarClienteEmail(reserva, { destino });
 
     res.json({
       ok: resultado.enviado || resultado.estado === 'SIMULADO',

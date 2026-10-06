@@ -5,9 +5,15 @@
  *  · Revisión     → /api/v1/admin/onboarding      (solo SUPERADMIN aprueba)
  *
  * El formulario público crea de una sola vez el estacionamiento y su usuario
- * OWNER, pero nace apagado: `estado = PENDIENTE_APROBACION`, `activo = false` y
- * `publicado = false`. Así no aparece en ninguna búsqueda ni deja entrar al
- * panel hasta que ColdevIA lo revisa a mano. Aprobarlo es lo que lo enciende.
+ * OWNER, pero nace apagado: `activo = false` y `publicado = false`. Así no
+ * aparece en ninguna búsqueda ni deja entrar al panel hasta que ColdevIA lo
+ * revisa a mano. Aprobarlo es lo que lo enciende.
+ *
+ * Antes de la revisión, el dueño confirma su email (ver verificacion.js):
+ *
+ *   PENDIENTE_VERIFICACION ──clic en el link──▶ PENDIENTE_APROBACION ──▶ ACTIVO / RECHAZADO
+ *
+ * Mientras no lo confirma, la solicitud no aparece en Solicitudes.
  *
  * Es deliberado que esto no viva en parkings.admin.routes.js: ese router entero
  * pasa por `requiereAuth`, y acá el que escribe no tiene cuenta todavía.
@@ -18,7 +24,19 @@ import prisma from '../../config/prisma.js';
 import validar from '../../middleware/validate.js';
 import { asyncHandler } from '../../middleware/error.js';
 import { requiereAuth, requiereRol } from '../../middleware/auth.js';
-import { limiteAltaEstacionamiento, limiteSubidaFotos } from '../../middleware/rateLimit.js';
+import {
+  limiteAltaEstacionamiento,
+  limiteSubidaFotos,
+  limiteVerificacion,
+} from '../../middleware/rateLimit.js';
+import { AppError } from '../../utils/errors.js';
+import {
+  nuevoToken,
+  enviarEmailDeVerificacion,
+  verificarEmail,
+  reenviarVerificacion,
+  HORAS_DE_VALIDEZ,
+} from './verificacion.js';
 import errores from '../../utils/errors.js';
 import env from '../../config/env.js';
 import { auditar } from '../../services/audit.js';
@@ -200,8 +218,18 @@ routerPublico.post(
     // prolijo; adentro se vuelve a chequear por si entran dos a la vez.
     const yaExiste = await prisma.user.findUnique({
       where: { email: duenio.email },
-      select: { id: true },
+      select: { id: true, emailVerificadoEn: true, parking: { select: { estado: true } } },
     });
+    // Ya empezó un alta con ese email y no la confirmó: no se crea otra, se le
+    // ofrece reenviar el link (el formulario muestra el botón).
+    if (yaExiste && !yaExiste.emailVerificadoEn && yaExiste.parking?.estado === 'PENDIENTE_VERIFICACION') {
+      throw new AppError(
+        'Ya empezaste una solicitud con ese email y falta confirmarlo. Revisá tu correo o pedí que te reenviemos el link.',
+        409,
+        'VERIFICACION_PENDIENTE',
+        { email: duenio.email },
+      );
+    }
     if (yaExiste) {
       throw errores.datosInvalidos(
         { campos: [{ campo: 'duenio.email', mensaje: 'Ya hay una cuenta con ese email.' }] },
@@ -211,6 +239,7 @@ routerPublico.post(
 
     const slug = await slugDisponible(generarSlug(parking.nombre));
     const passwordHash = await hashearPassword(duenio.password);
+    const verificacion = nuevoToken();
     const { fotos, ...datosParking } = parking;
 
     const creado = await prisma.$transaction(async (tx) => {
@@ -219,8 +248,10 @@ routerPublico.post(
           ...datosParking,
           slug,
           horarios: datosParking.horarios ?? {},
-          // El trío que lo mantiene invisible hasta la aprobación.
-          estado: 'PENDIENTE_APROBACION',
+          // El trío que lo mantiene invisible hasta la aprobación. Nace
+          // esperando que el dueño confirme su email; recién ahí pasa a
+          // PENDIENTE_APROBACION y aparece en Solicitudes.
+          estado: 'PENDIENTE_VERIFICACION',
           activo: false,
           publicado: false,
           fotos: {
@@ -246,6 +277,8 @@ routerPublico.post(
           parkingId: nuevo.id,
           // Se habilita al aprobar la solicitud.
           activo: false,
+          verificacionTokenHash: verificacion.hash,
+          verificacionExpiraEn: verificacion.expiraEn,
         },
       });
 
@@ -257,10 +290,13 @@ routerPublico.post(
       include: { usuarios: true, fotos: { orderBy: { orden: 'asc' } } },
     });
 
-    // El mail es un extra: si falla, la solicitud igual quedó guardada.
-    const aviso = await notificarAltaEstacionamiento('recibida', {
-      parking: completo,
+    // Primer mail: confirmar el email. El acuse de "la revisamos en menos de
+    // 24 horas" sale recién cuando lo confirma (verificacion.js). Si este mail
+    // falla, la solicitud igual quedó guardada y el dueño puede pedir el reenvío.
+    const aviso = await enviarEmailDeVerificacion({
       owner: { nombre: `${duenio.nombre} ${duenio.apellido}`, email: duenio.email },
+      parking: completo,
+      token: verificacion.token,
     });
 
     await auditar(req, {
@@ -279,8 +315,62 @@ routerPublico.post(
         email: duenio.email,
       },
       emailEnviado: aviso.estado,
+      verificacion: { horasDeValidez: HORAS_DE_VALIDEZ },
+      // Solo fuera de producción y con el email sin configurar: para probar
+      // el flujo en desarrollo sin una casilla real.
+      enlaceDePrueba: aviso.enlaceDePrueba,
+      mensaje: `Te enviamos un email a ${duenio.email} para confirmar tu cuenta. Una vez que lo confirmes, tu solicitud entra en revisión y te avisamos en menos de 24 horas.`,
+    });
+  }),
+);
+
+/**
+ * POST /api/v1/onboarding/verificar-email
+ * El link del email lleva a la web, y la web manda acá el token. Pasa la
+ * solicitud de PENDIENTE_VERIFICACION a PENDIENTE_APROBACION.
+ */
+routerPublico.post(
+  '/verificar-email',
+  limiteVerificacion,
+  validar({ body: z.object({ token: z.string().trim().min(20, 'El link no es válido.').max(200) }) }),
+  asyncHandler(async (req, res) => {
+    const resultado = await verificarEmail(req.body.token);
+
+    if (!resultado.yaVerificado) {
+      await auditar(req, {
+        accion: 'parking.email_verificado',
+        entidad: 'Parking',
+        entidadId: resultado.parkingId,
+        parkingId: resultado.parkingId,
+        datos: { email: resultado.email },
+      });
+    }
+
+    res.json({
+      estado: resultado.estado,
+      yaVerificado: resultado.yaVerificado,
+      mensaje: resultado.yaVerificado
+        ? 'Tu email ya estaba confirmado.'
+        : '¡Listo! Confirmaste tu email. Tu solicitud entró en revisión: te avisamos en menos de 24 horas.',
+    });
+  }),
+);
+
+/**
+ * POST /api/v1/onboarding/reenviar-verificacion
+ * Manda un link nuevo (el anterior deja de servir). Responde siempre lo mismo,
+ * exista o no la solicitud, para no revelar qué emails están registrados.
+ */
+routerPublico.post(
+  '/reenviar-verificacion',
+  limiteVerificacion,
+  validar({ body: z.object({ email }) }),
+  asyncHandler(async (req, res) => {
+    const { enlaceDePrueba } = await reenviarVerificacion(req.body.email);
+    res.json({
       mensaje:
-        'Recibimos tu solicitud. La revisamos a mano y te escribimos por email apenas esté lista.',
+        'Si hay una solicitud esperando confirmación con ese email, te mandamos un link nuevo. Revisá también la carpeta de spam.',
+      enlaceDePrueba,
     });
   }),
 );
@@ -304,7 +394,9 @@ routerAdmin.get(
     const { estado } = req.datosQuery;
 
     const solicitudes = await prisma.parking.findMany({
-      where: estado === 'TODAS' ? {} : { estado },
+      // "Todas" tampoco incluye las que no confirmaron el email: hasta entonces
+      // no se sabe si el email es real, y no le corresponde a nadie revisarlas.
+      where: estado === 'TODAS' ? { estado: { not: 'PENDIENTE_VERIFICACION' } } : { estado },
       include: {
         usuarios: { where: { role: 'OWNER' }, orderBy: { createdAt: 'asc' } },
         fotos: { orderBy: { orden: 'asc' } },
@@ -350,6 +442,10 @@ routerAdmin.post(
       include: { usuarios: { where: { role: 'OWNER' } } },
     });
     if (!solicitud) throw errores.noEncontrado('La solicitud');
+    // No se revisa lo que todavía no existe para ColdevIA: el dueño no confirmó el email.
+    if (solicitud.estado === 'PENDIENTE_VERIFICACION') {
+      throw errores.conflicto('El dueño todavía no confirmó su email: la solicitud no está lista para revisar.');
+    }
     if (solicitud.estado === 'ACTIVO') {
       throw errores.conflicto('Esa solicitud ya estaba aprobada.');
     }
@@ -412,6 +508,10 @@ routerAdmin.post(
       select: { id: true, estado: true },
     });
     if (!solicitud) throw errores.noEncontrado('La solicitud');
+    // No se revisa lo que todavía no existe para ColdevIA: el dueño no confirmó el email.
+    if (solicitud.estado === 'PENDIENTE_VERIFICACION') {
+      throw errores.conflicto('El dueño todavía no confirmó su email: la solicitud no está lista para revisar.');
+    }
 
     const parking = await prisma.$transaction(async (tx) => {
       const actualizado = await tx.parking.update({

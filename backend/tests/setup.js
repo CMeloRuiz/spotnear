@@ -14,3 +14,12 @@ process.env.NODE_ENV = 'test';
 // para eso alcanza el proveedor simulado. Se fuerza acá para que el .env de
 // cada uno no cambie el resultado de la suite.
 process.env.PAYMENT_PROVIDER = 'simulado';
+
+// Tampoco se mandan emails de verdad: la suite crea cientos de reservas y
+// altas con casillas inventadas, y con la RESEND_API_KEY del .env saldrían por
+// Resend. dotenv no pisa variables ya definidas, así que vaciarlas acá alcanza.
+// Los tests de email activan Resend a mano (con fetch simulado).
+process.env.RESEND_API_KEY = '';
+process.env.SMTP_HOST = '';
+process.env.SMTP_USER = '';
+process.env.SMTP_PASS = '';

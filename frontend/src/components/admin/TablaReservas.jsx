@@ -89,6 +89,13 @@ function Acciones({ reserva, onAccion, procesando, compacto = false }) {
  * @param {string|null} [props.procesando] Id de la reserva con una acción en curso
  * @param {boolean} [props.mostrarParking] Para el SUPERADMIN, que ve varios
  */
+/**
+ * El monto de una reserva según quién mira: el SUPERADMIN recibe el total
+ * (con la seña); al estacionamiento la API no se lo manda y ve lo que cobra en
+ * el lugar.
+ */
+const montoVisible = (r) => r.precioTotal ?? r.montoNeto;
+
 export function TablaReservas({
   reservas = [],
   onAccion,
@@ -111,7 +118,9 @@ export function TablaReservas({
               <th>{textos.admin.reservas.columnas.ingreso}</th>
               <th>{textos.admin.reservas.columnas.salida}</th>
               <th>{textos.admin.reservas.columnas.estado}</th>
-              <th className="sn-tabla__num">{textos.admin.reservas.columnas.monto}</th>
+              <th className="sn-tabla__num">
+                {mostrarParking ? textos.admin.reservas.columnas.monto : textos.admin.comisiones.aCobrar}
+              </th>
               <th aria-label={textos.admin.reservas.columnas.acciones} />
             </tr>
           </thead>
@@ -177,7 +186,7 @@ export function TablaReservas({
                   <EstadoReserva estado={r.estado} />
                 </td>
 
-                <td className="sn-tabla__num sn-precio">{fmtPrecio(r.precioTotal)}</td>
+                <td className="sn-tabla__num sn-precio">{fmtPrecio(montoVisible(r))}</td>
 
                 <td>
                   <div className="sn-tabla-reservas__fila-acciones">
@@ -254,7 +263,7 @@ export function TablaReservas({
                 </p>
               )}
 
-              <p className="sn-reserva-tarjeta__monto">{fmtPrecio(r.precioTotal)}</p>
+              <p className="sn-reserva-tarjeta__monto">{fmtPrecio(montoVisible(r))}</p>
             </div>
 
             <div className="sn-reserva-tarjeta__pie">

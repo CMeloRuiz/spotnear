@@ -14,6 +14,7 @@ import { Map, AdvancedMarker } from '@vis.gl/react-google-maps';
 import { Icono, ICONO_SERVICIO, ICONO_VEHICULO } from '../components/ui/Iconos.jsx';
 import { Campo, CampoTexto, CampoCheck } from '../components/ui/Campo.jsx';
 import SubirFotos, { MAX_FOTOS } from '../components/ui/SubirFotos.jsx';
+import ReenviarVerificacion from '../components/registro/ReenviarVerificacion.jsx';
 import { Aviso } from '../components/ui/Varios.jsx';
 import BuscadorDireccion from '../components/busqueda/BuscadorDireccion.jsx';
 import { MAP_ID, useEstadoMapas } from '../components/mapas/ProveedorMapas.jsx';
@@ -88,6 +89,10 @@ export function RegistrarEstacionamiento() {
   const [errores, setErrores] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [listo, setListo] = useState(null);
+  // Ya había un alta con ese email sin confirmar: se ofrece reenviar el link.
+  const [verificacionPendiente, setVerificacionPendiente] = useState(null);
+  // Solo en desarrollo, si el email no salió: el link que iría en el mail.
+  const [enlaceDePrueba, setEnlaceDePrueba] = useState(null);
 
   // ¿El servidor tiene dónde guardar las fotos (Cloudinary)? Mientras carga la
   // configuración se asume que sí: el caso normal no tiene que parpadear.
@@ -249,8 +254,14 @@ export function RegistrarEstacionamiento() {
       });
 
       setListo(respuesta.solicitud);
+      setEnlaceDePrueba(respuesta.enlaceDePrueba ?? null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
+      if (error.codigo === 'VERIFICACION_PENDIENTE') {
+        setVerificacionPendiente(error.detalle?.email ?? form.email.trim());
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       toast.error(error.message ?? textos.errores.generico);
       const deCampo = error.erroresDeCampo ?? {};
       // El backend nombra los campos anidados ("duenio.email"): se aplanan
@@ -277,7 +288,7 @@ export function RegistrarEstacionamiento() {
             <Icono nombre="check" tam={32} />
           </span>
           <h1>{t.exitoTitulo}</h1>
-          <p className="sn-registro__exito-texto">{t.exitoTexto}</p>
+          <p className="sn-registro__exito-texto">{t.exitoTexto(listo.email)}</p>
 
           <div className="sn-registro__exito-ficha">
             <span className="sn-registro__exito-etiqueta">{t.nombreComercial}</span>
@@ -292,6 +303,16 @@ export function RegistrarEstacionamiento() {
               <li key={p}>{p}</li>
             ))}
           </ol>
+
+          <p className="sn-registro__exito-texto">{t.exitoNoLlego}</p>
+          <ReenviarVerificacion email={listo.email} alEnlaceDePrueba={setEnlaceDePrueba} />
+
+          {enlaceDePrueba && (
+            <p className="sn-verificar__dev">
+              {t.verificacion.enlaceDePrueba}{' '}
+              <a href={enlaceDePrueba}>{t.verificacion.abrirEnlace}</a>
+            </p>
+          )}
 
           <button type="button" className="sn-boton sn-boton--primario sn-boton--lg" onClick={() => navegar('/')}>
             {t.exitoVolver}
@@ -346,6 +367,16 @@ export function RegistrarEstacionamiento() {
             );
           })}
         </ol>
+
+        {verificacionPendiente && (
+          <Aviso tipo="aviso" className="sn-registro__pendiente">
+            <strong>{t.verificacionPendiente}</strong> {t.exitoNoLlego}
+            <ReenviarVerificacion email={verificacionPendiente} alEnlaceDePrueba={setEnlaceDePrueba} />
+            {enlaceDePrueba && (
+              <a href={enlaceDePrueba}>{t.verificacion.abrirEnlace}</a>
+            )}
+          </Aviso>
+        )}
 
         <form className="sn-registro__form" onSubmit={enviar} onKeyDown={alTeclado} noValidate>
           {/* ─────────── Paso 1: el dueño ─────────── */}

@@ -114,13 +114,6 @@ function bloqueCuando(reserva) {
   ];
 }
 
-const ETIQUETA_PAGO = {
-  PENDIENTE: 'pago pendiente',
-  PAGADO: 'pagado',
-  FALLIDO: 'pago rechazado',
-  REEMBOLSADO: 'reembolsado',
-};
-
 /**
  * Nombre del cliente tal como quedó guardado EN LA RESERVA.
  *
@@ -208,12 +201,10 @@ export function mensajeGrupoWhatsApp(reserva) {
 
   if (reserva.cantidadVehiculos > 1) lineas.push(`🔢 Vehículos: ${reserva.cantidadVehiculos}`);
 
-  lineas.push(
-    // Lo primero que necesita saber el playero es cuánto tiene que cobrar
-    // cuando llegue el cliente. La seña va después, como contexto.
-    `💰 A COBRAR EN EL LUGAR: *${formatearARS(reserva.montoNeto)}*`,
-    `🎫 Seña ya pagada online: ${formatearARS(reserva.montoComision)} (${ETIQUETA_PAGO[reserva.paymentStatus] ?? 'pendiente'})`,
-  );
+  // Lo que el playero tiene que cobrar cuando llegue el cliente, y nada más.
+  // La seña (monto y que ya se pagó online) es de SpotNear: no va en ningún
+  // mensaje para el estacionamiento.
+  lineas.push(`💰 A COBRAR EN EL LUGAR: *${formatearARS(reserva.montoNeto)}*`);
 
   if (reserva.notas) lineas.push(`📝 ${reserva.notas}`);
   if (parking?.nombre) lineas.push(`🏢 ${parking.nombre}`);
@@ -232,7 +223,9 @@ export function mensajeResumenDelDia(reservas, fecha = new Date(), nombreParking
   }
 
   const activas = reservas.filter((r) => !['CANCELADA', 'NO_SHOW'].includes(r.estado));
-  const total = activas.reduce((acc, r) => acc + Number(r.precioTotal), 0);
+  // Lo que cobra el estacionamiento (sin la seña de SpotNear), como en el aviso
+  // de cada reserva.
+  const total = activas.reduce((acc, r) => acc + Number(r.montoNeto), 0);
   const lugares = activas.reduce((acc, r) => acc + r.cantidadVehiculos, 0);
 
   const lineas = [
@@ -249,12 +242,12 @@ export function mensajeResumenDelDia(reservas, fecha = new Date(), nombreParking
     lineas.push(
       `${formatearHora(r.inicio)}–${formatearHora(r.fin)} · ${r.codigo}`,
       `   ${nombreDelCliente(r)} · ${formatearPatente(r.vehicle.patente)}`,
-      `   ${formatearARS(r.precioTotal)}`,
+      `   A cobrar: ${formatearARS(r.montoNeto)}`,
       '',
     );
   }
 
-  lineas.push(`💵 Total previsto: ${formatearARS(total)}`);
+  lineas.push(`💵 Total a cobrar en el lugar: ${formatearARS(total)}`);
   return lineas.join('\n');
 }
 
@@ -408,6 +401,40 @@ function filasParking(parking) {
     ${fila('Capacidad', `${parking.capacidadTotal} lugares`)}
     ${fila('Comisión', `${Number(parking.comisionPorcentaje)}% por reserva confirmada`)}
   </table>`;
+}
+
+/** Escapa lo que escribió una persona antes de meterlo en el HTML de un email. */
+function escaparHtml(texto) {
+  return String(texto ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Primer paso del alta: confirmar el email. Hasta que no hace clic, la
+ * solicitud no entra en revisión (ver modules/onboarding/verificacion.js).
+ */
+export function emailVerificacionAlta({ owner, parking, enlace, horas }) {
+  const nombre = escaparHtml(String(owner.nombre ?? '').split(' ')[0]);
+  return {
+    asunto: 'Confirmá tu email para sumar tu estacionamiento a SpotNear',
+    html: marcoEmail({
+      bajada: 'Confirmá tu email',
+      titulo: `¡Hola, ${nombre}!`,
+      cuerpo: `
+        <p style="margin:0 0 12px;color:#334155;font-size:15px;line-height:1.6;">
+          Recibimos los datos de <strong>${escaparHtml(parking.nombre)}</strong>. Para que tu
+          solicitud entre en revisión, confirmá que este email es tuyo con el botón de abajo.
+        </p>
+        <p style="margin:0;color:#64748b;font-size:14px;line-height:1.6;">
+          Una vez que lo confirmes, la revisamos y te respondemos en menos de 24 horas.
+          El link vence en ${horas} horas. Si no fuiste vos, ignorá este mensaje.
+        </p>`,
+      accion: { url: enlace, etiqueta: 'Confirmar mi email' },
+    }),
+  };
 }
 
 /** Acuse de recibo: la solicitud entró y queda esperando revisión. */

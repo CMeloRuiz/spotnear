@@ -5,16 +5,18 @@
  * Se reserva como invitado: no hace falta crear cuenta ni cargar tarjeta.
  */
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Campo, CampoOpciones } from '../components/ui/Campo.jsx';
 import { Icono, ICONO_VEHICULO } from '../components/ui/Iconos.jsx';
-import { Cargando, ErrorCarga, Vacio } from '../components/ui/Estado.jsx';
+import { Cargando, ErrorCarga } from '../components/ui/Estado.jsx';
 import { Aviso } from '../components/ui/Varios.jsx';
 import { publico } from '../services/spotnear.service.js';
 import { usePedido, useTitulo, useDebounce } from '../hooks/index.js';
 import { periodoPorDefecto } from '../hooks/useBusqueda.js';
+import SelectorPeriodo from '../components/busqueda/SelectorPeriodo.jsx';
 import {
   validarReserva,
+  validarRango,
   sinErrores,
   normalizarPatente,
   normalizarTelefono,
@@ -63,7 +65,7 @@ const FORM_INICIAL = {
 
 export function Checkout() {
   const { slug } = useParams();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const navegar = useNavigate();
 
   useTitulo(textos.checkout.titulo);
@@ -75,6 +77,50 @@ export function Checkout() {
       fin: params.get('fin') ? new Date(params.get('fin')) : porDefecto.fin,
     };
   }, [params]);
+
+  /**
+   * Edición del período desde la tarjeta del resumen.
+   *
+   * El período vive en la URL (?inicio=&fin=). Editarlo reemplaza esos dos
+   * parámetros: la pantalla NO se desmonta, así que lo que el cliente ya
+   * escribió (datos, vehículo) queda intacto, y el pedido del estacionamiento
+   * se repite solo con el horario nuevo: duración, escalón, precio, seña,
+   * total y disponibilidad salen de la misma API y el mismo motor de precios.
+   *
+   * Se aplica en vivo mientras el cliente mueve las fechas (con una pausa
+   * corta para no pedir en cada tecla) y solo si el rango es válido.
+   */
+  const [editandoPeriodo, setEditandoPeriodo] = useState(false);
+  const [borrador, setBorrador] = useState(periodo);
+  const [errorBorrador, setErrorBorrador] = useState(null);
+  const borradorDemorado = useDebounce(borrador, 500);
+
+  useEffect(() => {
+    if (!editandoPeriodo) return;
+    const { inicio, fin } = borradorDemorado;
+    const problema =
+      validarRango(inicio, fin) ??
+      (inicio.getTime() < Date.now() - 5 * 60_000 ? textos.checkout.periodoEnElPasado : null);
+    setErrorBorrador(problema);
+    if (problema) return;
+    if (inicio.getTime() === periodo.inicio.getTime() && fin.getTime() === periodo.fin.getTime()) return;
+    setParams(
+      (actuales) => {
+        const nuevos = new URLSearchParams(actuales);
+        nuevos.set('inicio', inicio.toISOString());
+        nuevos.set('fin', fin.toISOString());
+        return nuevos;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [borradorDemorado, editandoPeriodo]);
+
+  const abrirEdicionPeriodo = () => {
+    setBorrador(periodo);
+    setErrorBorrador(null);
+    setEditandoPeriodo(true);
+  };
 
   // El tipo de vehículo arranca SIN elegir (salvo que venga en la URL): lo
   // detecta el catálogo a partir de la marca y el modelo, o lo elige el
@@ -217,6 +263,12 @@ export function Checkout() {
 
   const continuar = (e) => {
     e.preventDefault();
+    // Con un horario sin lugar, fuera de horario o sin precio no se avanza: el
+    // aviso está en la tarjeta del resumen, que es donde se corrige.
+    if (problemaPeriodo || recotizando) {
+      document.querySelector('.sn-checkout__periodo')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     const { tipoVehiculo: faltaTipo, ...nuevos } = validarReserva(form);
     if (emailObligatorio && !form.email.trim()) nuevos.email = textos.checkout.emailObligatorio;
     // Marca, modelo y color son obligatorios: con marca y modelo se detecta
@@ -309,7 +361,9 @@ export function Checkout() {
   if (cargando && !datos) return <Cargando texto="Preparando tu reserva..." />;
   const recotizando = cargando && Boolean(datos);
 
-  if (error) {
+  // Error en la PRIMERA carga: no hay nada que mostrar. Si falla al recotizar
+  // un horario nuevo, el formulario se queda y el error va en la tarjeta.
+  if (error && !datos) {
     return (
       <div className="sn-contenedor sn-seccion">
         <ErrorCarga error={error} onReintentar={recargar} />
@@ -320,6 +374,20 @@ export function Checkout() {
   if (!parking) return null;
 
   const sinLugar = parking.disponibilidad && !parking.disponibilidad.hayLugar;
+
+  /**
+   * Lo que impide reservar con este horario, en orden de importancia. Se
+   * muestra en la tarjeta del resumen y bloquea "Continuar" y "Confirmar".
+   */
+  const problemaPeriodo = error
+    ? error.message ?? textos.checkout.periodoSinPrecio
+    : sinLugar
+      ? textos.checkout.periodoSinLugar
+      : parking.fueraDeHorario
+        ? parking.fueraDeHorario
+        : !parking.precio
+          ? parking.precioError ?? textos.checkout.periodoSinPrecio
+          : null;
 
   /** Texto bajo el tipo de vehículo: qué detectó el catálogo, o qué hacer. */
   const ayudaTipoVehiculo = (() => {
@@ -343,22 +411,9 @@ export function Checkout() {
    */
   const pagoNoDisponible = config ? config.pago?.disponible === false : false;
 
-  if (sinLugar) {
-    return (
-      <div className="sn-contenedor sn-seccion">
-        <Vacio
-          icono="sinLugar"
-          titulo={textos.parking.noDisponible}
-          texto={textos.checkout.sinCupo}
-          accion={
-            <Link to="/" className="sn-boton sn-boton--primario">
-              {textos.checkout.volverABuscar}
-            </Link>
-          }
-        />
-      </div>
-    );
-  }
+  // Sin lugar ya no reemplaza la pantalla entera: el aviso va en la tarjeta,
+  // al lado del período, y el cliente cambia el horario ahí mismo sin perder
+  // lo que cargó.
 
   return (
     <div className="sn-checkout">
@@ -542,7 +597,11 @@ export function Checkout() {
                 </section>
 
 
-                <button type="submit" className="sn-boton sn-boton--primario sn-boton--lg sn-boton--bloque">
+                <button
+                  type="submit"
+                  className="sn-boton sn-boton--primario sn-boton--lg sn-boton--bloque"
+                  disabled={Boolean(problemaPeriodo) || recotizando}
+                >
                   {textos.checkout.continuar}
                   <Icono nombre="flechaDerecha" tam={17} />
                 </button>
@@ -625,7 +684,7 @@ export function Checkout() {
                     type="button"
                     className="sn-boton sn-boton--primario sn-boton--lg"
                     onClick={confirmar}
-                    disabled={enviando || pagoNoDisponible}
+                    disabled={enviando || pagoNoDisponible || Boolean(problemaPeriodo) || recotizando}
                   >
                     {enviando ? (
                       <>
@@ -672,16 +731,49 @@ export function Checkout() {
               </div>
 
               <div className="sn-checkout__periodo">
-                {/* Solo informativo: el período lo eligió el cliente en la búsqueda. */}
                 <div className="sn-checkout__periodo-cabecera">
                   <span>{textos.checkout.periodo}</span>
+                  {paso === 1 && !editandoPeriodo && (
+                    <button type="button" className="sn-checkout__editar-periodo" onClick={abrirEdicionPeriodo}>
+                      <Icono nombre="editar" tam={14} />
+                      {textos.checkout.editarPeriodo}
+                    </button>
+                  )}
                 </div>
-                <p className="sn-checkout__periodo-fechas">
-                  {fechaLarga(periodo.inicio)} · {hora(periodo.inicio)}
-                  <Icono nombre="flechaDerecha" tam={14} />
-                  {fechaLarga(periodo.fin)} · {hora(periodo.fin)}
-                </p>
+
+                {editandoPeriodo ? (
+                  <div className="sn-checkout__periodo-editor">
+                    <SelectorPeriodo
+                      inicio={borrador.inicio}
+                      fin={borrador.fin}
+                      compacto
+                      separado
+                      onChange={(cambios) => setBorrador((b) => ({ ...b, ...cambios }))}
+                      error={errorBorrador}
+                    />
+                    <button
+                      type="button"
+                      className="sn-boton sn-boton--secundario sn-boton--sm"
+                      onClick={() => setEditandoPeriodo(false)}
+                    >
+                      <Icono nombre="check" tam={15} />
+                      {textos.checkout.listoPeriodo}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="sn-checkout__periodo-fechas">
+                    {fechaLarga(periodo.inicio)} · {hora(periodo.inicio)}
+                    <Icono nombre="flechaDerecha" tam={14} />
+                    {fechaLarga(periodo.fin)} · {hora(periodo.fin)}
+                  </p>
+                )}
                 <span className="sn-checkout__duracion">{duracion(periodo.inicio, periodo.fin)}</span>
+
+                {problemaPeriodo && !recotizando && (
+                  <Aviso tipo="error" className="sn-checkout__periodo-aviso">
+                    {problemaPeriodo}
+                  </Aviso>
+                )}
               </div>
 
               {parking.precio && (

@@ -182,6 +182,8 @@ router.get(
       where.id = req.usuario.parkingId;
     }
     if (!req.datosQuery.incluirInactivos) where.activo = true;
+    // Un alta que todavía no confirmó el email no existe para el panel.
+    where.estado = { not: 'PENDIENTE_VERIFICACION' };
     if (req.datosQuery.q) {
       where.OR = [
         { nombre: { contains: req.datosQuery.q, mode: 'insensitive' } },

@@ -28,6 +28,9 @@ enum Role {
  * que ColdevIA los revisa.
  */
 enum ParkingEstado {
+  // Alta por autogestión cuyo dueño todavía no confirmó el email. No aparece
+  // en Solicitudes: hasta que no se confirma, no se sabe si el email es real.
+  PENDIENTE_VERIFICACION
   PENDIENTE_APROBACION
   ACTIVO
   RECHAZADO
@@ -127,6 +130,14 @@ model User {
   /// Reservas). Lo usa el contador azul del menú: cuenta las confirmadas
   /// después de esta fecha. Null = nunca abrió la lista.
   reservasVistasEn DateTime?
+
+  /// Verificación del email en el alta por autogestión. Se guarda el hash del
+  /// token (nunca el token en claro), igual que los refresh tokens.
+  /// emailVerificadoEn null = no pasó por este flujo (usuarios creados desde
+  /// el panel o antes de que existiera) o todavía no confirmó.
+  emailVerificadoEn     DateTime?
+  verificacionTokenHash String?   @unique
+  verificacionExpiraEn  DateTime?
 
   refreshTokens   RefreshToken[]
   reservasCreadas Reservation[]  @relation("ReservationCreatedBy")

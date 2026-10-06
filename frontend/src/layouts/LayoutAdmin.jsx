@@ -57,6 +57,8 @@ const SECCIONES = [
     a: '/panel/comisiones',
     icono: 'grafico',
     texto: textos.admin.nav.comisiones,
+    // El dueño no ve comisiones: ve lo que le corresponde.
+    textoPorRol: { OWNER: textos.admin.comisiones.tituloOwner },
     roles: ['SUPERADMIN', 'OWNER'],
   },
   {
@@ -185,7 +187,9 @@ export function LayoutAdmin() {
     return <Navigate to="/panel/ingresar" replace state={{ desde: ubicacion.pathname }} />;
   }
 
-  const secciones = SECCIONES.filter((s) => !s.roles || s.roles.includes(rol));
+  const secciones = SECCIONES.filter((s) => !s.roles || s.roles.includes(rol)).map((s) =>
+    s.textoPorRol?.[rol] ? { ...s, texto: s.textoPorRol[rol] } : s,
+  );
 
   const cerrarSesion = async () => {
     await salir();

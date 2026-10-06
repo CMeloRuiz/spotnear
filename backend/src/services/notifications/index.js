@@ -159,10 +159,24 @@ export async function notificarGrupoWhatsApp(reserva) {
 }
 
 /**
- * Envía el comprobante por email. Si no hay SMTP configurado, queda SIMULADO.
+ * Email de UNA reserva: el que el cliente escribió en el formulario de esa
+ * reserva (copia congelada en `clienteEmail`). El del contacto (Customer) es
+ * solo el respaldo de reservas viejas: ese se comparte entre todas las
+ * reservas con el mismo teléfono y guarda el primer email que se usó, así que
+ * usarlo mandaba el comprobante a la casilla de otra persona.
  */
-export async function notificarClienteEmail(reserva) {
-  if (!reserva.customer?.email) {
+export function emailDeLaReserva(reserva) {
+  return reserva.clienteEmail ?? reserva.customer?.email ?? null;
+}
+
+/**
+ * Envía el comprobante por email. Si no hay SMTP configurado, queda SIMULADO.
+ * @param {object} reserva
+ * @param {{ destino?: string }} [opciones]  Otra casilla elegida por el cliente
+ */
+export async function notificarClienteEmail(reserva, { destino: otraCasilla } = {}) {
+  const destino = otraCasilla ?? emailDeLaReserva(reserva);
+  if (!destino) {
     return { enviado: false, estado: 'PENDIENTE', proveedor: null, error: 'El cliente no dejó email.' };
   }
 
@@ -187,7 +201,7 @@ export async function notificarClienteEmail(reserva) {
   const texto = emailComprobanteTexto(reserva);
 
   const resultado = await enviarEmail({
-    destino: reserva.customer.email,
+    destino,
     asunto,
     html,
     texto,
@@ -197,7 +211,7 @@ export async function notificarClienteEmail(reserva) {
   await registrar({
     reservationId: reserva.id,
     canal: 'EMAIL',
-    destino: reserva.customer.email,
+    destino,
     resultado,
     asunto,
   });
@@ -256,7 +270,7 @@ export async function notificarReservaCreada(reserva) {
     console.error('[notificaciones] WhatsApp grupo:', error.message);
   }
 
-  if (reserva.customer?.email) {
+  if (emailDeLaReserva(reserva)) {
     try {
       resultados.email = await notificarClienteEmail(reserva);
     } catch (error) {

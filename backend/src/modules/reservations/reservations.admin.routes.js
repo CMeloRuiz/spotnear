@@ -189,18 +189,23 @@ router.get(
     ]);
 
     res.json({
-      reservas: reservas.map(servicio.aReservaAdmin),
+      reservas: reservas.map((r) => servicio.aReservaAdmin(r, req.usuario.role)),
       paginacion: {
         pagina: filtros.pagina,
         porPagina: filtros.porPagina,
         total,
         paginas: Math.max(1, Math.ceil(total / filtros.porPagina)),
       },
-      totales: {
-        precioTotal: Number(totales._sum.precioTotal ?? 0),
-        montoComision: Number(totales._sum.montoComision ?? 0),
-        montoNeto: Number(totales._sum.montoNeto ?? 0),
-      },
+      // El total facturado y la seña son de SpotNear: al estacionamiento solo
+      // le llega lo que le corresponde.
+      totales:
+        req.usuario.role === 'SUPERADMIN'
+          ? {
+              precioTotal: Number(totales._sum.precioTotal ?? 0),
+              montoComision: Number(totales._sum.montoComision ?? 0),
+              montoNeto: Number(totales._sum.montoNeto ?? 0),
+            }
+          : { montoNeto: Number(totales._sum.montoNeto ?? 0) },
     });
   }),
 );
@@ -214,7 +219,7 @@ router.get(
   validar({ query: z.object({ q: z.string().trim().min(3, 'Escribí al menos 3 caracteres.'), parkingId: z.string().optional() }) }),
   asyncHandler(async (req, res) => {
     const reservas = await servicio.busquedaRapida(req.datosQuery.q, filtroTenant(req));
-    res.json({ reservas: reservas.map(servicio.aReservaAdmin) });
+    res.json({ reservas: reservas.map((r) => servicio.aReservaAdmin(r, req.usuario.role)) });
   }),
 );
 
@@ -242,9 +247,10 @@ router.get(
       { key: 'estado', label: 'Estado' },
       { key: 'inicio', label: 'Ingreso', format: (r) => formatearFechaHora(r.inicio) },
       { key: 'fin', label: 'Salida', format: (r) => formatearFechaHora(r.fin) },
-      { key: 'nombre', label: 'Nombre', format: (r) => `${r.customer.nombre} ${r.customer.apellido}` },
+      // Nombre y email de la reserva, no del contacto compartido por teléfono.
+      { key: 'nombre', label: 'Nombre', format: (r) => { const c = servicio.clienteParaMostrar(r); return `${c.nombre} ${c.apellido}`; } },
       { key: 'telefono', label: 'Teléfono', format: (r) => r.customer.telefono },
-      { key: 'email', label: 'Email', format: (r) => r.customer.email ?? '' },
+      { key: 'email', label: 'Email', format: (r) => servicio.clienteParaMostrar(r).email ?? '' },
       { key: 'patente', label: 'Patente', format: (r) => formatearPatente(r.vehicle.patente) },
       { key: 'tipo', label: 'Tipo', format: (r) => r.vehicle.tipo },
       {
@@ -254,7 +260,6 @@ router.get(
       },
       { key: 'color', label: 'Color', format: (r) => r.vehicle.color ?? '' },
       { key: 'cantidadVehiculos', label: 'Vehículos' },
-      { key: 'precioTotal', label: 'Total', format: (r) => Number(r.precioTotal).toFixed(2) },
       { key: 'origen', label: 'Origen', format: (r) => r.source },
       { key: 'checkIn', label: 'Check-in', format: (r) => (r.checkInAt ? formatearFechaHora(r.checkInAt) : '') },
       { key: 'checkOut', label: 'Check-out', format: (r) => (r.checkOutAt ? formatearFechaHora(r.checkOutAt) : '') },
@@ -262,13 +267,19 @@ router.get(
       { key: 'creada', label: 'Creada', format: (r) => formatearFechaHora(r.createdAt) },
     ];
 
-    // La comisión solo se exporta a quien le corresponde verla.
+    // El total con la seña y la comisión solo se exportan al SUPERADMIN: para el
+    // estacionamiento la reserva vale lo que cobra en el lugar.
     columnas.splice(
       14,
       0,
-      { key: 'montoNeto', label: 'Neto estacionamiento', format: (r) => Number(r.montoNeto).toFixed(2) },
+      {
+        key: 'montoNeto',
+        label: esSuperadmin ? 'Neto estacionamiento' : 'A cobrar en el lugar',
+        format: (r) => Number(r.montoNeto).toFixed(2),
+      },
       ...(esSuperadmin
         ? [
+            { key: 'precioTotal', label: 'Total', format: (r) => Number(r.precioTotal).toFixed(2) },
             { key: 'comisionPorcentaje', label: 'Comisión %', format: (r) => Number(r.comisionPorcentaje).toFixed(2) },
             { key: 'montoComision', label: 'Comisión $', format: (r) => Number(r.montoComision).toFixed(2) },
           ]
@@ -407,7 +418,7 @@ router.get(
     if (!reserva) throw errores.noEncontrado('La reserva');
 
     res.json({
-      reserva: servicio.aReservaAdmin(reserva),
+      reserva: servicio.aReservaAdmin(reserva, req.usuario.role),
       links: {
         comprobante: urlComprobante(reserva),
         whatsappCliente: linkWhatsApp(reserva.customer.telefono, mensajeClienteWhatsApp(reserva)),
@@ -486,7 +497,7 @@ router.post(
     });
 
     res.status(201).json({
-      reserva: servicio.aReservaAdmin(reserva),
+      reserva: servicio.aReservaAdmin(reserva, req.usuario.role),
       links: {
         comprobante: urlComprobante(reserva),
         whatsappCliente: linkWhatsApp(reserva.customer.telefono, mensajeClienteWhatsApp(reserva)),
@@ -534,7 +545,7 @@ router.post(
       datos: { codigo: reserva.codigo, estado },
     });
 
-    res.json({ reserva: servicio.aReservaAdmin(reserva) });
+    res.json({ reserva: servicio.aReservaAdmin(reserva, req.usuario.role) });
   }),
 );
 
@@ -689,7 +700,7 @@ router.patch(
       datos: req.body,
     });
 
-    res.json({ reserva: servicio.aReservaAdmin(reserva) });
+    res.json({ reserva: servicio.aReservaAdmin(reserva, req.usuario.role) });
   }),
 );
 
@@ -723,7 +734,7 @@ router.patch(
 
     const { tipo } = req.body;
     const anterior = reserva.vehicle.tipo;
-    if (tipo === anterior) return res.json({ reserva: servicio.aReservaAdmin(reserva), ajuste: null });
+    if (tipo === anterior) return res.json({ reserva: servicio.aReservaAdmin(reserva, req.usuario.role), ajuste: null });
 
     const parking = await prisma.parking.findUnique({
       where: { id: reserva.parkingId },
@@ -778,7 +789,7 @@ router.patch(
       datos: ajuste,
     });
 
-    res.json({ reserva: servicio.aReservaAdmin(actualizada), ajuste });
+    res.json({ reserva: servicio.aReservaAdmin(actualizada, req.usuario.role), ajuste });
   }),
 );
 

@@ -252,20 +252,31 @@ export function Reservas() {
       {/* ── Totales del filtro ── */}
       {totales && reservas.length > 0 && (
         <div className="sn-reservas__totales">
-          <Metrica
-            etiqueta={textos.admin.comisiones.facturado}
-            valor={fmtPrecio(totales.precioTotal)}
-          />
-          <Metrica
-            etiqueta={textos.admin.comisiones.neto}
-            valor={fmtPrecio(totales.montoNeto)}
-            tono="ok"
-          />
-          {esSuperadmin && (
+          {/* El facturado (con la seña) y la comisión son de SpotNear: solo los
+              ve el SUPERADMIN. El estacionamiento ve lo que le corresponde. */}
+          {esSuperadmin ? (
+            <>
+              <Metrica
+                etiqueta={textos.admin.comisiones.facturado}
+                valor={fmtPrecio(totales.precioTotal)}
+              />
+              <Metrica
+                etiqueta={textos.admin.comisiones.neto}
+                valor={fmtPrecio(totales.montoNeto)}
+                tono="ok"
+              />
+              <Metrica
+                etiqueta={textos.admin.comisiones.comision}
+                valor={fmtPrecio(totales.montoComision)}
+                tono="marca"
+              />
+            </>
+          ) : (
             <Metrica
-              etiqueta={textos.admin.comisiones.comision}
-              valor={fmtPrecio(totales.montoComision)}
-              tono="marca"
+              etiqueta={textos.admin.comisiones.tusIngresos}
+              valor={fmtPrecio(totales.montoNeto)}
+              detalle={textos.admin.dashboard.seCobranEnElLugar}
+              tono="ok"
             />
           )}
         </div>

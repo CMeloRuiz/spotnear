@@ -791,12 +791,11 @@ export function aComprobantePublico(reserva) {
       lng: reserva.parking.lng,
       telefono: reserva.parking.telefono,
     },
-    cliente: {
-      nombre: clienteParaMostrar(reserva).nombre,
-      apellido: clienteParaMostrar(reserva).apellido,
-      telefono: reserva.customer.telefono,
-      email: reserva.customer.email,
-    },
+    // Todo lo del cliente sale de la copia congelada en la reserva, no del
+    // contacto (Customer): ese se comparte por teléfono y guarda el PRIMER
+    // email que se usó con él, así que el comprobante mostraba el de otra
+    // reserva. Mismo patrón que el bug de los nombres cruzados.
+    cliente: { ...clienteParaMostrar(reserva), telefono: reserva.customer.telefono },
     vehiculo: {
       patente: reserva.vehicle.patente,
       tipo: reserva.vehicle.tipo,
@@ -807,8 +806,36 @@ export function aComprobantePublico(reserva) {
   };
 }
 
-/** Vista para el panel: incluye comisión y neto. */
-export function aReservaAdmin(reserva) {
+/**
+ * Lo que el estacionamiento (OWNER/STAFF) NO ve de una reserva: el total con
+ * la seña, la seña y el porcentaje que retiene SpotNear. Para el
+ * estacionamiento la reserva vale lo que cobra en el lugar (montoNeto); el
+ * resto es información interna de SpotNear y solo la ve el SUPERADMIN.
+ * Se quita en la API, no solo en la pantalla.
+ */
+const SOLO_SUPERADMIN = ['precioTotal', 'comisionPorcentaje', 'montoComision'];
+const DESGLOSE_SOLO_SUPERADMIN = ['sena', 'aPagarAhora'];
+
+export function vistaSegunRol(reservaAdmin, rol) {
+  if (rol === 'SUPERADMIN') return reservaAdmin;
+  const vista = { ...reservaAdmin };
+  for (const campo of SOLO_SUPERADMIN) delete vista[campo];
+  if (vista.desglosePrecio && typeof vista.desglosePrecio === 'object') {
+    vista.desglosePrecio = { ...vista.desglosePrecio };
+    for (const campo of DESGLOSE_SOLO_SUPERADMIN) delete vista.desglosePrecio[campo];
+  }
+  return vista;
+}
+
+/**
+ * Vista para el panel. Con `rol` distinto de SUPERADMIN, sin el total ni la
+ * seña (ver vistaSegunRol).
+ */
+export function aReservaAdmin(reserva, rol = 'SUPERADMIN') {
+  return vistaSegunRol(aReservaAdminCompleta(reserva), rol);
+}
+
+function aReservaAdminCompleta(reserva) {
   return {
     id: reserva.id,
     codigo: reserva.codigo,

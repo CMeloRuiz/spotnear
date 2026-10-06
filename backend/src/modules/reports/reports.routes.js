@@ -102,6 +102,11 @@ router.get(
         }),
       ]);
 
+    const esSuperadmin = req.usuario.role === 'SUPERADMIN';
+    // Al estacionamiento, la plata se le muestra siempre como lo que le
+    // corresponde (montoNeto): el total con la seña de SpotNear es interno.
+    const montoVisible = (r) => Number(esSuperadmin ? r.precioTotal : r.montoNeto);
+
     // Serie día por día, con los días sin reservas en cero (si no, el gráfico miente).
     const porDia = new Map();
     for (let i = 0; i < req.datosQuery.dias; i++) {
@@ -114,7 +119,7 @@ router.get(
       const item = porDia.get(clave);
       if (item) {
         item.cantidad += 1;
-        item.monto += Number(r.precioTotal);
+        item.monto += montoVisible(r);
       }
     }
 
@@ -124,14 +129,12 @@ router.get(
       ocupacion = await ocupacionActual(parkingId).catch(() => null);
     }
 
-    const esSuperadmin = req.usuario.role === 'SUPERADMIN';
-
     res.json({
       hoy: {
         fecha: desdeHoy,
         cantidad: totalesHoy._count ?? 0,
         vehiculos: totalesHoy._sum.cantidadVehiculos ?? 0,
-        ingresosPrevistos: Number(totalesHoy._sum.precioTotal ?? 0),
+        ingresosPrevistos: Number((esSuperadmin ? totalesHoy._sum.precioTotal : totalesHoy._sum.montoNeto) ?? 0),
         netoPrevisto: Number(totalesHoy._sum.montoNeto ?? 0),
         // La comisión de la plataforma solo la ve ColdevIA
         comision: esSuperadmin ? Number(totalesHoy._sum.montoComision ?? 0) : undefined,
@@ -139,13 +142,13 @@ router.get(
       },
       mes: {
         cantidad: totalesMes._count ?? 0,
-        ingresos: Number(totalesMes._sum.precioTotal ?? 0),
+        ingresos: Number((esSuperadmin ? totalesMes._sum.precioTotal : totalesMes._sum.montoNeto) ?? 0),
         neto: Number(totalesMes._sum.montoNeto ?? 0),
         comision: esSuperadmin ? Number(totalesMes._sum.montoComision ?? 0) : undefined,
       },
       ocupacion,
-      reservasHoy: reservasHoy.map(aReservaAdmin),
-      proximasLlegadas: proximasLlegadas.map(aReservaAdmin),
+      reservasHoy: reservasHoy.map((r) => aReservaAdmin(r, req.usuario.role)),
+      proximasLlegadas: proximasLlegadas.map((r) => aReservaAdmin(r, req.usuario.role)),
       serie: [...porDia.values()],
     });
   }),
@@ -254,10 +257,16 @@ router.get(
       { cantidad: 0, precioTotal: 0, montoComision: 0, montoNeto: 0 },
     );
 
-    // El OWNER ve su neto y su facturación, no el total de comisiones de la plataforma.
+    // El estacionamiento ve solo lo que le corresponde (montoNeto): ni el total
+    // facturado con la seña ni la comisión, que son información de SpotNear.
     if (!esSuperadmin) {
-      for (const f of filas) delete f.montoComision;
+      for (const f of filas) {
+        delete f.montoComision;
+        delete f.precioTotal;
+      }
       delete totales.montoComision;
+      delete totales.precioTotal;
+      filas.sort((x, y) => y.montoNeto - x.montoNeto);
     }
 
     res.json({
@@ -310,14 +319,19 @@ router.get(
       { key: 'codigo', label: 'Código' },
       { key: 'parking', label: 'Estacionamiento', format: (r) => r.parking.nombre },
       { key: 'fecha', label: 'Fecha', format: (r) => r.inicio.toISOString().slice(0, 10) },
-      { key: 'precioTotal', label: 'Total', format: (r) => Number(r.precioTotal).toFixed(2) },
+      // Total con la seña y comisión: solo para el SUPERADMIN.
       ...(esSuperadmin
         ? [
+            { key: 'precioTotal', label: 'Total', format: (r) => Number(r.precioTotal).toFixed(2) },
             { key: 'comisionPorcentaje', label: 'Comisión %', format: (r) => Number(r.comisionPorcentaje).toFixed(2) },
             { key: 'montoComision', label: 'Comisión $', format: (r) => Number(r.montoComision).toFixed(2) },
           ]
         : []),
-      { key: 'montoNeto', label: 'Neto estacionamiento', format: (r) => Number(r.montoNeto).toFixed(2) },
+      {
+        key: 'montoNeto',
+        label: esSuperadmin ? 'Neto estacionamiento' : 'Tus ingresos',
+        format: (r) => Number(r.montoNeto).toFixed(2),
+      },
     ];
 
     await auditar(req, {

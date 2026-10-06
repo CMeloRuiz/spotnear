@@ -76,12 +76,13 @@ export function Dashboard() {
         <Metrica
           icono="dinero"
           tono="ok"
-          etiqueta={textos.admin.dashboard.ingresosPrevistos}
+          // Al estacionamiento la API ya le manda solo lo suyo (sin la seña).
+          etiqueta={esSuperadmin ? textos.admin.dashboard.ingresosPrevistos : textos.admin.dashboard.tusIngresosHoy}
           valor={fmtPrecio(hoy.ingresosPrevistos)}
           detalle={
             esSuperadmin
               ? `${textos.admin.dashboard.comisionSpotNear}: ${fmtPrecio(hoy.comision ?? 0)}`
-              : `${textos.admin.dashboard.netoPrevisto}: ${fmtPrecio(hoy.netoPrevisto)}`
+              : textos.admin.dashboard.seCobranEnElLugar
           }
         />
         <Metrica
@@ -93,7 +94,7 @@ export function Dashboard() {
         />
         <Metrica
           icono="grafico"
-          etiqueta={textos.admin.dashboard.esteMes}
+          etiqueta={esSuperadmin ? textos.admin.dashboard.esteMes : textos.admin.dashboard.tusIngresosMes}
           valor={fmtPrecio(mes.ingresos)}
           detalle={`${mes.cantidad} ${mes.cantidad === 1 ? 'reserva' : 'reservas'}`}
         />

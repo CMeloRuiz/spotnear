@@ -371,3 +371,45 @@
   opacity: 0.55;
   transition: opacity var(--sn-trans);
 }
+
+/* ── Editar el período desde el resumen ── */
+.sn-checkout__editar-periodo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sn-e1);
+  padding: 2px var(--sn-e2);
+  border: 0;
+  border-radius: var(--sn-radio-sm);
+  background: none;
+  color: var(--sn-marca-texto);
+  font: inherit;
+  font-size: var(--sn-texto-sm);
+  font-weight: var(--sn-peso-semi);
+  cursor: pointer;
+}
+
+.sn-checkout__editar-periodo:hover {
+  background: var(--sn-marca-suave);
+}
+
+.sn-checkout__periodo-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sn-e3);
+  margin: var(--sn-e2) 0;
+}
+
+.sn-checkout__periodo-editor > .sn-boton {
+  align-self: flex-end;
+}
+
+.sn-checkout__periodo-aviso {
+  margin-top: var(--sn-e3);
+}
+
+/* La tarjeta del resumen es angosta: Ingreso y Salida van uno debajo del
+   otro, así la fecha y la hora se leen completas. */
+.sn-checkout__periodo-editor .sn-periodo__fila {
+  grid-template-columns: 1fr;
+}

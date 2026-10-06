@@ -98,6 +98,11 @@ export async function login({ email, password }, contexto = {}) {
   // desactivado" a alguien que acaba de registrarse suena a que lo rechazamos.
   // La causa real es la solicitud en revisión, y eso es lo que tiene que leer.
   if (usuario.role !== 'SUPERADMIN' && usuario.parking) {
+    if (usuario.parking.estado === 'PENDIENTE_VERIFICACION') {
+      throw errores.sinPermiso(
+        'Todavía no confirmaste tu email. Abrí el link que te mandamos para que tu solicitud entre en revisión.',
+      );
+    }
     if (usuario.parking.estado === 'PENDIENTE_APROBACION') {
       throw errores.sinPermiso(
         'Tu solicitud todavía está en revisión. Te avisamos por email apenas la aprobemos.',

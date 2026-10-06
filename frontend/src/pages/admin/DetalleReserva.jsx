@@ -290,17 +290,23 @@ export function DetalleReserva() {
                   <strong>{fmtPrecio(reserva.montoNeto)}</strong>
                 </div>
 
-                <div className="sn-detalle-reserva__linea">
-                  <span>
-                    {textos.admin.detalleReserva.senaCobrada} ({reserva.comisionPorcentaje}%)
-                  </span>
-                  <span>+{fmtPrecio(reserva.montoComision)}</span>
-                </div>
+                {/* La seña y el total solo llegan para el SUPERADMIN: al
+                    estacionamiento la API no se los manda. */}
+                {reserva.montoComision !== undefined && (
+                  <div className="sn-detalle-reserva__linea">
+                    <span>
+                      {textos.admin.detalleReserva.senaCobrada} ({reserva.comisionPorcentaje}%)
+                    </span>
+                    <span>+{fmtPrecio(reserva.montoComision)}</span>
+                  </div>
+                )}
 
-                <div className="sn-detalle-reserva__linea sn-detalle-reserva__linea--fuerte">
-                  <span>{textos.admin.detalleReserva.precioTotal}</span>
-                  <strong>{fmtPrecio(reserva.precioTotal)}</strong>
-                </div>
+                {reserva.precioTotal !== undefined && (
+                  <div className="sn-detalle-reserva__linea sn-detalle-reserva__linea--fuerte">
+                    <span>{textos.admin.detalleReserva.precioTotal}</span>
+                    <strong>{fmtPrecio(reserva.precioTotal)}</strong>
+                  </div>
+                )}
 
                 {reserva.desglosePrecio && (
                   <p className="sn-detalle-reserva__desglose">

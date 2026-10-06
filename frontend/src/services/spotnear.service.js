@@ -135,6 +135,12 @@ export const publico = {
    * Crea el dueño y el estacionamiento en estado pendiente de aprobación.
    */
   registrarEstacionamiento: (datos) => api.post('/onboarding/parkings', datos),
+
+  /** El link del email de confirmación del alta. */
+  verificarEmail: (token) => api.post('/onboarding/verificar-email', { token }),
+
+  /** Manda un link nuevo (el anterior deja de servir). */
+  reenviarVerificacion: (email) => api.post('/onboarding/reenviar-verificacion', { email }),
 };
 
 /* ═══════════════════════════ Auth ═══════════════════════════ */

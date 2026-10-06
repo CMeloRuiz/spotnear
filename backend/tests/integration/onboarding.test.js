@@ -86,7 +86,8 @@ describe('Solicitud pública de alta', () => {
     const res = await agente.post('/api/v1/onboarding/parkings').send(solicitud(email));
 
     assert.equal(res.status, 201);
-    assert.equal(res.body.solicitud.estado, 'PENDIENTE_APROBACION');
+    // Nace esperando que el dueño confirme su email (ver verificacion-email.test.js).
+    assert.equal(res.body.solicitud.estado, 'PENDIENTE_VERIFICACION');
     creados.push(res.body.solicitud.id);
 
     const enBase = await prisma.parking.findUnique({
@@ -95,7 +96,7 @@ describe('Solicitud pública de alta', () => {
     });
 
     // Los tres interruptores que lo mantienen invisible.
-    assert.equal(enBase.estado, 'PENDIENTE_APROBACION');
+    assert.equal(enBase.estado, 'PENDIENTE_VERIFICACION');
     assert.equal(enBase.activo, false);
     assert.equal(enBase.publicado, false);
 
@@ -104,6 +105,14 @@ describe('Solicitud pública de alta', () => {
     assert.equal(enBase.usuarios[0].activo, false);
     // La contraseña nunca se guarda en claro.
     assert.notEqual(enBase.usuarios[0].passwordHash, PASSWORD);
+
+    // Confirma el email con el link (en tests el email queda simulado y la API
+    // devuelve el link de prueba): recién ahí entra en revisión.
+    const token = res.body.enlaceDePrueba.split('/').pop();
+    const ok = await agente.post('/api/v1/onboarding/verificar-email').send({ token });
+    assert.equal(ok.status, 200, JSON.stringify(ok.body));
+    const verificado = await prisma.parking.findUnique({ where: { id: res.body.solicitud.id } });
+    assert.equal(verificado.estado, 'PENDIENTE_APROBACION');
   });
 
   test('no aparece en la búsqueda pública mientras está pendiente', async () => {
@@ -298,6 +307,15 @@ describe('Revisión de solicitudes', () => {
 
   test('rechazar guarda el motivo y no borra el registro', async () => {
     const motivo = 'La dirección no coincide con el domicilio comercial.';
+
+    // Sin el email confirmado no se puede revisar: ni aprobar ni rechazar.
+    const antes = await agente
+      .post(`/api/v1/admin/onboarding/${creados[1]}/rechazar`)
+      .set('Authorization', `Bearer ${tokenSuper}`)
+      .send({ motivo });
+    assert.equal(antes.status, 409);
+    // Como si el dueño hubiera confirmado su email.
+    await prisma.parking.update({ where: { id: creados[1] }, data: { estado: 'PENDIENTE_APROBACION' } });
 
     const res = await agente
       .post(`/api/v1/admin/onboarding/${creados[1]}/rechazar`)

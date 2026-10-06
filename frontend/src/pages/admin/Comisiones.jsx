@@ -143,11 +143,13 @@ export function Comisiones() {
                 etiqueta={textos.admin.comisiones.reservas}
                 valor={totales.cantidad}
               />
-              <Metrica
-                icono="dinero"
-                etiqueta={textos.admin.comisiones.facturado}
-                valor={fmtPrecio(totales.precioTotal)}
-              />
+              {esSuperadmin && (
+                <Metrica
+                  icono="dinero"
+                  etiqueta={textos.admin.comisiones.facturado}
+                  valor={fmtPrecio(totales.precioTotal)}
+                />
+              )}
               {esSuperadmin && totales.montoComision !== undefined && (
                 <Metrica
                   icono="grafico"
@@ -164,7 +166,7 @@ export function Comisiones() {
               <Metrica
                 icono="edificio"
                 tono="ok"
-                etiqueta={textos.admin.comisiones.neto}
+                etiqueta={esSuperadmin ? textos.admin.comisiones.neto : textos.admin.comisiones.tusIngresos}
                 valor={fmtPrecio(totales.montoNeto)}
               />
             </div>
@@ -189,20 +191,23 @@ export function Comisiones() {
                           : textos.admin.comisiones.estacionamiento}
                       </th>
                       <th className="sn-tabla__num">{textos.admin.comisiones.reservas}</th>
-                      <th className="sn-tabla__num">{textos.admin.comisiones.facturado}</th>
+                      {esSuperadmin && <th className="sn-tabla__num">{textos.admin.comisiones.facturado}</th>}
                       {esSuperadmin && (
                         <th className="sn-tabla__num">{textos.admin.comisiones.comision}</th>
                       )}
-                      <th className="sn-tabla__num">{textos.admin.comisiones.neto}</th>
+                      <th className="sn-tabla__num">
+                        {esSuperadmin ? textos.admin.comisiones.neto : textos.admin.comisiones.tusIngresos}
+                      </th>
                       <th className="sn-comisiones__col-barra" aria-label="Participación" />
                     </tr>
                   </thead>
                   <tbody>
                     {filas.map((f) => {
+                      // Sobre el facturado para el SUPERADMIN; sobre sus
+                      // ingresos para el dueño, que no recibe el facturado.
+                      const base = esSuperadmin ? 'precioTotal' : 'montoNeto';
                       const participacion =
-                        totales?.precioTotal > 0
-                          ? Math.round((f.precioTotal / totales.precioTotal) * 100)
-                          : 0;
+                        totales?.[base] > 0 ? Math.round((f[base] / totales[base]) * 100) : 0;
                       return (
                         <tr key={f.clave} className={f.parkingEliminado ? 'sn-fila--historica' : ''}>
                           <td>
@@ -217,7 +222,7 @@ export function Comisiones() {
                             )}
                           </td>
                           <td className="sn-tabla__num">{f.cantidad}</td>
-                          <td className="sn-tabla__num sn-precio">{fmtPrecio(f.precioTotal)}</td>
+                          {esSuperadmin && <td className="sn-tabla__num sn-precio">{fmtPrecio(f.precioTotal)}</td>}
                           {esSuperadmin && (
                             <td className="sn-tabla__num sn-comisiones__comision">
                               {fmtPrecio(f.montoComision ?? 0)}
@@ -244,7 +249,7 @@ export function Comisiones() {
                       <tr>
                         <th>{textos.admin.comisiones.totales}</th>
                         <td className="sn-tabla__num">{totales.cantidad}</td>
-                        <td className="sn-tabla__num sn-precio">{fmtPrecio(totales.precioTotal)}</td>
+                        {esSuperadmin && <td className="sn-tabla__num sn-precio">{fmtPrecio(totales.precioTotal)}</td>}
                         {esSuperadmin && (
                           <td className="sn-tabla__num sn-comisiones__comision">
                             {fmtPrecio(totales.montoComision ?? 0)}

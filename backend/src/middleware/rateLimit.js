@@ -68,7 +68,22 @@ export const limiteSubidaFotos = rateLimit({
   handler: respuesta('Subiste demasiadas fotos en poco tiempo. Probá de nuevo en un rato.'),
 });
 
+/**
+ * Confirmar el email y pedir el reenvío del link. Públicos: el reenvío manda
+ * mails, así que va acotado para que nadie lo use para llenarle la casilla a
+ * alguien.
+ */
+export const limiteVerificacion = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => env.isTest,
+  handler: respuesta('Hiciste varios intentos seguidos. Probá de nuevo en unos minutos.'),
+});
+
 export default {
+  limiteVerificacion,
   limiteGeneral,
   limiteLogin,
   limiteReservas,

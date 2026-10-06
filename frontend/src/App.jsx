@@ -21,6 +21,7 @@ import Checkout from './pages/Checkout.jsx';
 import Comprobante from './pages/Comprobante.jsx';
 import Pago from './pages/Pago.jsx';
 import RegistrarEstacionamiento from './pages/RegistrarEstacionamiento.jsx';
+import VerificarEmail from './pages/VerificarEmail.jsx';
 import { SobreNosotros, Terminos, Privacidad, NoEncontrado } from './pages/Estaticas.jsx';
 
 /* ── Panel (carga diferida) ── */
@@ -54,6 +55,9 @@ const router = createBrowserRouter([
       { path: '/pago/:token', element: <Pago /> },
       { path: '/comprobante/:token', element: <Comprobante /> },
       { path: '/registrar-estacionamiento', element: <RegistrarEstacionamiento /> },
+      // El link del email de confirmación, y la pantalla para pedir otro.
+      { path: '/verificar-email/:token', element: <VerificarEmail /> },
+      { path: '/verificar-email', element: <VerificarEmail /> },
       { path: '/sobre-nosotros', element: <SobreNosotros /> },
       { path: '/terminos', element: <Terminos /> },
       { path: '/privacidad', element: <Privacidad /> },

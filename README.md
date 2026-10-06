@@ -460,10 +460,51 @@ Hay dos caminos, y los dos terminan en el mismo lugar.
    Places y marcador ajustable) y las condiciones, donde ve escrita la
    **comisión del 20%** y tiene que aceptarla explícitamente.
 3. Al enviar se crean de una sola vez el `Parking` y su usuario `OWNER`, pero
-   **apagados**: `estado = PENDIENTE_APROBACION`, `activo = false` y
+   **apagados**: `estado = PENDIENTE_VERIFICACION`, `activo = false` y
    `publicado = false`. Eso significa que no aparece en ninguna búsqueda y que
    el dueño todavía no puede entrar al panel.
-4. Le llega un email de acuse de recibo.
+4. **Confirma su email.** En pantalla lee "Te enviamos un email a … para
+   confirmar tu cuenta" y le llega un mail con el botón *Confirmar mi email*.
+   Recién cuando lo toca, la solicitud pasa a `PENDIENTE_APROBACION`, aparece
+   en *Solicitudes* y le llega el acuse de "la revisamos en menos de 24 horas".
+   Ver *Verificación del email en el alta*.
+
+### Verificación del email en el alta
+
+```
+formulario ─▶ PENDIENTE_VERIFICACION ─(clic en el link)─▶ PENDIENTE_APROBACION ─▶ ACTIVO / RECHAZADO
+```
+
+- **El token** es aleatorio (32 bytes) y viaja solo en el link
+  (`/verificar-email/:token`). En la base se guarda su **SHA-256**, igual que
+  los refresh tokens. **Vence a las 48 horas.** Pedir un reenvío genera uno
+  nuevo y el anterior deja de servir.
+- **Mientras no confirma**, la solicitud no existe para ColdevIA: no aparece en
+  *Solicitudes* (tampoco en "Todas"), ni en *Estacionamientos*, ni cuenta en
+  el contador del menú, y no se puede aprobar ni rechazar (409). Si el dueño
+  intenta entrar al panel, el login le dice que confirme su email.
+- **Reenvío:** en la pantalla de "te enviamos un email" hay un botón *Reenviar
+  email de verificación* (con 30 s de espera entre pedidos), y existe la
+  pantalla **`/verificar-email`** para quien perdió el mail: escribe su email
+  y se le manda un link nuevo. La respuesta es siempre la misma exista o no la
+  solicitud, para no revelar qué emails están registrados.
+- **Link vencido o inválido:** la pantalla lo dice y ofrece pedir otro ahí
+  mismo. Abrir de nuevo un link ya usado no es un error: dice "tu email ya
+  estaba confirmado".
+- **Si vuelve a registrarse** con el mismo email sin haber confirmado, no se
+  crea otra solicitud: el formulario le ofrece reenviar el link.
+- **Mismo canal de email** que el resto del proyecto (`enviarEmail`: Resend o
+  SMTP). Con Resend sin dominio verificado, el mail solo llega a la casilla de
+  la cuenta de Resend (ver *Emails*): para probar con otra casilla hay que
+  verificar el dominio.
+- **En desarrollo**, si el mail no salió (sin configurar, o Resend en modo
+  prueba), la API devuelve el link en `enlaceDePrueba` y la pantalla lo
+  muestra como "Modo desarrollo". **En producción nunca se devuelve.**
+- Los tests nunca mandan emails reales, aunque el `.env` tenga
+  `RESEND_API_KEY`.
+- Una solicitud que nunca se confirma queda en `PENDIENTE_VERIFICACION`
+  indefinidamente, invisible. No se borra sola (decisión: no hay tareas
+  programadas en el proyecto); si molesta, se limpian a mano.
 
 ### B. ColdevIA lo carga a mano
 
@@ -1388,7 +1429,9 @@ consume igual, sin cambios.
 | `GET` | `/reservations/comprobante/:token/comprobante.png` | Comprobante como imagen (la que va por WhatsApp) |
 | `POST` | `/parkings/:id/cotizar` | Precio y cupo sin crear nada |
 | `POST` | `/onboarding/fotos` | Sube fotos del estacionamiento (multipart) |
-| `POST` | `/onboarding/parkings` | Solicitud de alta de un estacionamiento |
+| `POST` | `/onboarding/parkings` | Solicitud de alta: nace `PENDIENTE_VERIFICACION` y manda el email de confirmación |
+| `POST` | `/onboarding/verificar-email` | Confirma el email con el token del link; la pasa a `PENDIENTE_APROBACION` |
+| `POST` | `/onboarding/reenviar-verificacion` | Manda un link nuevo (respuesta igual exista o no el email) |
 | `POST` | `/reservations` | Crea la reserva (como invitado) |
 | `GET` | `/reservations/comprobante/:token` | Comprobante |
 | `GET` | `/reservations/comprobante/:token/qr.svg` | QR para imprimir |
@@ -1447,7 +1490,7 @@ npm --prefix backend run test:unit         # sin base de datos
 npm --prefix backend run test:integration  # contra la base real
 ```
 
-**193 tests**, sobre lo que duele si se rompe:
+**208 tests**, sobre lo que duele si se rompe:
 
 - **Patentes argentinas** — formatos viejo, Mercosur y de moto; normalización.
 - **Teléfonos** — las diez formas en que la gente escribe un número (`011 15 …`,
@@ -1844,6 +1887,74 @@ finalizar el evento". En los modos con hora, es la del **día buscado** (cada
 día puede tener la suya); si ese día cierra, dice "Cerrado ese día". También va
 en el tooltip del marcador del mapa. Sale de `utils/horarios.js` →
 `leyendaHorario`, la misma lógica de los tres modos que ya usaba la ficha.
+
+### Lo que ve el estacionamiento: solo lo que le corresponde
+
+El total facturado incluye la seña, que se queda SpotNear. Para el dueño y el
+playero eso es información interna: ven siempre **lo que les corresponde**
+(`montoNeto`, lo que se cobra en el lugar), nunca el total ni la seña ni el
+porcentaje.
+
+- **Se quita en la API, no solo en la pantalla.** Para OWNER y STAFF, las
+  reservas del panel llegan sin `precioTotal`, `montoComision` ni
+  `comisionPorcentaje` (y el desglose sin la seña); los totales de *Reservas*
+  traen solo `montoNeto`; el tablero de *Inicio* y el reporte de ingresos
+  usan el neto; los CSV no tienen la columna *Total*.
+- **En pantalla:** *Reservas* muestra una sola tarjeta, **"Tus ingresos"**; la
+  columna de la tabla se llama **"A cobrar"**; *Inicio* dice "Tus ingresos de
+  hoy" / "del mes"; el detalle de la reserva no muestra la seña ni el total;
+  *Nueva reserva* cotiza lo que se cobra en el lugar; y la página que para el
+  SUPERADMIN es *Comisiones*, para el dueño se llama **"Mis ingresos"** y no
+  tiene la columna *Facturado*.
+- El **SUPERADMIN** sigue viendo todo (facturado, comisión y neto), en
+  *Comisiones* y en *Reservas*.
+
+### El comprobante mostraba el email de otra persona
+
+**Causa raíz:** el email que se precargaba en "Enviar por email" salía del
+**contacto** (`Customer`), que se comparte entre todas las reservas con el
+mismo teléfono y **guarda el primer email** que se usó con ese número (nunca se
+actualiza). Todas las reservas de prueba usaban el mismo teléfono, así que el
+comprobante de *Bear Grylls* mostraba el email de una reserva vieja. Es el
+mismo patrón que el bug de los nombres cruzados: aquella vez el nombre y el
+apellido pasaron a leerse de la copia congelada en la reserva
+(`clienteParaMostrar`), pero el email quedó leyéndose del contacto.
+
+No era solo la pantalla: el **email automático después del pago** y la
+casilla por defecto de "Enviar por email" también usaban el del contacto, o
+sea, el comprobante le llegaba a otra persona. Y el CSV del panel tomaba el
+nombre del contacto. Ahora todo sale de la reserva (`clienteEmail`), con el
+contacto solo como respaldo para reservas viejas que no tienen la copia
+(`emailDeLaReserva` en `services/notifications/index.js`). El campo sigue
+siendo editable para mandarlo a otra casilla.
+
+### El aviso al grupo no menciona la seña
+
+El mensaje de "Compartir en el grupo" (y el envío automático, que usa el mismo
+texto) tenía la línea "Seña ya pagada online: $X (pagado)". Se sacó: el grupo
+ve código, cliente, teléfono, vehículo y patente, ingreso y salida, y **A
+COBRAR EN EL LUGAR**. El *Resumen del día* que se manda al mismo grupo sumaba
+el total con la seña; ahora suma lo que se cobra en el lugar. No hay otros
+avisos al estacionamiento con montos (los emails de alta no tienen precios).
+
+### Cambiar el horario desde el checkout
+
+En *Terminá tu reserva*, al lado de "Período de reserva" hay un **Editar** que
+despliega los mismos selectores de fecha y hora del buscador, dentro de la
+tarjeta. Al cambiarlos (con una pausa de medio segundo, y solo si el rango es
+válido y no está en el pasado) se reemplazan `inicio` y `fin` en la URL:
+la pantalla no se desmonta, así que **los datos del cliente y del vehículo no
+se pierden**, y se vuelve a pedir el estacionamiento con el horario nuevo.
+Duración, escalón (por hora / media estadía / estadía completa), monto, seña,
+total y disponibilidad salen de la misma API y el mismo motor de precios.
+
+Si en el horario nuevo **no hay lugar**, si cae **fuera del horario de
+atención** (el mismo chequeo que hace la creación de la reserva, ahora también
+en `GET /parkings/:slug` como `fueraDeHorario`) o no se puede calcular el
+precio, la tarjeta lo dice ("No hay lugar disponible en este horario. Probá con
+otro.") y **Continuar** y **Confirmar** quedan bloqueados. Antes, sin lugar,
+el checkout entero se reemplazaba por una pantalla que mandaba a buscar de
+nuevo; ahora el cliente lo corrige ahí mismo.
 
 ### Columnas descuadradas en las tablas del panel
 

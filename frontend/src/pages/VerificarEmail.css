@@ -1,0 +1,68 @@
+/* Confirmación del email del alta y pantalla de reenvío. */
+
+.sn-verificar {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--sn-e12);
+}
+
+.sn-verificar__tarjeta {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sn-e4);
+  padding: var(--sn-e8) var(--sn-e6);
+  background: var(--sn-superficie);
+  border: 1px solid var(--sn-borde);
+  border-radius: var(--sn-radio-lg);
+  box-shadow: var(--sn-sombra-sm);
+  text-align: center;
+}
+
+.sn-verificar__tarjeta h1 {
+  font-size: var(--sn-texto-xl);
+}
+
+.sn-verificar__tarjeta p {
+  color: var(--sn-tinta-media);
+  line-height: var(--sn-interlineado);
+}
+
+.sn-verificar__icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--sn-radio-full);
+  background: var(--sn-marca-suave);
+  color: var(--sn-marca-texto);
+}
+
+.sn-verificar__icono--ok {
+  background: var(--sn-ok-suave, #dcfce7);
+  color: var(--sn-ok-texto);
+}
+
+.sn-verificar__dev {
+  font-size: var(--sn-texto-sm);
+  padding: var(--sn-e3);
+  border: 1px dashed var(--sn-borde);
+  border-radius: var(--sn-radio);
+}
+
+/* Formulario de reenvío (también dentro de la pantalla de éxito del registro). */
+.sn-reenviar {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sn-e3);
+  text-align: left;
+}
+
+.sn-reenviar > .sn-boton {
+  align-self: center;
+}

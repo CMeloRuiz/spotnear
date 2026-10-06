@@ -12,6 +12,7 @@ import { distanciaEnMetros, minutosCaminando, cajaDeBusqueda } from '../../utils
 import { calcularPrecio, tarifaDesde } from '../../services/pricing.js';
 import { disponibilidadEnLote } from '../../services/availability.js';
 import { aNumero } from '../../utils/money.js';
+import { validarHorario } from '../../utils/horarios.js';
 
 /** Campos que se exponen públicamente de un estacionamiento. */
 const SELECT_PUBLICO = {
@@ -338,6 +339,11 @@ export async function detalleParking(idOSlug, opciones = {}) {
       hayLugar: info?.hayLugar ?? false,
       capacidadTotal: parking.capacidadTotal,
     };
+
+    // El mismo chequeo de horario de atención que hace la creación de la
+    // reserva: el checkout lo muestra apenas el cliente cambia el horario, en
+    // vez de enterarse recién al confirmar. null = está dentro del horario.
+    extra.fueraDeHorario = validarHorario(parking, opciones.inicio);
 
     try {
       const precio = calcularPrecio({
